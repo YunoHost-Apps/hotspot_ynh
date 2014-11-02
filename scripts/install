@@ -1,0 +1,96 @@
+#!/bin/bash
+
+# Retrieve arguments
+wifi_ssid=$1
+wifi_passphrase=$2
+wifi_device=$3
+wired_device=$4
+ip6_net=$5
+ip6_dns0=$6
+ip6_dns1=$7
+ip4_dns0=$8
+ip4_dns1=$9
+
+# Check arguments
+# TODO
+
+# Save arguments for future upgrades
+sudo yunohost app setting hotspot wifi_ssid -v $wifi_ssid
+sudo yunohost app setting hotspot wifi_passphrase -v $wifi_passphrase
+sudo yunohost app setting hotspot wifi_device -v $wifi_device
+sudo yunohost app setting hotspot wired_device -v $wired_device
+sudo yunohost app setting hotspot ip6_net -v $ip6_net
+sudo yunohost app setting hotspot ip6_dns0 -v $ip6_dns0
+sudo yunohost app setting hotspot ip6_dns1 -v $ip6_dns1
+sudo yunohost app setting hotspot ip4_dns0 -v $ip4_dns0
+sudo yunohost app setting hotspot ip4_dns1 -v $ip4_dns1
+
+# Install packages
+sudo apt-get --assume-yes --force-yes install hostapd radvd isc-dhcp-server
+
+# Install extra packages
+sudo apt-get --assume-yes --force-yes install sipcalc
+
+# Compute extra arguments
+ip6_expanded_net=$(sipcalc ${ip6_net} | grep Expanded | awk '{ print $NF; }')
+ip6_net=$(sipcalc ${ip6_net} | grep Compressed | awk '{ print $NF; }')
+ip6_addr=$(echo "$(echo ${ip6_expanded_net} | cut -d: -f1-7):42")
+ip6_addr=$(sipcalc ${ip6_addr} | grep Compressed | awk '{ print $NF; }')
+ip4_nat_prefix=10.0.242
+
+# Copy confs
+sudo install -b -o root -g root -m 0644 ../conf/hostapd.conf /etc/hostapd/
+sudo install -b -o root -g root -m 0644 ../conf/radvd.conf /etc/
+sudo install -b -o root -g root -m 0644 ../conf/dhcpd.conf /etc/dhcp/
+
+# Fix confs
+## hostapd
+sudo sed "s|<TPL:WIFI_DEVICE>|${wifi_device}|g" -i /etc/hostapd/hostapd.conf
+sudo sed "s|<TPL:WIFI_SSID>|${wifi_ssid}|g" -i /etc/hostapd/hostapd.conf
+sudo sed "s|<TPL:WIFI_PASSPHRASE>|${wifi_passphrase}|g" -i /etc/hostapd/hostapd.conf
+
+## radvd
+sudo sed "s|<TPL:WIFI_DEVICE>|${wifi_device}|g" -i /etc/radvd.conf
+sudo sed "s|<TPL:IP6_NET>|${ip6_net}|g" -i /etc/radvd.conf
+sudo sed "s|<TPL:IP6_DNS0>|${ip6_dns0}|g" -i /etc/radvd.conf
+sudo sed "s|<TPL:IP6_DNS1>|${ip6_dns1}|g" -i /etc/radvd.conf
+
+## dhcpd
+sudo sed "s|<TPL:IP4_DNS0>|${ip4_dns0}|g" -i /etc/dhcp/dhcpd.conf
+sudo sed "s|<TPL:IP4_DNS1>|${ip4_dns1}|g" -i /etc/dhcp/dhcpd.conf
+sudo sed "s|<TPL:WIFI_DEVICE>|${wifi_device}|g" -i /etc/dhcp/dhcpd.conf
+sudo sed "s|<TPL:IP4_NAT_PREFIX>|${ip4_nat_prefix}|g" -i /etc/dhcp/dhcpd.conf
+
+# Copy init script
+sudo install -b -o root -g root -m 0755 ../conf/ynh-hotspot /etc/init.d/
+
+# Fix init script
+## ynh-hostspot
+sudo sed "s|<TPL:IP6_ADDR>|${ip6_addr}|g" -i /etc/init.d/ynh-hotspot
+sudo sed "s|<TPL:IP4_NAT_PREFIX>|${ip4_nat_prefix}|g" -i /etc/init.d/ynh-hotspot
+sudo sed "s|<TPL:WIFI_DEVICE>|${wifi_device}|g" -i /etc/init.d/ynh-hotspot
+sudo sed "s|<TPL:WIRED_DEVICE>|${wired_device}|g" -i /etc/init.d/ynh-hotspot
+
+## hostapd
+sudo sed 's|^DAEMON_CONF=$|&/etc/hostapd/hostapd.conf|' -i /etc/init.d/hostapd
+
+# Set default inits
+# The boot order of these services are important, so they are disabled by default
+# and the ynh-hotspot service handles them.
+# All services are registred by yunohost in order to prevent conflicts after the uninstall.
+sudo yunohost service add isc-dhcp-server
+sudo yunohost service stop isc-dhcp-server
+sudo yunohost service disable isc-dhcp-server
+sudo yunohost service add radvd
+sudo yunohost service stop radvd
+sudo yunohost service disable radvd
+sudo yunohost service add hostapd 
+sudo yunohost service stop hostapd 
+sudo yunohost service disable hostapd 
+
+# Gooo
+sudo yunohost service add ynh-hotspot
+sudo yunohost service enable ynh-hotspot
+sudo yunohost service start ynh-hotspot
+
+exit 0

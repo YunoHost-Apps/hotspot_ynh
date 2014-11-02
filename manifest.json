@@ -1,0 +1,89 @@
+{
+  "name": "Wifi Hotspot",
+  "id": "hotspot",
+  "description": {
+    "en": "Wifi Hotspot",
+    "fr": "Hotspot Wifi"
+  },
+  "license": "AGPL-3",
+  "developer": {
+    "name": "Julien Vaubourg",
+    "email": "julien@vaubourg.com",
+    "url": "http://julien.vaubourg.com"
+  },
+  "multi_instance": "false",
+  "arguments": {
+    "install" : [
+      {
+        "name": "Wifi SSID",
+        "ask": {
+            "en": "Choose an SSID"
+        },
+        "example": "myNeutralNetwork",
+        "default": "myNeutralNetwork"
+      },
+      {
+        "name": "Wifi passphrase",
+        "ask": {
+            "en": "Choose a WPA2 passphrase (at least 8 chars)"
+        },
+        "example": "VhegT8oev0jZI"
+      },
+      {
+        "name": "Wifi device",
+        "ask": {
+            "en": "Select your wifi interface (hotspot side)"
+        },
+        "example": "wlan0",
+        "default": "wlan0"
+      },
+      {
+        "name": "Wired device",
+        "ask": {
+            "en": "Select your wired interface (internet side)"
+        },
+        "example": "eth0",
+        "default": "eth0"
+      },
+      {
+        "name": "IPv6 network",
+        "ask": {
+            "en": "Select your IPv6 delegated network (netmask number must be <= 64)"
+        },
+        "example": "2001:db8:42::/48"
+      },
+      {
+        "name": "First IPv6 DNS resolver",
+        "ask": {
+            "en": "Select a first IPv6 DNS resolver"
+        },
+        "example": "2001:913::8",
+	"default": "2001:913::8"
+      },
+      {
+        "name": "Second IPv6 DNS resolver",
+        "ask": {
+            "en": "Select a second IPv6 DNS resolver"
+        },
+        "example": "2001:910:800::40",
+	"default": "2001:910:800::40"
+      },
+      {
+        "name": "First IPv4 DNS resolver",
+        "ask": {
+            "en": "Select a first IPv4 DNS resolver"
+        },
+        "example": "80.67.188.188",
+	"default": "80.67.188.188"
+      },
+      {
+        "name": "Second IPv4 DNS resolver",
+        "ask": {
+            "en": "Select a second IPv4 DNS resolver"
+        },
+        "example": "80.67.169.12",
+	"default": "80.67.169.12"
+      }
+    ]
+  }
+}
