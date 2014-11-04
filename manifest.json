@@ -38,14 +38,6 @@
         "default": "wlan0"
       },
       {
-        "name": "Wired device",
-        "ask": {
-            "en": "Select your wired interface (internet side)"
-        },
-        "example": "eth0",
-        "default": "eth0"
-      },
-      {
         "name": "IPv6 network",
         "ask": {
             "en": "Select your IPv6 delegated network (netmask number must be <= 64)"
