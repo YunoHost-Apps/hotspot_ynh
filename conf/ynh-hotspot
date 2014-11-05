@@ -49,6 +49,16 @@ is_running() {
   && is_hostapd_running && is_radvd_running && is_dhcpd_running
 }
 
+internet_device=$(ip r | awk '/default via/ { print $NF; }')
+internet_device_vpn=tun0
+internet_device_default=${internet_device}
+
+# Apply NAT on tun0 if IPv6 address if VPN is used
+ip l sh dev tun0 &> /dev/null
+if [ "$?" -eq 0 ]; then
+  internet_device_default=${internet_device_vpn}
+fi
+
 case "$1" in
   start)
     if is_running; then
@@ -61,7 +71,7 @@ case "$1" in
 
       if ! is_nat_set; then
         echo "Set NAT"
-        iptables -t nat -A POSTROUTING -o <TPL:WIRED_DEVICE> -j MASQUERADE
+        iptables -t nat -A POSTROUTING -o ${internet_device_default} -j MASQUERADE
       fi
 
       if ! is_ip4nataddr_set; then
@@ -107,7 +117,9 @@ case "$1" in
   
     if is_nat_set; then
       echo "Unset NAT"
-      iptables -t nat -D POSTROUTING -o <TPL:WIRED_DEVICE> -j MASQUERADE
+      # Depending on the presence or not of a VPN at the last startup, one of these 2 lines is unnecessary
+      iptables -t nat -D POSTROUTING -o ${internet_device} -j MASQUERADE 2> /dev/null
+      iptables -t nat -D POSTROUTING -o ${internet_device_vpn} -j MASQUERADE 2> /dev/null
     fi
 
     if is_ip4nataddr_set; then

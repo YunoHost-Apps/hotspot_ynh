@@ -22,10 +22,9 @@ sudo apt-get --assume-yes --force-yes install hostapd radvd isc-dhcp-server ipta
 sudo apt-get --assume-yes --force-yes install sipcalc
 
 # Compute extra arguments
-wired_device=$(ip r | awk '/default via/ { print $NF; }')
 ip6_expanded_net=$(sipcalc ${ip6_net} | grep Expanded | awk '{ print $NF; }')
 ip6_net=$(sipcalc ${ip6_net} | grep Compressed | awk '{ print $NF; }')
-ip6_addr=$(echo "$(echo ${ip6_expanded_net} | cut -d: -f1-7):42")
+ip6_addr=$(echo "$(echo ${ip6_expanded_net} | cut -d: -f1-7):1")
 ip6_addr=$(sipcalc ${ip6_addr} | grep Compressed | awk '{ print $NF; }')
 ip4_nat_prefix=10.0.242
 
@@ -33,7 +32,6 @@ ip4_nat_prefix=10.0.242
 sudo yunohost app setting hotspot wifi_ssid -v ${wifi_ssid}
 sudo yunohost app setting hotspot wifi_passphrase -v ${wifi_passphrase}
 sudo yunohost app setting hotspot wifi_device -v ${wifi_device}
-sudo yunohost app setting hotspot wired_device -v ${wired_device}
 sudo yunohost app setting hotspot ip6_addr -v ${ip6_addr}
 sudo yunohost app setting hotspot ip6_net -v ${ip6_net}
 sudo yunohost app setting hotspot ip6_dns0 -v ${ip6_dns0}
@@ -73,16 +71,9 @@ sudo install -b -o root -g root -m 0755 ../conf/ynh-hotspot /etc/init.d/
 sudo sed "s|<TPL:IP6_ADDR>|${ip6_addr}|g" -i /etc/init.d/ynh-hotspot
 sudo sed "s|<TPL:IP4_NAT_PREFIX>|${ip4_nat_prefix}|g" -i /etc/init.d/ynh-hotspot
 sudo sed "s|<TPL:WIFI_DEVICE>|${wifi_device}|g" -i /etc/init.d/ynh-hotspot
-sudo sed "s|<TPL:WIRED_DEVICE>|${wired_device}|g" -i /etc/init.d/ynh-hotspot
 
 ## hostapd
 sudo sed 's|^DAEMON_CONF=$|&/etc/hostapd/hostapd.conf|' -i /etc/init.d/hostapd
-
-# Remove IPv6 address if vpnclient is installed because from now this one is handle by this app
-yunohost app list -f vpnclient --json | grep -q '"installed": true'
-if [ "$?" -eq 0 ]; then
-  ip a d ${ip6_addr}/128 dev tun0 &> /dev/null
-fi
 
 # Set default inits
 # The boot order of these services are important, so they are disabled by default
@@ -97,6 +88,12 @@ sudo yunohost service disable radvd
 sudo yunohost service add hostapd 
 sudo yunohost service stop hostapd 
 sudo yunohost service disable hostapd 
+
+# Remove IPv6 address if vpnclient is installed because from now this one is handle by this app
+sudo yunohost app list -f vpnclient --json | grep -q '"installed": true'
+if [ "$?" -eq 0 ]; then
+  ip a d ${ip6_addr}/128 dev tun0 &> /dev/null
+fi
 
 # Gooo
 sudo yunohost service add ynh-hotspot

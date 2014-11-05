@@ -6,7 +6,7 @@ sudo yunohost service remove ynh-hotspot
 sudo rm -f /etc/init.d/ynh-hotspot
 
 # Remove confs
-sudo rm -rf /etc/hostapd/ /etc/radvd.conf /etc/dhcp/dhcpd.conf
+sudo rm -f /etc/hostapd/hostapd.conf /etc/radvd.conf /etc/dhcp/dhcpd.conf
 
 # Remove packets
 # The yunohost policy is currently to not uninstall packets (dependency problems)
