@@ -22,55 +22,31 @@ sudo apt-get --assume-yes --force-yes install hostapd radvd isc-dhcp-server ipta
 sudo apt-get --assume-yes --force-yes install sipcalc
 
 # Compute extra arguments
-ip6_expanded_net=$(sipcalc ${ip6_net} | grep Expanded | awk '{ print $NF; }')
-ip6_net=$(sipcalc ${ip6_net} | grep Compressed | awk '{ print $NF; }')
-ip6_addr=$(echo "$(echo ${ip6_expanded_net} | cut -d: -f1-7):1")
-ip6_addr=$(sipcalc ${ip6_addr} | grep Compressed | awk '{ print $NF; }')
+ip6_expanded_net=$(sipcalc "${ip6_net}" | grep Expanded | awk '{ print $NF; }')
+ip6_net=$(sipcalc "${ip6_net}" | grep Compressed | awk '{ print $NF; }')
+ip6_addr=$(echo "$(echo "${ip6_expanded_net}" | cut -d: -f1-7):1")
+ip6_addr=$(sipcalc "${ip6_addr}" | grep Compressed | awk '{ print $NF; }')
 ip4_nat_prefix=10.0.242
 
 # Save arguments for future upgrades
-sudo yunohost app setting hotspot wifi_ssid -v ${wifi_ssid}
-sudo yunohost app setting hotspot wifi_passphrase -v ${wifi_passphrase}
-sudo yunohost app setting hotspot wifi_device -v ${wifi_device}
-sudo yunohost app setting hotspot ip6_addr -v ${ip6_addr}
-sudo yunohost app setting hotspot ip6_net -v ${ip6_net}
-sudo yunohost app setting hotspot ip6_dns0 -v ${ip6_dns0}
-sudo yunohost app setting hotspot ip6_dns1 -v ${ip6_dns1}
-sudo yunohost app setting hotspot ip4_dns0 -v ${ip4_dns0}
-sudo yunohost app setting hotspot ip4_dns1 -v ${ip4_dns1}
-sudo yunohost app setting hotspot ip4_nat_prefix -v ${ip4_nat_prefix}
+sudo yunohost app setting hotspot wifi_ssid -v "${wifi_ssid}"
+sudo yunohost app setting hotspot wifi_passphrase -v "${wifi_passphrase}"
+sudo yunohost app setting hotspot wifi_device -v "${wifi_device}"
+sudo yunohost app setting hotspot ip6_addr -v "${ip6_addr}"
+sudo yunohost app setting hotspot ip6_net -v "${ip6_net}"
+sudo yunohost app setting hotspot ip6_dns0 -v "${ip6_dns0}"
+sudo yunohost app setting hotspot ip6_dns1 -v "${ip6_dns1}"
+sudo yunohost app setting hotspot ip4_dns0 -v "${ip4_dns0}"
+sudo yunohost app setting hotspot ip4_dns1 -v "${ip4_dns1}"
+sudo yunohost app setting hotspot ip4_nat_prefix -v "${ip4_nat_prefix}"
 
 # Copy confs
-sudo install -b -o root -g root -m 0644 ../conf/hostapd.conf /etc/hostapd/
-sudo install -b -o root -g root -m 0644 ../conf/radvd.conf /etc/
-sudo install -b -o root -g root -m 0644 ../conf/dhcpd.conf /etc/dhcp/
-
-# Fix confs
-## hostapd
-sudo sed "s|<TPL:WIFI_DEVICE>|${wifi_device}|g" -i /etc/hostapd/hostapd.conf
-sudo sed "s|<TPL:WIFI_SSID>|${wifi_ssid}|g" -i /etc/hostapd/hostapd.conf
-sudo sed "s|<TPL:WIFI_PASSPHRASE>|${wifi_passphrase}|g" -i /etc/hostapd/hostapd.conf
-
-## radvd
-sudo sed "s|<TPL:WIFI_DEVICE>|${wifi_device}|g" -i /etc/radvd.conf
-sudo sed "s|<TPL:IP6_NET>|${ip6_net}|g" -i /etc/radvd.conf
-sudo sed "s|<TPL:IP6_DNS0>|${ip6_dns0}|g" -i /etc/radvd.conf
-sudo sed "s|<TPL:IP6_DNS1>|${ip6_dns1}|g" -i /etc/radvd.conf
-
-## dhcpd
-sudo sed "s|<TPL:IP4_DNS0>|${ip4_dns0}|g" -i /etc/dhcp/dhcpd.conf
-sudo sed "s|<TPL:IP4_DNS1>|${ip4_dns1}|g" -i /etc/dhcp/dhcpd.conf
-sudo sed "s|<TPL:WIFI_DEVICE>|${wifi_device}|g" -i /etc/dhcp/dhcpd.conf
-sudo sed "s|<TPL:IP4_NAT_PREFIX>|${ip4_nat_prefix}|g" -i /etc/dhcp/dhcpd.conf
+sudo install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl /etc/hostapd/
+sudo install -b -o root -g root -m 0644 ../conf/radvd.conf.tpl /etc/
+sudo install -b -o root -g root -m 0644 ../conf/dhcpd.conf.tpl /etc/dhcp/
 
 # Copy init script
-sudo install -b -o root -g root -m 0755 ../conf/ynh-hotspot /etc/init.d/
-
-# Fix init script
-## ynh-hostspot
-sudo sed "s|<TPL:IP6_ADDR>|${ip6_addr}|g" -i /etc/init.d/ynh-hotspot
-sudo sed "s|<TPL:IP4_NAT_PREFIX>|${ip4_nat_prefix}|g" -i /etc/init.d/ynh-hotspot
-sudo sed "s|<TPL:WIFI_DEVICE>|${wifi_device}|g" -i /etc/init.d/ynh-hotspot
+sudo install -b -o root -g root -m 0755 ../conf/init_ynh-hotspot /etc/init.d/ynh-hotspot
 
 ## hostapd
 sudo sed 's|^DAEMON_CONF=$|&/etc/hostapd/hostapd.conf|' -i /etc/init.d/hostapd
@@ -89,10 +65,10 @@ sudo yunohost service add hostapd
 sudo yunohost service stop hostapd 
 sudo yunohost service disable hostapd 
 
-# Remove IPv6 address if vpnclient is installed because from now this one is handle by this app
-sudo yunohost app list -f vpnclient --json | grep -q '"installed": true'
+# Remove IPv6 address set if there is a VPN installed
+sudo ip -6 address show dev tun0 2> /dev/null | grep -q "${ip6_addr}/"
 if [ "$?" -eq 0 ]; then
-  ip a d ${ip6_addr}/128 dev tun0 &> /dev/null
+  sudo ip address delete "${ip6_addr}/128" dev tun0 &> /dev/null
 fi
 
 # Gooo
