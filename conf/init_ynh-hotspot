@@ -270,6 +270,9 @@ case "$1" in
         start_dhcpd
       fi
     fi
+
+    # Update dynamic settings
+    moulinette_set internet_device "${new_internet_device}"
   ;;
   stop)
     echo "Stopping..."
