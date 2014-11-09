@@ -16,8 +16,6 @@ function restart_service() {
 }
 
 dispatch('/', function() {
-  set('title', T_('Wifi Hotspot'));
-
   exec('ip link', $devs);
   $wifi_device = moulinette_get('wifi_device');
   $devs_list = "";
@@ -37,6 +35,7 @@ dispatch('/', function() {
   set('wifi_ssid', moulinette_get('wifi_ssid'));
   set('wifi_passphrase', moulinette_get('wifi_passphrase'));
   set('wifi_channel', moulinette_get('wifi_channel'));
+  set('wifi_n', moulinette_get('wifi_n'));
   set('wifi_device', $wifi_device);
   set('wifi_device_list', $devs_list);
   set('ip6_net', moulinette_get('ip6_net'));
@@ -53,6 +52,7 @@ dispatch_put('/settings', function() {
   moulinette_set('wifi_ssid', $_POST['wifi_ssid']);
   moulinette_set('wifi_passphrase', $_POST['wifi_passphrase']);
   moulinette_set('wifi_channel', $_POST['wifi_channel']);
+  moulinette_set('wifi_n', isset($_POST['wifi_n']) ? 1 : 0);
   moulinette_set('wifi_device', $_POST['wifi_device']);
   moulinette_set('ip6_net', $_POST['ip6_net']);
   moulinette_set('ip6_dns0', $_POST['ip6_dns0']);

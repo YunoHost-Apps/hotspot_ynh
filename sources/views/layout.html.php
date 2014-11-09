@@ -6,13 +6,15 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-  <title>VPN Client <? echo (isset($title)) ? "| ".$title : "" ?></title>
+  <title>Wifi Hotspot <? echo (isset($title)) ? "| ".$title : "" ?></title>
   <meta name="viewport" content="width=device-width">
   <link media="all" type="text/css" href="<?= PUBLIC_DIR ?>/bootstrap/css/bootstrap.min.css" rel="stylesheet">
   <link media="all" type="text/css" href="<?= PUBLIC_DIR ?>/bootstrap/css/bootstrap-theme.min.css" rel="stylesheet">
+  <link media="all" type="text/css" href="<?= PUBLIC_DIR ?>/css/bootstrap-toggle.min.css" rel="stylesheet">
   <link media="all" type="text/css" href="<?= PUBLIC_DIR ?>/css/style.css" rel="stylesheet">
   <script src="<?= PUBLIC_DIR ?>/jquery/jquery-2.1.1.min.js"></script>
   <script src="<?= PUBLIC_DIR ?>/bootstrap/js/bootstrap.min.js"></script>
+  <script src="<?= PUBLIC_DIR ?>/js/bootstrap-toggle.min.js"></script>
   <script src="<?= PUBLIC_DIR ?>/js/custom.js"></script>
 </head>
 <body>

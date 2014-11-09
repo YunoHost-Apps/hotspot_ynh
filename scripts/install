@@ -40,6 +40,7 @@ sudo yunohost app setting hotspot wifi_ssid -v "${wifi_ssid}"
 sudo yunohost app setting hotspot wifi_passphrase -v "${wifi_passphrase}"
 sudo yunohost app setting hotspot wifi_device -v "${wifi_device}"
 sudo yunohost app setting hotspot wifi_channel -v 6
+sudo yunohost app setting hotspot wifi_n -v 0
 sudo yunohost app setting hotspot ip6_addr -v "${ip6_addr}"
 sudo yunohost app setting hotspot ip6_net -v "${ip6_net}"
 sudo yunohost app setting hotspot ip6_dns0 -v "${ip6_dns0}"

@@ -1,6 +1,8 @@
 interface=<TPL:WIFI_DEVICE>
 ssid=<TPL:WIFI_SSID>
 hw_mode=g
+<TPL:N_COMMENT>ieee80211n=1
+<TPL:N_COMMENT>wmm_enabled=1
 channel=<TPL:WIFI_CHANNEL>
 macaddr_acl=0
 auth_algs=1

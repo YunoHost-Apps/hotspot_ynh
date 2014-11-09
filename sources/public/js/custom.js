@@ -26,4 +26,6 @@ $(document).ready(function() {
 
     input.attr('value', $(this).text());
   });
+
+  $('.switch').bootstrapToggle();
 });

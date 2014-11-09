@@ -49,6 +49,15 @@
               </div>
             </div>
           </div>
+
+          <div class="form-group">
+            <label for="wifi_passphrase" class="col-sm-3 control-label"><?= T_('Wifi N') ?></label>
+            <div class="col-sm-9 input-group-btn" data-toggle="tooltip" data-title="<?= T_('Only if your antenna is 802.11n compliant') ?>">
+              <div class="input-group">
+                <input type="checkbox" class="form-control switch" name="wifi_n" id="wifi_n" value="1" <?= $wifi_n == 1 ? 'checked="checked"' : '' ?> />
+              </div>
+            </div>
+          </div>
   
           <div class="form-group">
             <label for="wifi_device" class="col-sm-3 control-label"><?= T_('Device') ?></label>

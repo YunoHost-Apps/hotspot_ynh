@@ -89,6 +89,12 @@ start_hostapd() {
   sed "s|<TPL:WIFI_PASSPHRASE>|${ynh_wifi_passphrase}|g" -i /etc/hostapd/hostapd.conf
   sed "s|<TPL:WIFI_CHANNEL>|${ynh_wifi_channel}|g" -i /etc/hostapd/hostapd.conf
 
+  if [ "${ynh_wifi_n}" -eq 1 ]; then
+    sed "s|<TPL:N_COMMENT>||g" -i /etc/hostapd/hostapd.conf
+  else
+    sed "s|<TPL:N_COMMENT>|#|g" -i /etc/hostapd/hostapd.conf
+  fi
+
   service hostapd start
 }
 
@@ -186,6 +192,7 @@ ynh_wifi_device=$(moulinette_get wifi_device)
 ynh_wifi_ssid=$(moulinette_get wifi_ssid)
 ynh_wifi_passphrase=$(moulinette_get wifi_passphrase)
 ynh_wifi_channel=$(moulinette_get wifi_channel)
+ynh_wifi_n=$(moulinette_get wifi_n)
 ynh_ip6_addr=$(moulinette_get ip6_addr)
 ynh_ip6_net=$(moulinette_get ip6_net)
 ynh_ip6_dns0=$(moulinette_get ip6_dns0)
