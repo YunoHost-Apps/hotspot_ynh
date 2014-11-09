@@ -15,6 +15,21 @@
   "arguments": {
     "install" : [
       {
+        "name": "Domain",
+        "ask": {
+            "en": "Choose a domain for your Wifi web administration"
+        },
+        "example": "domain.org"
+      },
+      {
+        "name": "URL Path",
+        "ask": {
+            "en": "Choose a path for your Wifi web administration"
+        },
+        "example": "/wifiadmin",
+        "default": "/wifiadmin"
+      },
+      {
         "name": "Wifi SSID",
         "ask": {
             "en": "Choose an SSID"

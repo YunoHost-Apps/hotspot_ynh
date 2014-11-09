@@ -1,22 +1,29 @@
-#!/bin/bash
+#wifiadmin!/bin/bash
 
 # Retrieve arguments
-wifi_ssid=$1
-wifi_passphrase=$2
-wifi_device=$3
-ip6_net=$4
-ip6_dns0=$5
-ip6_dns1=$6
-ip4_dns0=$7
-ip4_dns1=$8
+domain=${1}
+url_path=${2}
+wifi_ssid=${3}
+wifi_passphrase=${4}
+wifi_device=${5}
+ip6_net=${6}
+ip6_dns0=${7}
+ip6_dns1=${8}
+ip4_dns0=${9}
+ip4_dns1=${10}
 
 # Check arguments
 # TODO
 
+sudo yunohost app checkurl ${domain}${url_path} -a hotspot 
+if [ ! $? -eq 0 ]; then
+  exit 1
+fi
+
 # Install packages
 # TODO: Replace isc-dhcp-server by dnsmasq (currently negotiating with the YunoHost team to
 # also replace bind9 by dnsmasq)
-sudo apt-get --assume-yes --force-yes install hostapd radvd isc-dhcp-server iptables
+sudo apt-get --assume-yes --force-yes install hostapd radvd isc-dhcp-server iptables php5-fpm
 
 # Install extra packages
 sudo apt-get --assume-yes --force-yes install sipcalc
@@ -28,10 +35,11 @@ ip6_addr=$(echo "$(echo "${ip6_expanded_net}" | cut -d: -f1-7):1")
 ip6_addr=$(sipcalc "${ip6_addr}" | grep Compressed | awk '{ print $NF; }')
 ip4_nat_prefix=10.0.242
 
-# Save arguments for future upgrades
+# Save arguments
 sudo yunohost app setting hotspot wifi_ssid -v "${wifi_ssid}"
 sudo yunohost app setting hotspot wifi_passphrase -v "${wifi_passphrase}"
 sudo yunohost app setting hotspot wifi_device -v "${wifi_device}"
+sudo yunohost app setting hotspot wifi_channel -v 6
 sudo yunohost app setting hotspot ip6_addr -v "${ip6_addr}"
 sudo yunohost app setting hotspot ip6_net -v "${ip6_net}"
 sudo yunohost app setting hotspot ip6_dns0 -v "${ip6_dns0}"
@@ -44,12 +52,41 @@ sudo yunohost app setting hotspot ip4_nat_prefix -v "${ip4_nat_prefix}"
 sudo install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl /etc/hostapd/
 sudo install -b -o root -g root -m 0644 ../conf/radvd.conf.tpl /etc/
 sudo install -b -o root -g root -m 0644 ../conf/dhcpd.conf.tpl /etc/dhcp/
+sudo install -b -o root -g root -m 0644 ../conf/nginx_wifiadmin.conf "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
+sudo install -b -o root -g root -m 0644 ../conf/phpfpm_wifiadmin.conf /etc/php5/fpm/pool.d/wifiadmin.conf
+
+# Copy web sources
+sudo mkdir -pm 0755 /var/www/wifiadmin/
+sudo cp -a ../sources/* /var/www/wifiadmin/
+
+sudo chown -R root: /var/www/wifiadmin/
+sudo chmod -R 0644 /var/www/wifiadmin/*
+sudo find /var/www/wifiadmin/ -type d -exec chmod +x {} \;
+
+# Create user for the web admin
+sudo useradd -MUr wifiadmin
+
+# Fix confs
+## hostapd
+sudo sed 's|^DAEMON_CONF=$|&/etc/hostapd/hostapd.conf|' -i /etc/init.d/hostapd
+
+## nginx
+sudo sed "s|<TPL:NGINX_LOCATION>|${url_path}|g" -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
+sudo sed 's|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g' -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
+sudo sed 's|<TPL:PHP_NAME>|wifiadmin|g' -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
+
+## php-fpm
+sudo sed 's|<TPL:PHP_NAME>|wifiadmin|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
+sudo sed 's|<TPL:PHP_USER>|admin|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
+sudo sed 's|<TPL:PHP_GROUP>|admins|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
+sudo sed 's|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
+sudo sed 's|^;\?\s*max_execution_time.\+|max_execution_time = 600|' -i /etc/php5/fpm/php.ini
+
+# Fix sources
+sudo sed "s|<TPL:NGINX_LOCATION>|${url_path}|g" -i /var/www/wifiadmin/config.php
 
 # Copy init script
 sudo install -b -o root -g root -m 0755 ../conf/init_ynh-hotspot /etc/init.d/ynh-hotspot
-
-## hostapd
-sudo sed 's|^DAEMON_CONF=$|&/etc/hostapd/hostapd.conf|' -i /etc/init.d/hostapd
 
 # Set default inits
 # The boot order of these services are important, so they are disabled by default
@@ -58,12 +95,21 @@ sudo sed 's|^DAEMON_CONF=$|&/etc/hostapd/hostapd.conf|' -i /etc/init.d/hostapd
 sudo yunohost service add isc-dhcp-server
 sudo yunohost service stop isc-dhcp-server
 sudo yunohost service disable isc-dhcp-server
+
 sudo yunohost service add radvd
 sudo yunohost service stop radvd
 sudo yunohost service disable radvd
+
 sudo yunohost service add hostapd 
 sudo yunohost service stop hostapd 
 sudo yunohost service disable hostapd 
+
+sudo yunohost service add php5-fpm
+sudo yunohost service enable php5-fpm
+sudo yunohost service stop php5-fpm
+sudo yunohost service start php5-fpm
+
+sudo service nginx reload
 
 # Remove IPv6 address set if there is a VPN installed
 sudo ip -6 address show dev tun0 2> /dev/null | grep -q "${ip6_addr}/"
@@ -71,9 +117,11 @@ if [ "$?" -eq 0 ]; then
   sudo ip address delete "${ip6_addr}/128" dev tun0 &> /dev/null
 fi
 
-# Gooo
 sudo yunohost service add ynh-hotspot
 sudo yunohost service enable ynh-hotspot
-sudo yunohost service start ynh-hotspot
+sudo service ynh-hotspot start
+
+# Update SSO for wifiadmin
+sudo yunohost app ssowatconf
 
 exit 0

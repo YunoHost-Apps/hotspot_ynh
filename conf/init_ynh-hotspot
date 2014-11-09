@@ -18,7 +18,7 @@ is_ndproxy_set() {
 }
 
 is_nat_set() {
-  internet_device=$1
+  internet_device=${1}
 
   iptables -nvt nat -L POSTROUTING | grep MASQUERADE | grep -q "${internet_device}"
 }
@@ -63,7 +63,7 @@ set_ndproxy() {
 }
 
 set_nat() {
-  internet_device=$1
+  internet_device=${1}
 
   iptables -t nat -A POSTROUTING -o "${internet_device}" -j MASQUERADE
 }
@@ -87,6 +87,7 @@ start_hostapd() {
   sed "s|<TPL:WIFI_DEVICE>|${ynh_wifi_device}|g" -i /etc/hostapd/hostapd.conf
   sed "s|<TPL:WIFI_SSID>|${ynh_wifi_ssid}|g" -i /etc/hostapd/hostapd.conf
   sed "s|<TPL:WIFI_PASSPHRASE>|${ynh_wifi_passphrase}|g" -i /etc/hostapd/hostapd.conf
+  sed "s|<TPL:WIFI_CHANNEL>|${ynh_wifi_channel}|g" -i /etc/hostapd/hostapd.conf
 
   service hostapd start
 }
@@ -120,7 +121,7 @@ unset_ndproxy() {
 }
 
 unset_nat() {
-  internet_device=$1
+  internet_device=${1}
 
   iptables -t nat -D POSTROUTING -o "${internet_device}" -j MASQUERADE
 }
@@ -153,7 +154,7 @@ stop_dhcpd() {
 ## Tools
 
 moulinette_get() {
-  var=$1
+  var=${1}
 
   value=$(yunohost app setting hotspot "${var}")
 
@@ -166,8 +167,8 @@ moulinette_get() {
 } 
 
 moulinette_set() {
-  var=$1
-  value=$2
+  var=${1}
+  value=${2}
 
   msg=$(yunohost app setting hotspot "${var}" -v "${value}")
 
@@ -184,6 +185,7 @@ echo -n "Retrieving Yunohost settings... "
 ynh_wifi_device=$(moulinette_get wifi_device)
 ynh_wifi_ssid=$(moulinette_get wifi_ssid)
 ynh_wifi_passphrase=$(moulinette_get wifi_passphrase)
+ynh_wifi_channel=$(moulinette_get wifi_channel)
 ynh_ip6_addr=$(moulinette_get ip6_addr)
 ynh_ip6_net=$(moulinette_get ip6_net)
 ynh_ip6_dns0=$(moulinette_get ip6_dns0)
@@ -317,10 +319,6 @@ case "$1" in
       stop_dhcpd
     fi
   ;;
-  restart)
-    $0 stop
-    $0 start
-  ;;
   status)
     exitcode=0
 
@@ -383,7 +381,7 @@ case "$1" in
     exit ${exitcode}
   ;;
   *)
-    echo "Usage: $0 {start|stop|restart|status}"
+    echo "Usage: $0 {start|stop|status}"
     exit 1
   ;;
 esac

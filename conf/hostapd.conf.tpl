@@ -1,7 +1,7 @@
 interface=<TPL:WIFI_DEVICE>
 ssid=<TPL:WIFI_SSID>
 hw_mode=g
-channel=6
+channel=<TPL:WIFI_CHANNEL>
 macaddr_acl=0
 auth_algs=1
 ignore_broadcast_ssid=0

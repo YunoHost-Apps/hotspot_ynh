@@ -1,18 +1,34 @@
 #!/bin/bash
 
+# Retrieve arguments
+domain=$(sudo yunohost app setting hotspot domain)
+
 # The End
-sudo yunohost service stop ynh-hotspot
+sudo service ynh-hotspot stop
 sudo yunohost service remove ynh-hotspot
 sudo rm -f /etc/init.d/ynh-hotspot
 
 # Remove confs
 sudo rm -f /etc/hostapd/hostapd.conf{.tpl,} /etc/radvd.conf{.tpl,} /etc/dhcp/dhcpd.conf{.tpl,}
+sudo rm -f /etc/nginx/conf.d/${domain}.d/wifiadmin.conf
+sudo rm -f /etc/php5/fpm/pool.d/wifiadmin.conf
+
+# Restart services
+sudo yunohost service stop php5-fpm
+sudo yunohost service start php5-fpm
+sudo service nginx reload
+
+# Remove sources
+sudo rm -rf /var/www/wifiadmin/
+
+# Remove user
+sudo userdel -f wifiadmin
 
 # Restart vpnclient service if installed to set the IPv6 address
 # A new start will fix the address without unsetting all stuff
 sudo yunohost app list -f vpnclient --json | grep -q '"installed": true'
 if [ "$?" -eq 0 ]; then
-  sudo yunohost service start ynh-vpnclient
+  sudo service ynh-vpnclient start
 fi
 
 
