@@ -34,8 +34,8 @@
       {
         "name": "wifi_ssid",
         "ask": {
-            "en": "Choose an SSID (wifi name)",
-            "fr": "Choisissez un SSID (le nom du wifi)"
+            "en": "Choose a wifi name (SSID)",
+            "fr": "Choisissez un nom pour le wifi (SSID)"
         },
         "example": "myNeutralNetwork",
         "default": "myNeutralNetwork"
