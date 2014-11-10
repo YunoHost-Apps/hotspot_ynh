@@ -51,7 +51,7 @@
       {
         "name": "wifi_device",
         "ask": {
-            "en": "Select your wifi interface",
+            "en": "Select the wifi antenna interface",
             "fr": "Sélectionnez l'interface correspondant à l'antenne wifi"
         },
         "example": "wlan0",
