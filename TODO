@@ -1,0 +1,4 @@
+* Check input parameters
+** in bash install script (empty parameters, passphrase size and allowed characters with WPA2, is Wifi device exist) 
+** in PHP controller (empty parameters, parameters format, compressed IPv6, NAT address format, passphrase size and allowed characters with WPA2)
+* Translate PHP interface in French
