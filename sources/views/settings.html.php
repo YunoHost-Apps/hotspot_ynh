@@ -80,15 +80,23 @@
         </div>
 
         <div style="padding: 14px 14px 0 10px">
+          <?php if(empty($ip6_net)): ?>
+            <div class="alert alert-dismissible alert-warning fade in" style="margin: 2px 2px 17px" role="alert">
+              <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+              <strong><?= T_('Notice') ?>:</strong> <?= T_("Currently, your wifi clients don't have IPv6 and it's a very bad thing. Ask your Internet Service Provider an IPv6 delegated prefix, or") ?>
+              <a href="http://db.ffdn.org" class="alert-link"><?= T_('change providers') ?></a> !</span>
+            </div>
+          <?php endif; ?>
+
           <div class="form-group">
-            <label for="ip6_net" class="col-sm-3 control-label"><?= T_('Delegated IPv6 subnet') ?></label>
+            <label for="ip6_net" class="col-sm-3 control-label"><?= T_('Delegated prefix') ?></label>
             <div class="col-sm-9">
-              <input type="text" class="form-control" name="ip6_net" id="ip6_net" placeholder="2001:db8:42::/48" value="<?= $ip6_net ?>" />
+              <input type="text" class="form-control" name="ip6_net" id="ip6_net" placeholder="2001:db8:42::" value="<?= $ip6_net ?>" />
             </div>
           </div>
 
           <div class="form-group">
-            <label for="ip6_dns0" class="col-sm-3 control-label"><?= T_('Frist DNS resolver') ?></label>
+            <label for="ip6_dns0" class="col-sm-3 control-label"><?= T_('First DNS resolver') ?></label>
             <div class="col-sm-9">
               <input type="text" class="form-control" name="ip6_dns0" id="ip6_dns0" placeholder="2001:913::8" value="<?= $ip6_dns0 ?>" />
             </div>

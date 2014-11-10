@@ -8,8 +8,11 @@ function moulinette_set($var, $value) {
   return exec("sudo yunohost app setting hotspot ".escapeshellarg($var)." -v ".escapeshellarg($value));
 }
 
-function restart_service() {
+function stop_service() {
   exec('sudo service ynh-hotspot stop');
+}
+
+function start_service() {
   exec('sudo service ynh-hotspot start', $output, $retcode);
 
   return $retcode;
@@ -32,13 +35,16 @@ dispatch('/', function() {
     }
   }
 
+  $ip6_net = moulinette_get('ip6_net');
+  $ip6_net = ($ip6_net == 'none') ? '' : $ip6_net;
+
   set('wifi_ssid', moulinette_get('wifi_ssid'));
   set('wifi_passphrase', moulinette_get('wifi_passphrase'));
   set('wifi_channel', moulinette_get('wifi_channel'));
   set('wifi_n', moulinette_get('wifi_n'));
   set('wifi_device', $wifi_device);
   set('wifi_device_list', $devs_list);
-  set('ip6_net', moulinette_get('ip6_net'));
+  set('ip6_net', $ip6_net);
   set('ip6_dns0', moulinette_get('ip6_dns0'));
   set('ip6_dns1', moulinette_get('ip6_dns1'));
   set('ip4_nat_prefix', moulinette_get('ip4_nat_prefix'));
@@ -49,19 +55,31 @@ dispatch('/', function() {
 });
 
 dispatch_put('/settings', function() {
+  $ip6_net = empty($_POST['ip6_net']) ? 'none' : $_POST['ip6_net'];
+
+  stop_service();
+
   moulinette_set('wifi_ssid', $_POST['wifi_ssid']);
   moulinette_set('wifi_passphrase', $_POST['wifi_passphrase']);
   moulinette_set('wifi_channel', $_POST['wifi_channel']);
   moulinette_set('wifi_n', isset($_POST['wifi_n']) ? 1 : 0);
   moulinette_set('wifi_device', $_POST['wifi_device']);
-  moulinette_set('ip6_net', $_POST['ip6_net']);
+  moulinette_set('ip6_net', $ip6_net);
   moulinette_set('ip6_dns0', $_POST['ip6_dns0']);
   moulinette_set('ip6_dns1', $_POST['ip6_dns1']);
   moulinette_set('ip4_nat_prefix', $_POST['ip4_nat_prefix']);
   moulinette_set('ip4_dns0', $_POST['ip4_dns0']);
   moulinette_set('ip4_dns1', $_POST['ip4_dns1']);
 
-  $retcode = restart_service();
+  # TODO: format ip6_net
+  if($ip6_net == 'none') {
+    moulinette_set('ip6_addr', 'none');
+  } else {
+    $ip6_addr = "${ip6_net}1";
+    moulinette_set('ip6_addr', $ip6_addr);
+  }
+
+  $retcode = start_service();
 
   if($retcode == 0) {
     flash('success', T_('Configuration updated and service successfully reloaded'));

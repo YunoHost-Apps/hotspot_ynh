@@ -7,10 +7,6 @@ wifi_ssid=${3}
 wifi_passphrase=${4}
 wifi_device=${5}
 ip6_net=${6}
-ip6_dns0=${7}
-ip6_dns1=${8}
-ip4_dns0=${9}
-ip4_dns1=${10}
 
 # Check arguments
 # TODO
@@ -29,11 +25,15 @@ sudo apt-get --assume-yes --force-yes install hostapd radvd isc-dhcp-server ipta
 sudo apt-get --assume-yes --force-yes install sipcalc
 
 # Compute extra arguments
-ip6_expanded_net=$(sipcalc "${ip6_net}" | grep Expanded | awk '{ print $NF; }')
-ip6_net=$(sipcalc "${ip6_net}" | grep Compressed | awk '{ print $NF; }')
-ip6_addr=$(echo "$(echo "${ip6_expanded_net}" | cut -d: -f1-7):1")
-ip6_addr=$(sipcalc "${ip6_addr}" | grep Compressed | awk '{ print $NF; }')
-ip4_nat_prefix=10.0.242
+if [ -z "${ip6_net}" ]; then
+  ip6_net=none
+  ip6_addr=none
+else
+  ip6_expanded_net=$(sipcalc "${ip6_net}" | grep Expanded | awk '{ print $NF; }')
+  ip6_net=$(sipcalc "${ip6_net}" | grep Compressed | awk '{ print $NF; }')
+  ip6_addr=$(echo "$(echo "${ip6_expanded_net}" | cut -d: -f1-7):1")
+  ip6_addr=$(sipcalc "${ip6_addr}" | grep Compressed | awk '{ print $NF; }')
+fi
 
 # Save arguments
 sudo yunohost app setting hotspot wifi_ssid -v "${wifi_ssid}"
@@ -43,11 +43,11 @@ sudo yunohost app setting hotspot wifi_channel -v 6
 sudo yunohost app setting hotspot wifi_n -v 0
 sudo yunohost app setting hotspot ip6_addr -v "${ip6_addr}"
 sudo yunohost app setting hotspot ip6_net -v "${ip6_net}"
-sudo yunohost app setting hotspot ip6_dns0 -v "${ip6_dns0}"
-sudo yunohost app setting hotspot ip6_dns1 -v "${ip6_dns1}"
-sudo yunohost app setting hotspot ip4_dns0 -v "${ip4_dns0}"
-sudo yunohost app setting hotspot ip4_dns1 -v "${ip4_dns1}"
-sudo yunohost app setting hotspot ip4_nat_prefix -v "${ip4_nat_prefix}"
+sudo yunohost app setting hotspot ip6_dns0 -v 2001:913::8
+sudo yunohost app setting hotspot ip6_dns1 -v 2001:910:800::12
+sudo yunohost app setting hotspot ip4_dns0 -v 80.67.188.188
+sudo yunohost app setting hotspot ip4_dns1 -v 80.67.169.12
+sudo yunohost app setting hotspot ip4_nat_prefix -v 10.0.242
 
 # Copy confs
 sudo install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl /etc/hostapd/
@@ -113,9 +113,11 @@ sudo yunohost service start php5-fpm
 sudo service nginx reload
 
 # Remove IPv6 address set if there is a VPN installed
-sudo ip -6 address show dev tun0 2> /dev/null | grep -q "${ip6_addr}/"
-if [ "$?" -eq 0 ]; then
-  sudo ip address delete "${ip6_addr}/128" dev tun0 &> /dev/null
+if [ "${ip6_addr}" != none ]; then
+  sudo ip -6 address show dev tun0 2> /dev/null | grep -q "${ip6_addr}/"
+  if [ "$?" -eq 0 ]; then
+    sudo ip address delete "${ip6_addr}/128" dev tun0 &> /dev/null
+  fi
 fi
 
 sudo yunohost service add ynh-hotspot

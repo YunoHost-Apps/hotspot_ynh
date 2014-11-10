@@ -60,46 +60,10 @@
       {
         "name": "ip6_net",
         "ask": {
-            "en": "Select your IPv6 delegated prefix (netmask number provided must be lesser or equal to 64)",
-            "fr": "Sélectionnez votre préfixe IPv6 délégué (le masque de sous-réseau fourni doit être plus petit ou égal à 64)"
+            "en": "Select your IPv6 delegated prefix (leave empty if your Internet Service Provider does not give you a delegated prefix, but you will not have IPv6)",
+            "fr": "Sélectionnez votre préfixe IPv6 délégué (laisser vide si votre Fournisseur d'Accès à Internet ne vous donne pas de préfixe délégué, mais vous n'aurez pas d'IPv6)"
         },
-        "example": "2001:db8:42::/48"
-      },
-      {
-        "name": "ip6_dns0",
-        "ask": {
-            "en": "Select a first IPv6 DNS resolver",
-            "fr": "Sélectionnez un premier serveur DNS IPv6"
-        },
-        "example": "2001:913::8",
-	"default": "2001:913::8"
-      },
-      {
-        "name": "ip6_dns1",
-        "ask": {
-            "en": "Select a second IPv6 DNS resolver",
-            "fr": "Sélectionnez un second serveur DNS IPv6"
-        },
-        "example": "2001:910:800::40",
-	"default": "2001:910:800::40"
-      },
-      {
-        "name": "ip4_dns0",
-        "ask": {
-            "en": "Select a first IPv4 DNS resolver",
-            "fr": "Sélectionnez un premier serveur DNS IPv4"
-        },
-        "example": "80.67.188.188",
-	"default": "80.67.188.188"
-      },
-      {
-        "name": "ip4_dns1",
-        "ask": {
-            "en": "Select a second IPv4 DNS resolver",
-            "fr": "Sélectionnez un second serveur DNS IPv4"
-        },
-        "example": "80.67.169.12",
-	"default": "80.67.169.12"
+        "example": "2001:db8:42::"
       }
     ]
   }

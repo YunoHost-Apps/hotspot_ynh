@@ -12,6 +12,10 @@
 # Functions
 ## State functions
 
+has_ip6delegatedprefix() {
+  [ "${ynh_ip6_net}" != none ]
+}
+
 is_ndproxy_set() {
   proxy=$(ip -6 neighbour show proxy)
   [ ! -z "${proxy}" ]
@@ -51,9 +55,9 @@ is_dhcpd_running() {
 }
 
 is_running() {
-  is_ndproxy_set && is_nat_set "${new_internet_device}" && is_ip4nataddr_set\
-  && is_ip6addr_set && is_forwarding_set && is_hostapd_running\
-  && is_radvd_running && is_dhcpd_running
+  ( has_ip6delegatedprefix && is_ip6addr_set && is_radvd_running && is_ndproxy_set || ! has_ip6delegatedprefix )\
+  && is_nat_set "${new_internet_device}" && is_ip4nataddr_set && is_forwarding_set && is_hostapd_running\
+  && is_dhcpd_running
 }
 
 ## Setters
@@ -222,7 +226,7 @@ case "$1" in
       echo "Starting..."
 
       # Set NDP proxy
-      if ! is_ndproxy_set; then
+      if has_ip6delegatedprefix && ! is_ndproxy_set; then
         echo "Set NDP proxy"
         set_ndproxy
       fi
@@ -247,7 +251,7 @@ case "$1" in
       fi
 
       # Set the ipv6 address
-      if ! is_ip6addr_set; then
+      if has_ip6delegatedprefix && ! is_ip6addr_set; then
         echo "Set IPv6 address"
         set_ip6addr
       fi
@@ -267,7 +271,7 @@ case "$1" in
 
       # Run radvd
       # must be running after hostapd
-      if ! is_radvd_running; then
+      if has_ip6delegatedprefix && ! is_radvd_running; then
         echo "Run radvd"
         start_radvd
       fi
@@ -286,7 +290,7 @@ case "$1" in
   stop)
     echo "Stopping..."
 
-    if is_ndproxy_set; then
+    if has_ip6delegatedprefix && is_ndproxy_set; then
       echo "Unset NDP proxy"
       unset_ndproxy
     fi
@@ -301,7 +305,7 @@ case "$1" in
       unset_ip4nataddr
     fi
 
-    if is_ip6addr_set; then
+    if has_ip6delegatedprefix && is_ip6addr_set; then
       echo "Unset IPv6 address"
       unset_ip6addr
     fi 
@@ -316,7 +320,7 @@ case "$1" in
       stop_hostapd
     fi
   
-    if is_radvd_running; then
+    if has_ip6delegatedprefix && is_radvd_running; then
       echo "Stop radvd"
       stop_radvd
     fi
@@ -328,12 +332,30 @@ case "$1" in
   ;;
   status)
     exitcode=0
-
-    if is_ndproxy_set; then
-      echo "NDP proxy is correctly set"
+  
+    if has_ip6delegatedprefix; then
+      if is_ndproxy_set; then
+        echo "NDP proxy is correctly set"
+      else
+        echo "NDP proxy is NOT set"
+        exitcode=1
+      fi
+  
+      if is_ip6addr_set; then
+        echo "IPv6 address is correctly set"
+      else
+        echo "IPv6 address is NOT set"
+        exitcode=1
+      fi
+  
+      if is_radvd_running; then
+        echo "Radvd is running"
+      else
+        echo "Radvd is NOT running"
+        exitcode=1
+      fi
     else
-      echo "NDP proxy is NOT set"
-      exitcode=1
+      echo "No IPv6 delegated prefix"
     fi
 
     if is_nat_set "${new_internet_device}"; then
@@ -350,13 +372,6 @@ case "$1" in
       exitcode=1
     fi
 
-    if is_ip6addr_set; then
-      echo "IPv6 address is correctly set"
-    else
-      echo "IPv6 address is NOT set"
-      exitcode=1
-    fi
-
     if is_forwarding_set; then
       echo "Forwarding is correctly set"
     else
@@ -368,13 +383,6 @@ case "$1" in
       echo "Hostapd is running"
     else
       echo "Hostapd is NOT running"
-      exitcode=1
-    fi
-
-    if is_radvd_running; then
-      echo "Radvd is running"
-    else
-      echo "Radvd is NOT running"
       exitcode=1
     fi
 
