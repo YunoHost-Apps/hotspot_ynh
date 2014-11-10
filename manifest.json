@@ -15,78 +15,88 @@
   "arguments": {
     "install" : [
       {
-        "name": "Domain",
+        "name": "domain",
         "ask": {
-            "en": "Choose a domain for your Wifi web administration"
+            "en": "Choose a domain for the web administration",
+            "fr": "Choisissez un domaine pour l'administration web"
         },
         "example": "domain.org"
       },
       {
-        "name": "URL Path",
+        "name": "path",
         "ask": {
-            "en": "Choose a path for your Wifi web administration"
+            "en": "Choose a path for the web administration",
+            "fr": "Choissez un chemin pour l'administration web"
         },
         "example": "/wifiadmin",
         "default": "/wifiadmin"
       },
       {
-        "name": "Wifi SSID",
+        "name": "wifi_ssid",
         "ask": {
-            "en": "Choose an SSID"
+            "en": "Choose an SSID (wifi name)",
+            "fr": "Choisissez un SSID (le nom du wifi)"
         },
         "example": "myNeutralNetwork",
         "default": "myNeutralNetwork"
       },
       {
-        "name": "Wifi passphrase",
+        "name": "wifi_passphrase",
         "ask": {
-            "en": "Choose a WPA2 passphrase (at least 8 chars)"
+            "en": "Choose a wifi password (at least 8 characters for WPA2)",
+            "fr": "Choisissez un mot de passe wifi (au minimum 8 caractères pour le WPA2)"
         },
         "example": "VhegT8oev0jZI"
       },
       {
-        "name": "Wifi device",
+        "name": "wifi_device",
         "ask": {
-            "en": "Select your wifi interface (hotspot side)"
+            "en": "Select your wifi interface",
+            "fr": "Sélectionnez l'interface correspondant à l'antenne wifi"
         },
         "example": "wlan0",
         "default": "wlan0"
       },
       {
-        "name": "IPv6 network",
+        "name": "ip6_net",
         "ask": {
-            "en": "Select your IPv6 delegated network (netmask number must be <= 64)"
+            "en": "Select your IPv6 delegated network (netmask number provided must be greater or equal to 64)",
+            "fr": "Sélectionnez votre préfixe IPv6 délégué (le masque de sous-réseau fourni doit être plus petit ou égal à 64)"
         },
         "example": "2001:db8:42::/48"
       },
       {
-        "name": "First IPv6 DNS resolver",
+        "name": "ip6_dns0",
         "ask": {
-            "en": "Select a first IPv6 DNS resolver"
+            "en": "Select a first IPv6 DNS resolver",
+            "fr": "Sélectionnez un premier serveur DNS IPv6"
         },
         "example": "2001:913::8",
 	"default": "2001:913::8"
       },
       {
-        "name": "Second IPv6 DNS resolver",
+        "name": "ip6_dns1",
         "ask": {
-            "en": "Select a second IPv6 DNS resolver"
+            "en": "Select a second IPv6 DNS resolver",
+            "fr": "Sélectionnez un second serveur DNS IPv6"
         },
         "example": "2001:910:800::40",
 	"default": "2001:910:800::40"
       },
       {
-        "name": "First IPv4 DNS resolver",
+        "name": "ip4_dns0",
         "ask": {
-            "en": "Select a first IPv4 DNS resolver"
+            "en": "Select a first IPv4 DNS resolver",
+            "fr": "Sélectionnez un premier serveur DNS IPv4"
         },
         "example": "80.67.188.188",
 	"default": "80.67.188.188"
       },
       {
-        "name": "Second IPv4 DNS resolver",
+        "name": "ip4_dns1",
         "ask": {
-            "en": "Select a second IPv4 DNS resolver"
+            "en": "Select a second IPv4 DNS resolver",
+            "fr": "Sélectionnez un second serveur DNS IPv4"
         },
         "example": "80.67.169.12",
 	"default": "80.67.169.12"
