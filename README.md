@@ -7,7 +7,7 @@ Hotspot wifi app for [YunoHost](http://yunohost.org/).
 
 * Broadcast your own Wifi internet access in addition to your self-hosted web services.
 * Without internet access, it's a [PirateBox](https://en.wikipedia.org/wiki/PirateBox).
-* With the [VPN Client app for YunoHost](https://github.com/jvaubourg/vpnclient_ynh), it's an encrypted Wifi internet access (eventually with [neutral access](https://en.wikipedia.org/wiki/Net_neutrality) without filters, and with IPv6, depending on your VPN provider).
+* With the [VPN Client app for YunoHost](https://github.com/jvaubourg/vpnclient_ynh), it's an encrypted Wifi internet access (eventually with [neutral access](https://en.wikipedia.org/wiki/Net_neutrality), without filters, and with IPv6, depending on your VPN provider).
 
 Small computers like [Olimex](https://www.olimex.com) or [Raspberry PI](http://www.raspberrypi.org/) boxes and an USB Wifi dongle like [this one](https://www.olimex.com/Products/USB-Modules/MOD-WIFI-R5370-ANT/) are perfect for a nomade access with low power consumption.
 
