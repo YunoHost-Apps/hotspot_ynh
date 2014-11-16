@@ -14,14 +14,14 @@
 
         <div style="padding: 14px 14px 0 10px">
           <div class="form-group">
-            <label for="wifi_ssid" class="col-sm-3 control-label"><?= T_('SSID') ?></label>
+            <label for="wifi_ssid" class="col-sm-3 control-label"><?= T_('Name (SSID)') ?></label>
             <div class="col-sm-9">
               <input type="text" class="form-control" name="wifi_ssid" id="wifi_ssid" placeholder="myNeutralNetwork" value="<?= $wifi_ssid ?>" />
             </div>
           </div>
   
           <div class="form-group">
-            <label for="wifi_passphrase" class="col-sm-3 control-label"><?= T_('Passphrase (WPA2)') ?></label>
+            <label for="wifi_passphrase" class="col-sm-3 control-label"><?= T_('Password (WPA2)') ?></label>
             <div class="col-sm-9">
               <input type="text" data-toggle="tooltip" data-title="<?= T_('At least 8 characters') ?>" class="form-control" name="wifi_passphrase" id="wifi_passphrase" placeholder="VhegT8oev0jZI" value="<?= $wifi_passphrase ?>" />
             </div>
@@ -84,7 +84,7 @@
             <div class="alert alert-dismissible alert-warning fade in" style="margin: 2px 2px 17px" role="alert">
               <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
               <strong><?= T_('Notice') ?>:</strong> <?= T_("Currently, your wifi clients don't have IPv6 and it's a very bad thing. Ask your Internet Service Provider an IPv6 delegated prefix, or") ?>
-              <a href="http://db.ffdn.org" class="alert-link"><?= T_('change providers') ?></a> !</span>
+              <a href="http://db.ffdn.org" class="alert-link"><?= T_('change providers') ?></a>!
             </div>
           <?php endif; ?>
 

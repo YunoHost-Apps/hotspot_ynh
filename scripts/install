@@ -1,16 +1,31 @@
-#wifiadmin!/bin/bash
+#!/bin/bash
 
 # Retrieve arguments
 domain=${1}
 url_path=${2}
 wifi_ssid=${3}
 wifi_passphrase=${4}
-wifi_device=${5}
-ip6_net=${6}
+ip6_net=${5}
 
 # Check arguments
-# TODO
+if [ -z "${wifi_ssid}" -o -z "${wifi_passphrase}" ]; then
+  echo "ERROR: Your Wifi Hotspot needs a name and a password" >&2
+  exit 1
+fi
 
+wifi_passphrase_length="$(echo -n "${wifi_passphrase}" | wc -c)"
+if [ "${wifi_passphrase_length}" -lt 8 -o "${wifi_passphrase_length}" -gt 63 ]; then
+  echo "ERROR: Your password must from 8 to 63 characters (WPA2 passphrase)" >&2
+  exit 1
+fi
+
+echo "${wifi_passphrase}" | grep -qP '[^[:print:]]'
+if [ $? -eq 0 ]; then
+  echo "ERROR: Only printable ASCII characters are permitted in your password (WPA2 passphrase)" >&2
+  exit 1
+fi
+
+# Check domain/path availability
 sudo yunohost app checkurl ${domain}${url_path} -a hotspot 
 if [ ! $? -eq 0 ]; then
   exit 1
@@ -19,20 +34,40 @@ fi
 # Install packages
 # TODO: Replace isc-dhcp-server by dnsmasq (currently negotiating with the YunoHost team to
 # also replace bind9 by dnsmasq)
+#sudo apt-get update
 sudo apt-get --assume-yes --force-yes install hostapd radvd isc-dhcp-server iptables php5-fpm
 
-# Install extra packages
-sudo apt-get --assume-yes --force-yes install sipcalc
+# Extra packages
+sudo apt-get --assume-yes --force-yes install sipcalc iwconfig
 
 # Compute extra arguments
 if [ -z "${ip6_net}" ]; then
   ip6_net=none
   ip6_addr=none
 else
-  ip6_expanded_net=$(sipcalc "${ip6_net}" | grep Expanded | awk '{ print $NF; }')
-  ip6_net=$(sipcalc "${ip6_net}" | grep Compressed | awk '{ print $NF; }')
-  ip6_addr=$(echo "$(echo "${ip6_expanded_net}" | cut -d: -f1-7):1")
-  ip6_addr=$(sipcalc "${ip6_addr}" | grep Compressed | awk '{ print $NF; }')
+  ip6_net=$(bash ../conf/ipv6_expanded "${ip6_net}")
+
+  if [ -z "${ip6_net}" ]; then
+    echo "ERROR: The IPv6 Delegated Prefix format looks bad" >&2
+    exit 1
+  fi
+
+  ip6_addr="$(echo "${ip6_net}" | cut -d: -f1-7):42"
+  ip6_net=$(bash ../conf/ipv6_compressed "${ip6_net}")
+  ip6_addr=$(bash ../conf/ipv6_compressed "${ip6_addr}")
+fi
+
+wifi_device=$(sudo iwconfig 2>&1 | grep 802.11 | head -n1 | awk '{ print $1 }')
+wifi_n=0
+
+if [ -z "${wifi_device}" ]; then
+  echo "ERROR: No wifi interface found" >&2
+  exit 1
+fi
+
+sudo iwconfig "${wifi_device}" | grep -q 'n *ESSID'
+if [ $? -eq 0 ]; then
+  wifi_n=1
 fi
 
 # Save arguments
@@ -40,7 +75,7 @@ sudo yunohost app setting hotspot wifi_ssid -v "${wifi_ssid}"
 sudo yunohost app setting hotspot wifi_passphrase -v "${wifi_passphrase}"
 sudo yunohost app setting hotspot wifi_device -v "${wifi_device}"
 sudo yunohost app setting hotspot wifi_channel -v 6
-sudo yunohost app setting hotspot wifi_n -v 0
+sudo yunohost app setting hotspot wifi_n -v "${wifi_n}"
 sudo yunohost app setting hotspot ip6_addr -v "${ip6_addr}"
 sudo yunohost app setting hotspot ip6_net -v "${ip6_net}"
 sudo yunohost app setting hotspot ip6_dns0 -v 2001:913::8
@@ -48,6 +83,11 @@ sudo yunohost app setting hotspot ip6_dns1 -v 2001:910:800::12
 sudo yunohost app setting hotspot ip4_dns0 -v 80.67.188.188
 sudo yunohost app setting hotspot ip4_dns1 -v 80.67.169.12
 sudo yunohost app setting hotspot ip4_nat_prefix -v 10.0.242
+sudo yunohost app setting hotspot vpnclient -v no
+
+# Install IPv6 scripts
+sudo install -o root -g root -m 0755 ../conf/ipv6_expanded /usr/local/bin/
+sudo install -o root -g root -m 0755 ../conf/ipv6_compressed /usr/local/bin/
 
 # Copy confs
 sudo install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl /etc/hostapd/

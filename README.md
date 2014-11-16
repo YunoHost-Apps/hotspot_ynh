@@ -1,9 +1,7 @@
-# Hotspot Wifi
+# Wifi Hotspot
 ## Overview
 
 **Warning: work in progress**
-
-**Warning: currently, there is no checking on input parameters, so be careful**
 
 Hotspot wifi app for [YunoHost](http://yunohost.org/).
 
@@ -14,10 +12,9 @@ Hotspot wifi app for [YunoHost](http://yunohost.org/).
 ## Features
 
 * WPA2 encryption
-* 802.11n if your antenna is compliant
+* 802.11n compliant
 * IPv6 compliant (with a delegated prefix)
 * Automatic clients configuration (IPv6 and IPv4)
 * Announce DNS resolvers (IPv6 and IPv4)
-* Set an IPv6 from your delegated prefix (*prefix::1*) on the server, to use for the AAAA records
-* The internet provider can be a 3/4G connection with tethering
+* Set an IPv6 from your delegated prefix (*prefix::42*) on the server, to use for the AAAA records
 * Web interface ([screenshot](https://raw.githubusercontent.com/jvaubourg/hotspot_ynh/master/screenshot.png))

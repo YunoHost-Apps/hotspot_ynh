@@ -49,15 +49,6 @@
         "example": "VhegT8oev0jZI"
       },
       {
-        "name": "wifi_device",
-        "ask": {
-            "en": "Select the wifi antenna interface",
-            "fr": "Sélectionnez l'interface correspondant à l'antenne wifi"
-        },
-        "example": "wlan0",
-        "default": "wlan0"
-      },
-      {
         "name": "ip6_net",
         "ask": {
             "en": "Select your IPv6 delegated prefix (leave empty if your Internet Service Provider does not give you a delegated prefix, but you will not have IPv6)",

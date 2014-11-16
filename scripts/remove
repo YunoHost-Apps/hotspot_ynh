@@ -7,6 +7,7 @@ domain=$(sudo yunohost app setting hotspot domain)
 sudo service ynh-hotspot stop
 sudo yunohost service remove ynh-hotspot
 sudo rm -f /etc/init.d/ynh-hotspot
+sudo rm -f /tmp/.ynh-hotspot-boot
 
 # Remove confs
 sudo rm -f /etc/hostapd/hostapd.conf{.tpl,} /etc/radvd.conf{.tpl,} /etc/dhcp/dhcpd.conf{.tpl,}
@@ -24,17 +25,9 @@ sudo rm -rf /var/www/wifiadmin/
 # Remove user
 sudo userdel -f wifiadmin
 
-# Restart vpnclient service if installed to set the IPv6 address
-# A new start will fix the address without unsetting all stuff
-sudo yunohost app list -f vpnclient --json | grep -q '"installed": true'
-if [ "$?" -eq 0 ]; then
-  sudo service ynh-vpnclient start
-fi
-
-
 # Remove packets
 # The yunohost policy is currently to not uninstall packets (dependency problems)
 ## sudo apt-get --assume-yes --force-yes remove hostapd radvd isc-dhcp-server iptables
-## sudo apt-get --assume-yes --force-yes remove sipcalc
+## sudo apt-get --assume-yes --force-yes remove sipcalc iwconfig
 
 exit 0
