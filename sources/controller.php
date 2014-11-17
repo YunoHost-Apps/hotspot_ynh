@@ -18,6 +18,18 @@ function start_service() {
   return $retcode;
 }
 
+function service_status() {
+  exec('sudo service ynh-hotspot status', $output);
+
+  return $output;
+}
+
+function service_faststatus() {
+  exec('sudo service hostapd status', $output, $retcode);
+
+  return $retcode;
+}
+
 function ipv6_expanded($ip) {
   exec('ipv6_expanded '.escapeshellarg($ip), $output);
 
@@ -33,7 +45,7 @@ function ipv6_compressed($ip) {
 dispatch('/', function() {
   exec('sudo iwconfig', $devs);
   $wifi_device = moulinette_get('wifi_device');
-  $devs_list = "";
+  $devs_list = '';
 
   foreach($devs AS $dev) {
     if(preg_match('/802.11/', $dev)) {
@@ -60,6 +72,7 @@ dispatch('/', function() {
   set('ip4_nat_prefix', moulinette_get('ip4_nat_prefix'));
   set('ip4_dns0', moulinette_get('ip4_dns0'));
   set('ip4_dns1', moulinette_get('ip4_dns1'));
+  set('faststatus', service_faststatus() == 0);
 
   return render('settings.html.php');
 });
@@ -163,6 +176,28 @@ dispatch_put('/settings', function() {
 
   redirect:
   redirect_to('/');
+});
+
+dispatch('/status', function() {
+  $status_lines = service_status();
+  $status_list = '';
+
+  foreach($status_lines AS $status_line) {
+    if(preg_match('/^\[INFO\]/', $status_line)) {
+      $status_list .= "<li class='status-info'>${status_line}</li>";
+    }
+    elseif(preg_match('/^\[OK\]/', $status_line)) {
+      $status_list .= "<li class='status-success'>${status_line}</li>";
+    }
+    elseif(preg_match('/^\[WARN\]/', $status_line)) {
+      $status_list .= "<li class='status-warning'>${status_line}</li>";
+    }
+    elseif(preg_match('/^\[ERR\]/', $status_line)) {
+      $status_list .= "<li class='status-danger'>${status_line}</li>";
+    }
+  }
+
+  echo $status_list;
 });
 
 dispatch('/lang/:locale', function($locale = 'en') {

@@ -181,6 +181,19 @@ moulinette_get() {
   echo "${value}"
 } 
 
+moulinette_vpnclient_get() {
+  var=${1}
+
+  value=$(yunohost app setting vpnclient "${var}")
+
+  if [[ "${value}" =~ "An instance is already running" ]]; then
+    echo "${value}" >&2
+    exit 1
+  fi
+
+  echo "${value}"
+}
+
 moulinette_set() {
   var=${1}
   value=${2}
@@ -192,6 +205,12 @@ moulinette_set() {
     exit 1
   fi
 }
+
+# Restart php5-fpm at the first start (it needs to be restarted after the slapd start)
+if [ ! -e /tmp/.ynh-hotspot-boot ]; then
+  touch /tmp/.ynh-hotspot-boot
+  service php5-fpm restart
+fi
 
 # Variables
 
@@ -220,6 +239,21 @@ if [ "$?" -eq 0 ]; then
 fi
 
 echo "OK"
+
+# Check IPv6 delegated prefix from vpnclient
+if [ "${ynh_ip6_net}" == none ]; then
+  ynh_ip6_net=$(moulinette_vpnclient_get ip6_net)
+  ynh_ip6_addr=$(moulinette_vpnclient_get ip6_addr)
+
+  moulinette_set ip6_net "${ynh_ip6_net}"
+  moulinette_set ip6_addr "${ynh_ip6_addr}"
+else
+  vpnclient_ip6_net=$(moulinette_vpnclient_get ip6_net)
+
+  if [ "${ynh_ip6_net}" != "${vpnclient_ip6_net}" ]; then
+    echo "[WARN] The IPv6 delegated prefix is different from the vpnclient one"
+  fi
+fi
 
 # Script
 
@@ -298,12 +332,6 @@ case "$1" in
       # Update dynamic settings
       moulinette_set internet_device "${new_internet_device}"
     fi
-
-    # Restart php5-fpm at the first start (it needs to be restarted after the slapd start)
-    if [ ! -e /tmp/.ynh-hotspot-boot ]; then
-      touch /tmp/.ynh-hotspot-boot
-      service php5-fpm restart
-    fi
   ;;
   stop)
     echo "[hotspot] Stopping..."
@@ -357,62 +385,64 @@ case "$1" in
     exitcode=0
   
     if has_ip6delegatedprefix; then
+      echo "[INFO] IPv6 delegated prefix found"
+
       if is_ndproxy_set; then
-        echo "NDP proxy is correctly set"
+        echo "[OK] NDP proxy set"
       else
-        echo "NDP proxy is NOT set"
+        echo "[ERR] No NDP proxy set"
         exitcode=1
       fi
   
       if is_ip6addr_set; then
-        echo "IPv6 address is correctly set"
+        echo "[OK] IPv6 address set"
       else
-        echo "IPv6 address is NOT set"
+        echo "[ERR] No IPv6 address set"
         exitcode=1
       fi
   
       if is_radvd_running; then
-        echo "Radvd is running"
+        echo "[OK] Radvd is running"
       else
-        echo "Radvd is NOT running"
+        echo "[ERR] Radvd is not running"
         exitcode=1
       fi
     else
-      echo "No IPv6 delegated prefix"
+      echo "[INFO] No IPv6 delegated prefix found"
     fi
 
     if is_nat_set "${new_internet_device}"; then
-      echo "NAT is correctly set"
+      echo "[OK] IPv4 NAT set"
     else
-      echo "NAT is NOT set"
+      echo "[ERR] No IPv4 NAT set"
       exitcode=1
     fi
 
     if is_ip4nataddr_set; then
-      echo "IPv4 NAT address is correctly set"
+      echo "[OK] IPv4 NAT address set"
     else
-      echo "IPv4 NAT address is NOT set"
+      echo "[ERR] No IPv4 NAT address set"
       exitcode=1
     fi
 
     if is_forwarding_set; then
-      echo "Forwarding is correctly set"
+      echo "[OK] IPv6/IPv4 forwarding set"
     else
-      echo "Forwarding is NOT set"
+      echo "[ERR] No IPv6/IPv4 forwarding set"
       exitcode=1
     fi
 
     if is_hostapd_running; then
-      echo "Hostapd is running"
+      echo "[OK] Hostapd is running"
     else
-      echo "Hostapd is NOT running"
+      echo "[ERR] Hostapd is not running"
       exitcode=1
     fi
 
     if is_dhcpd_running; then
-      echo "Dhcpd is running"
+      echo "[OK] Dhcpd is running"
     else
-      echo "Dhcpd is NOT running"
+      echo "[ERR] Dhcpd is not running"
       exitcode=1
     fi
 

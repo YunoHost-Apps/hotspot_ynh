@@ -38,7 +38,7 @@ fi
 sudo apt-get --assume-yes --force-yes install hostapd radvd isc-dhcp-server iptables php5-fpm
 
 # Extra packages
-sudo apt-get --assume-yes --force-yes install sipcalc iwconfig
+sudo apt-get --assume-yes --force-yes install sipcalc iw
 
 # Compute extra arguments
 if [ -z "${ip6_net}" ]; then
@@ -147,8 +147,6 @@ sudo yunohost service disable hostapd
 
 sudo yunohost service add php5-fpm
 sudo yunohost service enable php5-fpm
-sudo yunohost service stop php5-fpm
-sudo yunohost service start php5-fpm
 
 sudo service nginx reload
 
