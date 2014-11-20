@@ -147,7 +147,7 @@ dispatch_put('/settings', function() {
     }
 
   } catch(Exception $e) {
-    flash('error', $e->getMessage().T_(' (configuration not updated).'));
+    flash('error', $e->getMessage().' ('.T_('configuration not updated').').');
     goto redirect;
   }
 
@@ -184,16 +184,16 @@ dispatch('/status', function() {
 
   foreach($status_lines AS $status_line) {
     if(preg_match('/^\[INFO\]/', $status_line)) {
-      $status_list .= "<li class='status-info'>${status_line}</li>";
+      $status_list .= '<li class="status-info">'.htmlspecialchars($status_line).'</li>';
     }
     elseif(preg_match('/^\[OK\]/', $status_line)) {
-      $status_list .= "<li class='status-success'>${status_line}</li>";
+      $status_list .= '<li class="status-success">'.htmlspecialchars($status_line).'</li>';
     }
     elseif(preg_match('/^\[WARN\]/', $status_line)) {
-      $status_list .= "<li class='status-warning'>${status_line}</li>";
+      $status_list .= '<li class="status-warning">'.htmlspecialchars($status_line).'</li>';
     }
     elseif(preg_match('/^\[ERR\]/', $status_line)) {
-      $status_list .= "<li class='status-danger'>${status_line}</li>";
+      $status_list .= '<li class="status-danger">'.htmlspecialchars($status_line).'</li>';
     }
   }
 

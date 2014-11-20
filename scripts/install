@@ -127,7 +127,7 @@ sudo sed 's|^;\?\s*max_execution_time.\+|max_execution_time = 600|' -i /etc/php5
 sudo sed "s|<TPL:NGINX_LOCATION>|${url_path}|g" -i /var/www/wifiadmin/config.php
 
 # Copy init script
-sudo install -b -o root -g root -m 0755 ../conf/init_ynh-hotspot /etc/init.d/ynh-hotspot
+sudo install -o root -g root -m 0755 ../conf/init_ynh-hotspot /etc/init.d/ynh-hotspot
 
 # Set default inits
 # The boot order of these services are important, so they are disabled by default

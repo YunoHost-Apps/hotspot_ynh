@@ -383,9 +383,12 @@ case "$1" in
   ;;
   status)
     exitcode=0
-  
+
+    echo "[INFO] Autodetected internet interface: ${new_internet_device} (last start: ${old_internet_device})"
+
     if has_ip6delegatedprefix; then
       echo "[INFO] IPv6 delegated prefix found"
+      echo "[INFO] IPv6 address computed from the delegated prefix: ${ynh_ip6_addr}"
 
       if is_ndproxy_set; then
         echo "[OK] NDP proxy set"
