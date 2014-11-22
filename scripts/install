@@ -35,7 +35,7 @@ fi
 # TODO: Replace isc-dhcp-server by dnsmasq (currently negotiating with the YunoHost team to
 # also replace bind9 by dnsmasq)
 #sudo apt-get update
-sudo apt-get --assume-yes --force-yes install hostapd radvd isc-dhcp-server iptables php5-fpm
+sudo apt-get --assume-yes --force-yes install hostapd radvd isc-dhcp-server iptables php5-fpm wireless-tools
 
 # Extra packages
 sudo apt-get --assume-yes --force-yes install sipcalc iw
