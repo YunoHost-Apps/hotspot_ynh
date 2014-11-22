@@ -38,7 +38,7 @@ fi
 sudo apt-get --assume-yes --force-yes install hostapd radvd isc-dhcp-server iptables php5-fpm wireless-tools
 
 # Extra packages
-sudo apt-get --assume-yes --force-yes install sipcalc iw
+sudo apt-get --assume-yes --force-yes install sipcalc wireless-tools
 
 # Compute extra arguments
 if [ -z "${ip6_net}" ]; then
