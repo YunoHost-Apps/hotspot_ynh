@@ -241,17 +241,19 @@ fi
 echo "OK"
 
 # Check IPv6 delegated prefix from vpnclient
-if [ "${ynh_ip6_net}" == none ]; then
-  ynh_ip6_net=$(moulinette_vpnclient_get ip6_net)
-  ynh_ip6_addr=$(moulinette_vpnclient_get ip6_addr)
+vpnclient_ip6_net=$(moulinette_vpnclient_get ip6_net)
 
-  moulinette_set ip6_net "${ynh_ip6_net}"
-  moulinette_set ip6_addr "${ynh_ip6_addr}"
-else
-  vpnclient_ip6_net=$(moulinette_vpnclient_get ip6_net)
-
-  if [ "${ynh_ip6_net}" != "${vpnclient_ip6_net}" ]; then
-    echo "[WARN] The IPv6 delegated prefix is different from the vpnclient one"
+if [ ! -z "${vpnclient_ip6_addr}" ]; then
+  if [ "${ynh_ip6_net}" == none ]; then
+    ynh_ip6_net=$vpnclient_ip6_net
+    ynh_ip6_addr=$(moulinette_vpnclient_get ip6_addr)
+  
+    moulinette_set ip6_net "${ynh_ip6_net}"
+    moulinette_set ip6_addr "${ynh_ip6_addr}"
+  else
+    if [ "${ynh_ip6_net}" != "${vpnclient_ip6_net}" ]; then
+      echo "[WARN] The IPv6 delegated prefix is different from the vpnclient one"
+    fi
   fi
 fi
 

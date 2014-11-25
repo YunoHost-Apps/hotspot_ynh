@@ -5,7 +5,13 @@ domain=${1}
 url_path=${2}
 wifi_ssid=${3}
 wifi_passphrase=${4}
-ip6_net=${5}
+
+##
+## These arguments are optional but YunoHost is not yet able to handle them with the web installer
+## See manifest.json.options
+##
+#
+#ip6_net=${5}
 
 # Check arguments
 if [ -z "${wifi_ssid}" -o -z "${wifi_passphrase}" ]; then
@@ -34,27 +40,29 @@ fi
 # Install packages
 # TODO: Replace isc-dhcp-server by dnsmasq (currently negotiating with the YunoHost team to
 # also replace bind9 by dnsmasq)
-#sudo apt-get update
-sudo apt-get --assume-yes --force-yes install hostapd radvd isc-dhcp-server iptables php5-fpm wireless-tools
+packages='php5-fpm sipcalc hostapd radvd isc-dhcp-server iptables wireless-tools wireless-tools'
+sudo apt-get --assume-yes --force-yes install ${packages}
 
-# Extra packages
-sudo apt-get --assume-yes --force-yes install sipcalc wireless-tools
+if [ $? -ne 0 ]; then
+  sudo apt-get update
+  sudo apt-get --assume-yes --force-yes install ${packages}
+fi
 
 # Compute extra arguments
 if [ -z "${ip6_net}" ]; then
   ip6_net=none
   ip6_addr=none
-else
-  ip6_net=$(bash ../conf/ipv6_expanded "${ip6_net}")
-
-  if [ -z "${ip6_net}" ]; then
-    echo "ERROR: The IPv6 Delegated Prefix format looks bad" >&2
-    exit 1
-  fi
-
-  ip6_addr="$(echo "${ip6_net}" | cut -d: -f1-7):42"
-  ip6_net=$(bash ../conf/ipv6_compressed "${ip6_net}")
-  ip6_addr=$(bash ../conf/ipv6_compressed "${ip6_addr}")
+#else
+#  ip6_net=$(bash ../conf/ipv6_expanded "${ip6_net}")
+#
+#  if [ -z "${ip6_net}" ]; then
+#    echo "ERROR: The IPv6 Delegated Prefix format looks bad" >&2
+#    exit 1
+#  fi
+#
+#  ip6_addr="$(echo "${ip6_net}" | cut -d: -f1-7):42"
+#  ip6_net=$(bash ../conf/ipv6_compressed "${ip6_net}")
+#  ip6_addr=$(bash ../conf/ipv6_compressed "${ip6_addr}")
 fi
 
 wifi_device=$(sudo iwconfig 2>&1 | grep 802.11 | head -n1 | awk '{ print $1 }')
@@ -103,9 +111,6 @@ sudo cp -a ../sources/* /var/www/wifiadmin/
 sudo chown -R root: /var/www/wifiadmin/
 sudo chmod -R 0644 /var/www/wifiadmin/*
 sudo find /var/www/wifiadmin/ -type d -exec chmod +x {} \;
-
-# Create user for the web admin
-sudo useradd -MUr wifiadmin
 
 # Fix confs
 ## hostapd

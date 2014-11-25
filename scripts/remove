@@ -22,12 +22,8 @@ sudo service nginx reload
 # Remove sources
 sudo rm -rf /var/www/wifiadmin/
 
-# Remove user
-sudo userdel -f wifiadmin
-
 # Remove packets
 # The yunohost policy is currently to not uninstall packets (dependency problems)
-## sudo apt-get --assume-yes --force-yes remove hostapd radvd isc-dhcp-server iptables
-## sudo apt-get --assume-yes --force-yes remove sipcalc wireless-tools
+## sudo apt-get --assume-yes --force-yes remove hostapd radvd isc-dhcp-server iptables sipcalc wireless-tools
 
 exit 0

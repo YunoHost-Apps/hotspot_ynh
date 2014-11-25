@@ -47,6 +47,14 @@
             "fr": "Choisissez un mot de passe wifi (au minimum 8 caractères pour le WPA2)"
         },
         "example": "VhegT8oev0jZI"
+      },
+      {
+        "name": "ip6_net",
+        "ask": {
+            "en": "Select your IPv6 delegated prefix (leave empty if your Internet Service Provider does not give you a delegated prefix, but you will not have IPv6)",
+            "fr": "Sélectionnez votre préfixe IPv6 délégué (laisser vide si votre Fournisseur d'Accès à Internet ne vous donne pas de préfixe délégué, mais vous n'aurez pas d'IPv6)"
+        },
+        "example": "2001:db8:42::"
       }
     ]
   }
