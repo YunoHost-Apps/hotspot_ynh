@@ -1,12 +1,32 @@
+# Wifi Hotspot app for YunoHost 
+# Copyright (C) 2015 Julien Vaubourg <julien@vaubourg.com>
+# Contribute at https://github.com/jvaubourg/hotspot_ynh
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 interface=<TPL:WIFI_DEVICE>
 ssid=<TPL:WIFI_SSID>
+
 hw_mode=g
 <TPL:N_COMMENT>ieee80211n=1
 <TPL:N_COMMENT>wmm_enabled=1
+
 channel=<TPL:WIFI_CHANNEL>
 macaddr_acl=0
 auth_algs=1
 ignore_broadcast_ssid=0
+
 wpa=2
 wpa_passphrase=<TPL:WIFI_PASSPHRASE>
 wpa_key_mgmt=WPA-PSK
