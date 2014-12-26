@@ -154,7 +154,18 @@
 
       <div class="form-group">
         <div style="text-align: center">
+<?php if($is_connected_through_hotspot): ?>
+          <div class="alert alert-dismissible alert-warning fade in" role="alert" id="saveconfirmation">
+            <strong><?= T_('Notice') ?>:</strong> <?= T_("You are currently connected through the wifi hotspot. Please, confirm the reloading, wait for the wifi disconnect/reconnect and go back here to check that everything is okay.") ?>
+            <div id="confirm">
+              <button type="submit" class="btn btn-default" data-toggle="tooltip" id="save" data-title="<?= T_('Reloading may take a few minutes. Be patient.') ?>"><?= T_('Confirm') ?></button> <img src="public/img/loading.gif" id="save-loading" alt="Loading..." />
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-default" id="saveconfirm"><?= T_('Save and reload') ?></button>
+<?php else: ?>
           <button type="submit" class="btn btn-default" data-toggle="tooltip" id="save" data-title="<?= T_('Reloading may take a few minutes. Be patient.') ?>"><?= T_('Save and reload') ?></button> <img src="public/img/loading.gif" id="save-loading" alt="Loading..." />
+<?php endif; ?>
         </div>
       </div>
     </form>

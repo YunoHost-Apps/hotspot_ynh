@@ -38,9 +38,7 @@ if [ ! $? -eq 0 ]; then
 fi
 
 # Install packages
-# TODO: Replace isc-dhcp-server by dnsmasq (currently negotiating with the YunoHost team to
-# also replace bind9 by dnsmasq)
-packages='php5-fpm sipcalc hostapd radvd isc-dhcp-server iptables wireless-tools wireless-tools'
+packages='php5-fpm sipcalc hostapd iptables wireless-tools'
 sudo apt-get --assume-yes --force-yes install ${packages}
 
 if [ $? -ne 0 ]; then
@@ -98,9 +96,12 @@ sudo install -o root -g root -m 0755 ../conf/ipv6_expanded /usr/local/bin/
 sudo install -o root -g root -m 0755 ../conf/ipv6_compressed /usr/local/bin/
 
 # Copy confs
+sudo mkdir -pm 0755 /etc/dnsmasq.d.tpl/
+sudo chown root: /etc/dnsmasq.d.tpl/
+
 sudo install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl /etc/hostapd/
-sudo install -b -o root -g root -m 0644 ../conf/radvd.conf.tpl /etc/
-sudo install -b -o root -g root -m 0644 ../conf/dhcpd.conf.tpl /etc/dhcp/
+sudo install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.d.tpl/dhcpdv6.conf.tpl
+sudo install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.d.tpl/dhcpdv4.conf.tpl
 sudo install -b -o root -g root -m 0644 ../conf/nginx_wifiadmin.conf "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
 sudo install -b -o root -g root -m 0644 ../conf/phpfpm_wifiadmin.conf /etc/php5/fpm/pool.d/wifiadmin.conf
 
@@ -134,18 +135,14 @@ sudo sed "s|<TPL:NGINX_LOCATION>|${url_path}|g" -i /var/www/wifiadmin/config.php
 # Copy init script
 sudo install -o root -g root -m 0755 ../conf/init_ynh-hotspot /etc/init.d/ynh-hotspot
 
+# Update firewall for DHCP
+sudo yunohost firewall allow --no-upnp --ipv6 UDP 547
+sudo yunohost firewall allow --no-upnp UDP 67
+
 # Set default inits
 # The boot order of these services are important, so they are disabled by default
 # and the ynh-hotspot service handles them.
 # All services are registred by yunohost in order to prevent conflicts after the uninstall.
-sudo yunohost service add isc-dhcp-server
-sudo yunohost service stop isc-dhcp-server
-sudo yunohost service disable isc-dhcp-server
-
-sudo yunohost service add radvd
-sudo yunohost service stop radvd
-sudo yunohost service disable radvd
-
 sudo yunohost service add hostapd 
 sudo yunohost service stop hostapd 
 sudo yunohost service disable hostapd 

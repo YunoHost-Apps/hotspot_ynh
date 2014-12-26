@@ -42,6 +42,14 @@ function ipv6_compressed($ip) {
   return $output[0];
 }
 
+function is_connected_through_hotspot($ip6_net, $ip4_nat_prefix) {
+  $ip = $_SERVER['REMOTE_ADDR'];
+  $ip6_regex = '/^'.preg_quote(preg_replace('/::$/', '', $ip6_net)).':/';
+  $ip4_regex = '/^'.preg_quote($ip4_nat_prefix).'\./';
+
+  return (preg_match($ip6_regex, $ip) || preg_match($ip4_regex, $ip));
+}
+
 dispatch('/', function() {
   exec('sudo iwconfig', $devs);
   $wifi_device = moulinette_get('wifi_device');
@@ -59,6 +67,7 @@ dispatch('/', function() {
 
   $ip6_net = moulinette_get('ip6_net');
   $ip6_net = ($ip6_net == 'none') ? '' : $ip6_net;
+  $ip4_nat_prefix = moulinette_get('ip4_nat_prefix');
 
   set('wifi_ssid', moulinette_get('wifi_ssid'));
   set('wifi_passphrase', moulinette_get('wifi_passphrase'));
@@ -69,10 +78,11 @@ dispatch('/', function() {
   set('ip6_net', $ip6_net);
   set('ip6_dns0', moulinette_get('ip6_dns0'));
   set('ip6_dns1', moulinette_get('ip6_dns1'));
-  set('ip4_nat_prefix', moulinette_get('ip4_nat_prefix'));
+  set('ip4_nat_prefix', $ip4_nat_prefix);
   set('ip4_dns0', moulinette_get('ip4_dns0'));
   set('ip4_dns1', moulinette_get('ip4_dns1'));
   set('faststatus', service_faststatus() == 0);
+  set('is_connected_through_hotspot', is_connected_through_hotspot($ip6_net, $ip4_nat_prefix));
 
   return render('settings.html.php');
 });

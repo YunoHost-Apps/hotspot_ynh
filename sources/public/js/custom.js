@@ -36,6 +36,11 @@ $(document).ready(function() {
     $('#form').submit();
   });
 
+  $('#saveconfirm').click(function() {
+    $(this).hide();
+    $('#saveconfirmation').show();
+  });
+
   $('#status .close').click(function() {
     $(this).parent().hide();
   });

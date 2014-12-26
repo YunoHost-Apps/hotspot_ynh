@@ -43,3 +43,17 @@ div#github {
 div#github a {
   margin-left: 17px;
 }
+
+div#saveconfirmation {
+  display: none;
+  padding-right: 15px;
+  width: 60%;
+  margin: 0 auto;
+}
+
+div#saveconfirmation div#confirm {
+  background-color: #fff;
+  padding: 10px;
+  margin: 15px 0 0 0;
+  border: 1px solid #F5E79E;
+}

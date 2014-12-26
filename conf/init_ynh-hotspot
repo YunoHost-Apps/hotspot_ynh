@@ -46,22 +46,39 @@ is_forwarding_set() {
   [ "${ip6}" -eq 1 -a "${ip4}" -eq 1 ]
 }
 
+is_dhcpdv6_set() {
+  [ -e /etc/dnsmasq.d/dhcpdv6.conf ]
+}
+
+is_dhcpdv4_set() {
+  [ -e /etc/dnsmasq.d/dhcpdv4.conf ]
+}
+
 is_hostapd_running() {
   service hostapd status &> /dev/null
+
+  if [ $? -eq 0 ]; then
+
+    # If the wifi antenna was unplugged
+    if ip link show dev "${ynh_wifi_device}" | grep -q DOWN; then
+      service hostapd stop &> /dev/null
+      return 1
+    fi
+
+    return 0
+  fi
+
+  return 1
 }
 
-is_radvd_running() {
-  service radvd status &> /dev/null
-}
-
-is_dhcpd_running() {
-  service isc-dhcp-server status &> /dev/null
+is_dnsmasq_running() {
+  service dnsmasq status &> /dev/null
 }
 
 is_running() {
-  ( has_ip6delegatedprefix && is_ip6addr_set && is_radvd_running && is_ndproxy_set || ! has_ip6delegatedprefix )\
+  ( has_ip6delegatedprefix && is_ip6addr_set && is_ndproxy_set && is_dhcpdv6_set || ! has_ip6delegatedprefix )\
   && is_nat_set "${new_internet_device}" && is_ip4nataddr_set && is_forwarding_set && is_hostapd_running\
-  && is_dhcpd_running
+  && is_dhcpdv4_set && is_dnsmasq_running
 }
 
 ## Setters
@@ -90,6 +107,26 @@ set_forwarding() {
   sysctl -w net.ipv4.conf.all.forwarding=1 > /dev/null
 }
 
+set_dhcpd() {
+  if has_ip6delegatedprefix; then
+    cp /etc/dnsmasq.d.tpl/dhcpdv6.conf.tpl /etc/dnsmasq.d/dhcpdv6.conf
+  
+    sed "s|<TPL:WIFI_DEVICE>|${ynh_wifi_device}|g" -i /etc/dnsmasq.d/dhcpdv6.conf
+    sed "s|<TPL:IP6_NET>|${ynh_ip6_net}|g" -i /etc/dnsmasq.d/dhcpdv6.conf
+    sed "s|<TPL:IP6_DNS0>|${ynh_ip6_dns0}|g" -i /etc/dnsmasq.d/dhcpdv6.conf
+    sed "s|<TPL:IP6_DNS1>|${ynh_ip6_dns1}|g" -i /etc/dnsmasq.d/dhcpdv6.conf
+  fi
+
+  cp /etc/dnsmasq.d.tpl/dhcpdv4.conf.tpl /etc/dnsmasq.d/dhcpdv4.conf
+
+  sed "s|<TPL:IP4_DNS0>|${ynh_ip4_dns0}|g" -i /etc/dnsmasq.d/dhcpdv4.conf
+  sed "s|<TPL:IP4_DNS1>|${ynh_ip4_dns1}|g" -i /etc/dnsmasq.d/dhcpdv4.conf
+  sed "s|<TPL:WIFI_DEVICE>|${ynh_wifi_device}|g" -i /etc/dnsmasq.d/dhcpdv4.conf
+  sed "s|<TPL:IP4_NAT_PREFIX>|${ynh_ip4_nat_prefix}|g" -i /etc/dnsmasq.d/dhcpdv4.conf
+
+  service dnsmasq restart
+}
+
 start_hostapd() {
   cp /etc/hostapd/hostapd.conf{.tpl,}
 
@@ -105,28 +142,6 @@ start_hostapd() {
   fi
 
   service hostapd start
-}
-
-start_radvd() {
-  cp /etc/radvd.conf{.tpl,}
-
-  sed "s|<TPL:WIFI_DEVICE>|${ynh_wifi_device}|g" -i /etc/radvd.conf
-  sed "s|<TPL:IP6_NET>|${ynh_ip6_net}|g" -i /etc/radvd.conf
-  sed "s|<TPL:IP6_DNS0>|${ynh_ip6_dns0}|g" -i /etc/radvd.conf
-  sed "s|<TPL:IP6_DNS1>|${ynh_ip6_dns1}|g" -i /etc/radvd.conf
-
-  service radvd start
-}
-
-start_dhcpd() {
-  cp /etc/dhcp/dhcpd.conf{.tpl,}
-
-  sed "s|<TPL:IP4_DNS0>|${ynh_ip4_dns0}|g" -i /etc/dhcp/dhcpd.conf
-  sed "s|<TPL:IP4_DNS1>|${ynh_ip4_dns1}|g" -i /etc/dhcp/dhcpd.conf
-  sed "s|<TPL:WIFI_DEVICE>|${ynh_wifi_device}|g" -i /etc/dhcp/dhcpd.conf
-  sed "s|<TPL:IP4_NAT_PREFIX>|${ynh_ip4_nat_prefix}|g" -i /etc/dhcp/dhcpd.conf
-
-  service isc-dhcp-server start
 }
 
 ## Unsetters
@@ -149,6 +164,11 @@ unset_ip6addr() {
   ip address delete "${ynh_ip6_addr}/64" dev "${ynh_wifi_device}"
 }
 
+unset_dhcpd() {
+  rm -f /etc/dnsmasq.d/dhcpdv?.conf
+  service dnsmasq restart
+}
+
 unset_forwarding() {
   sysctl -w net.ipv6.conf.all.forwarding=0 > /dev/null
   sysctl -w net.ipv4.conf.all.forwarding=0 > /dev/null
@@ -156,14 +176,6 @@ unset_forwarding() {
 
 stop_hostapd() {
   service hostapd stop
-}
-
-stop_radvd() {
-  service radvd stop
-}
-
-stop_dhcpd() {
-  service isc-dhcp-server stop
 }
 
 ## Tools
@@ -310,25 +322,16 @@ case "$1" in
         set_forwarding
       fi
 
+      # Run DHCP servers
+      if ( has_ip6delegatedprefix && ! is_dhcpdv6_set ) || ! is_dhcpdv4_set; then
+        echo "Set DHCP servers (dnsmasq)"
+        set_dhcpd
+      fi
+
       # Run hostapd
       if ! is_hostapd_running; then
         echo "Run hostapd"
         start_hostapd
-        sleep 1
-      fi
-
-      # Run radvd
-      # must be running after hostapd
-      if has_ip6delegatedprefix && ! is_radvd_running; then
-        echo "Run radvd"
-        start_radvd
-      fi
-
-      # Run dhcpd
-      # "options routers" addr (is_ip6addr_set) must be set before
-      if ! is_dhcpd_running; then
-        echo "Run dhcpd"
-        start_dhcpd
       fi
 
       # Update dynamic settings
@@ -337,7 +340,7 @@ case "$1" in
   ;;
   stop)
     echo "[hotspot] Stopping..."
-    rm /tmp/.ynh-hotspot-started
+    rm -f /tmp/.ynh-hotspot-started
 
     if has_ip6delegatedprefix && is_ndproxy_set; then
       echo "Unset NDP proxy"
@@ -364,19 +367,14 @@ case "$1" in
       unset_forwarding
     fi
   
+    if is_dhcpdv6_set || is_dhcpdv4_set; then
+      echo "Stop DHCP servers"
+      unset_dhcpd
+    fi
+
     if is_hostapd_running; then
       echo "Stop hostapd"
       stop_hostapd
-    fi
-  
-    if has_ip6delegatedprefix && is_radvd_running; then
-      echo "Stop radvd"
-      stop_radvd
-    fi
-  
-    if is_dhcpd_running; then
-      echo "Stop dhcpd"
-      stop_dhcpd
     fi
 
     if has_vpnclient_app; then
@@ -405,15 +403,22 @@ case "$1" in
         echo "[ERR] No IPv6 address set"
         exitcode=1
       fi
-  
-      if is_radvd_running; then
-        echo "[OK] Radvd is running"
+
+      if is_dhcpdv6_set; then
+        echo "[OK] SLAAC & DHCPv6 server set"
       else
-        echo "[ERR] Radvd is not running"
+        echo "[ERR] No SLAAC & DHCPv6 server set"
         exitcode=1
       fi
     else
       echo "[INFO] No IPv6 delegated prefix found"
+    fi
+
+    if is_dhcpdv4_set; then
+      echo "[OK] DHCPv4 server set"
+    else
+      echo "[ERR] No DHCPv4 server set"
+      exitcode=1
     fi
 
     if is_nat_set "${new_internet_device}"; then
@@ -437,17 +442,17 @@ case "$1" in
       exitcode=1
     fi
 
+    if is_dnsmasq_running; then
+      echo "[OK] Dnsmasq is running"
+    else
+      echo "[ERR] Dnsmasq is not running"
+      exitcode=1
+    fi
+
     if is_hostapd_running; then
       echo "[OK] Hostapd is running"
     else
       echo "[ERR] Hostapd is not running"
-      exitcode=1
-    fi
-
-    if is_dhcpd_running; then
-      echo "[OK] Dhcpd is running"
-    else
-      echo "[ERR] Dhcpd is not running"
       exitcode=1
     fi
 
