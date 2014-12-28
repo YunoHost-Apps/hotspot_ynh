@@ -56,6 +56,11 @@ fi
 
 # Install packages
 packages='php5-fpm sipcalc hostapd iptables wireless-tools'
+
+# Packaged USB Wireless Device firmwares
+# Based on https://wiki.debian.org/WiFi#USB_Devices
+packages="$packages firmware-atheros atmel-firmware firmware-linux-free firmware-linux-nonfree firmware-realtek firmware-ralink firmware-libertas zd1211-firmware"
+
 sudo apt-get --assume-yes --force-yes install ${packages}
 
 if [ $? -ne 0 ]; then

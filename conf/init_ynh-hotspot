@@ -398,6 +398,10 @@ case "$1" in
       service ynh-vpnclient start
     fi
   ;;
+  restart)
+    $0 stop
+    $0 start
+  ;;
   status)
     exitcode=0
 
@@ -476,7 +480,7 @@ case "$1" in
     exit ${exitcode}
   ;;
   *)
-    echo "Usage: $0 {start|stop|status}"
+    echo "Usage: $0 {start|stop|restart|status}"
     exit 1
   ;;
 esac

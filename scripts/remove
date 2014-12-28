@@ -47,5 +47,6 @@ sudo rm -rf /var/www/wifiadmin/
 # Remove packets
 # The yunohost policy is currently to not uninstall packets (dependency problems)
 ## sudo apt-get --assume-yes --force-yes remove hostapd iptables sipcalc wireless-tools
+## sudo apt-get --assume-yes --force-yes remove firmware-atheros atmel-firmware firmware-linux-free firmware-linux-nonfree firmware-realtek firmware-ralink firmware-libertas zd1211-firmware
 
 exit 0
