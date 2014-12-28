@@ -141,6 +141,7 @@ set_dhcpd() {
   sed "s|<TPL:WIFI_DEVICE>|${ynh_wifi_device}|g" -i /etc/dnsmasq.d/dhcpdv4.conf
   sed "s|<TPL:IP4_NAT_PREFIX>|${ynh_ip4_nat_prefix}|g" -i /etc/dnsmasq.d/dhcpdv4.conf
 
+  service bind9 stop &> /dev/null
   service dnsmasq restart
 }
 
@@ -235,55 +236,59 @@ moulinette_set() {
   fi
 }
 
-# Restart php5-fpm at the first start (it needs to be restarted after the slapd start)
-if [ ! -e /tmp/.ynh-hotspot-boot ]; then
-  touch /tmp/.ynh-hotspot-boot
-  service php5-fpm restart
-fi
+if [ "$1" != restart ]; then
 
-# Variables
-
-echo -n "Retrieving Yunohost settings... "
-
-ynh_wifi_device=$(moulinette_get wifi_device)
-ynh_wifi_ssid=$(moulinette_get wifi_ssid)
-ynh_wifi_passphrase=$(moulinette_get wifi_passphrase)
-ynh_wifi_channel=$(moulinette_get wifi_channel)
-ynh_wifi_n=$(moulinette_get wifi_n)
-ynh_ip6_addr=$(moulinette_get ip6_addr)
-ynh_ip6_net=$(moulinette_get ip6_net)
-ynh_ip6_dns0=$(moulinette_get ip6_dns0)
-ynh_ip6_dns1=$(moulinette_get ip6_dns1)
-ynh_ip4_dns0=$(moulinette_get ip4_dns0)
-ynh_ip4_dns1=$(moulinette_get ip4_dns1)
-ynh_ip4_nat_prefix=$(moulinette_get ip4_nat_prefix)
-
-old_internet_device=$(moulinette_get internet_device)
-new_internet_device=$(ip route | awk '/default via/ { print $NF; }')
-
-# Switch the NAT interface if there is a VPN
-ip link show dev tun0 &> /dev/null
-if [ "$?" -eq 0 ]; then
-  new_internet_device=tun0
-fi
-
-echo "OK"
-
-# Check IPv6 delegated prefix from vpnclient
-vpnclient_ip6_net=$(moulinette_vpnclient_get ip6_net)
-
-if [ ! -z "${vpnclient_ip6_addr}" ]; then
-  if [ "${ynh_ip6_net}" == none ]; then
-    ynh_ip6_net=$vpnclient_ip6_net
-    ynh_ip6_addr=$(moulinette_vpnclient_get ip6_addr)
+  # Restart php5-fpm at the first start (it needs to be restarted after the slapd start)
+  if [ ! -e /tmp/.ynh-hotspot-boot ]; then
+    touch /tmp/.ynh-hotspot-boot
+    service php5-fpm restart
+  fi
   
-    moulinette_set ip6_net "${ynh_ip6_net}"
-    moulinette_set ip6_addr "${ynh_ip6_addr}"
-  else
-    if [ "${ynh_ip6_net}" != "${vpnclient_ip6_net}" ]; then
-      echo "[WARN] The IPv6 delegated prefix is different from the vpnclient one"
+  # Variables
+  
+  echo -n "Retrieving Yunohost settings... "
+  
+  ynh_wifi_device=$(moulinette_get wifi_device)
+  ynh_wifi_ssid=$(moulinette_get wifi_ssid)
+  ynh_wifi_passphrase=$(moulinette_get wifi_passphrase)
+  ynh_wifi_channel=$(moulinette_get wifi_channel)
+  ynh_wifi_n=$(moulinette_get wifi_n)
+  ynh_ip6_addr=$(moulinette_get ip6_addr)
+  ynh_ip6_net=$(moulinette_get ip6_net)
+  ynh_ip6_dns0=$(moulinette_get ip6_dns0)
+  ynh_ip6_dns1=$(moulinette_get ip6_dns1)
+  ynh_ip4_dns0=$(moulinette_get ip4_dns0)
+  ynh_ip4_dns1=$(moulinette_get ip4_dns1)
+  ynh_ip4_nat_prefix=$(moulinette_get ip4_nat_prefix)
+  
+  old_internet_device=$(moulinette_get internet_device)
+  new_internet_device=$(ip route | awk '/default via/ { print $NF; }')
+  
+  # Switch the NAT interface if there is a VPN
+  ip link show dev tun0 &> /dev/null
+  if [ "$?" -eq 0 ]; then
+    new_internet_device=tun0
+  fi
+  
+  echo "OK"
+  
+  # Check IPv6 delegated prefix from vpnclient
+  vpnclient_ip6_net=$(moulinette_vpnclient_get ip6_net)
+  
+  if [ ! -z "${vpnclient_ip6_addr}" ]; then
+    if [ "${ynh_ip6_net}" == none ]; then
+      ynh_ip6_net=$vpnclient_ip6_net
+      ynh_ip6_addr=$(moulinette_vpnclient_get ip6_addr)
+    
+      moulinette_set ip6_net "${ynh_ip6_net}"
+      moulinette_set ip6_addr "${ynh_ip6_addr}"
+    else
+      if [ "${ynh_ip6_net}" != "${vpnclient_ip6_net}" ]; then
+        echo "[WARN] The IPv6 delegated prefix is different from the vpnclient one"
+      fi
     fi
   fi
+
 fi
 
 # Script
