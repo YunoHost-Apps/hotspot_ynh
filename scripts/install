@@ -72,6 +72,16 @@ fi
 if [ -z "${ip6_net}" ]; then
   ip6_net=none
   ip6_addr=none
+
+  if [ -e /tmp/.ynh-vpnclient-started ]; then
+    vpnclient_ip6_net=$(sudo yunohost app setting vpnclient ip6_net 2>&1)
+    vpnclient_ip6_addr=$(sudo yunohost app setting vpnclient ip6_addr 2>&1)
+
+    if [[ "${vpnclient_ip6_net}" =~ :: && "${vpnclient_ip6_addr}" =~ :: ]]; then
+      ip6_net=${vpnclient_ip6_net}
+      ip6_addr=${vpnclient_ip6_addr}
+    fi
+  fi
 #else
 #  ip6_net=$(bash ../conf/ipv6_expanded "${ip6_net}")
 #
