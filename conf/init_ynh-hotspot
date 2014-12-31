@@ -37,11 +37,6 @@ has_ip6delegatedprefix() {
   [ "${ynh_ip6_net}" != none ]
 }
 
-is_ndproxy_set() {
-  proxy=$(ip -6 neighbour show proxy)
-  [ ! -z "${proxy}" ]
-}
-
 is_nat_set() {
   internet_device=${1}
 
@@ -93,16 +88,12 @@ is_dnsmasq_running() {
 }
 
 is_running() {
-  ( has_ip6delegatedprefix && is_ip6addr_set && is_ndproxy_set && is_dhcpdv6_set || ! has_ip6delegatedprefix )\
+  ( has_ip6delegatedprefix && is_ip6addr_set && is_dhcpdv6_set || ! has_ip6delegatedprefix )\
   && is_nat_set "${new_internet_device}" && is_ip4nataddr_set && is_forwarding_set && is_hostapd_running\
   && is_dhcpdv4_set && is_dnsmasq_running
 }
 
 ## Setters
-
-set_ndproxy() {
-  ip -6 neighbour add proxy "${ynh_ip6_addr}" dev "${ynh_wifi_device}"
-}
 
 set_nat() {
   internet_device=${1}
@@ -163,10 +154,6 @@ start_hostapd() {
 }
 
 ## Unsetters
-
-unset_ndproxy() {
-  ip -6 neighbour delete proxy "${ynh_ip6_addr}" dev "${ynh_wifi_device}"
-}
 
 unset_nat() {
   internet_device=${1}
@@ -307,12 +294,6 @@ case "$1" in
         moulinette_set vpnclient no
       fi
 
-      # Set NDP proxy
-      if has_ip6delegatedprefix && ! is_ndproxy_set; then
-        echo "Set NDP proxy"
-        set_ndproxy
-      fi
-
       # Check old state of the ipv4 NAT settings
       if [ ! -z "${old_internet_device}" -a "${new_internet_device}" != "${old_internet_device}" ]\
          && is_nat_set "${old_internet_device}"; then
@@ -364,11 +345,6 @@ case "$1" in
     echo "[hotspot] Stopping..."
     rm -f /tmp/.ynh-hotspot-started
 
-    if has_ip6delegatedprefix && is_ndproxy_set; then
-      echo "Unset NDP proxy"
-      unset_ndproxy
-    fi
-  
     if is_nat_set "${old_internet_device}"; then
       echo "Unset NAT"
       unset_nat "${old_internet_device}"
@@ -416,13 +392,6 @@ case "$1" in
       echo "[INFO] IPv6 delegated prefix found"
       echo "[INFO] IPv6 address computed from the delegated prefix: ${ynh_ip6_addr}"
 
-      if is_ndproxy_set; then
-        echo "[OK] NDP proxy set"
-      else
-        echo "[ERR] No NDP proxy set"
-        exitcode=1
-      fi
-  
       if is_ip6addr_set; then
         echo "[OK] IPv6 address set"
       else
