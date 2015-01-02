@@ -77,4 +77,34 @@ $(document).ready(function() {
       });
     }
   });
+
+  $('#wifiparty').click(function() {
+    $('#wifiparty_screen').show('slow');
+  });
+
+  $('#wifiparty_zoomin_ssid').mousedown(function() {
+    $('#wifiparty_ssid').css('fontSize', (parseInt($('#wifiparty_ssid').css('fontSize')) + 5) + "px");
+  });
+
+  $('#wifiparty_zoomout_ssid').mousedown(function() {
+    $('#wifiparty_ssid').css('fontSize', (parseInt($('#wifiparty_ssid').css('fontSize')) - 5) + "px");
+  });
+
+  $('#wifiparty_zoomin_passphrase').mousedown(function() {
+    $('#wifiparty_passphrase').css('fontSize', (parseInt($('#wifiparty_passphrase').css('fontSize')) + 7) + "px");
+  });
+
+  $('#wifiparty_zoomout_passphrase').mousedown(function() {
+    $('#wifiparty_passphrase').css('fontSize', (parseInt($('#wifiparty_passphrase').css('fontSize')) - 7) + "px");
+  });
+
+  $('#wifiparty_close').click(function() {
+    $('#wifiparty_screen').hide();
+  });
+});
+
+$(document).keydown(function(e) {
+  if(e.keyCode == 27) {
+    $('#wifiparty_close').click();
+  }
 });

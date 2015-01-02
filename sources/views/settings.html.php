@@ -17,6 +17,31 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 
+<div id="wifiparty_screen">
+<div id="wifiparty_ssid_part">
+  <div class="btn-group" role="group">
+    <button type="button" class="btn btn-default" id="wifiparty_close"><span class="glyphicon glyphicon-eye-close"></span></button>
+    <button type="button" class="btn btn-default" id="wifiparty_zoomin_ssid"><span class="glyphicon glyphicon-zoom-in"></span></button>
+    <button type="button" class="btn btn-default" id="wifiparty_zoomout_ssid"><span class="glyphicon glyphicon-zoom-out"></span></button>
+  </div>
+
+  <span id="wifiparty_ssid"><span class="glyphicon glyphicon-signal"></span> <?= $wifi_ssid ?></span>
+</div>
+
+<div class="btn-group" role="group">
+  <button type="button" class="btn btn-default" id="wifiparty_zoomin_passphrase"><span class="glyphicon glyphicon-zoom-in"></span></button>
+  <button type="button" class="btn btn-default" id="wifiparty_zoomout_passphrase"><span class="glyphicon glyphicon-zoom-out"></span></button>
+</div>
+
+<div id="wifiparty_passphrase"><?php
+  $pw = preg_replace('/[^0-9a-z ]/i', '<span-class="passother">$0</span>', $wifi_passphrase);
+  $pw = preg_replace('/\d/', '<span-class="passdigit">$0</span>', $pw);
+  $pw = preg_replace('/ /', '<span class="passspace">&#x25AE;</span>', $pw);
+  $pw = preg_replace('/span-class/', 'span class', $pw);
+  echo $pw;
+?></div>
+</div>
+
 <h2><?= T_("Wifi Hotspot Configuration") ?></h2>
 <?php if($faststatus): ?>
   <span class="label label-success" data-toggle="tooltip" data-title="<?= T_('This is a fast status. Click on More details to show the complete status.') ?>"><?= T_('Running') ?></span>
@@ -53,8 +78,9 @@
   
           <div class="form-group">
             <label for="wifi_passphrase" class="col-sm-3 control-label"><?= T_('Password (WPA2)') ?></label>
-            <div class="col-sm-9">
+            <div class="input-group col-sm-9" style="padding: 0 15px">
               <input type="text" data-toggle="tooltip" data-title="<?= T_('At least 8 characters') ?>" class="form-control" name="wifi_passphrase" id="wifi_passphrase" placeholder="VhegT8oev0jZI" value="<?= $wifi_passphrase ?>" />
+              <a class="btn input-group-addon" id="wifiparty" data-toggle="tooltip" data-title="<?= T_('Show to your friends how to access to your hotspot') ?>"><span class="glyphicon glyphicon-fullscreen"></span></a>
             </div>
           </div>
   
