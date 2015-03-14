@@ -101,6 +101,22 @@ $(document).ready(function() {
   $('#wifiparty_close').click(function() {
     $('#wifiparty_screen').hide();
   });
+
+  $('#wifi_secure').change(function() {
+    if($('#wifi_secure').parent().hasClass('off')) {
+      $('.secure').hide('slow');
+    } else {
+      $('.secure').show('slow');
+    }
+  });
+
+  $('#service_enabled').change(function() {
+    if($('#service_enabled').parent().hasClass('off')) {
+      $('.enabled').hide('slow');
+    } else {
+      $('.enabled').show('slow');
+    }
+  });
 });
 
 $(document).keydown(function(e) {

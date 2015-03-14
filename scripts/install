@@ -22,13 +22,14 @@ domain=${1}
 url_path=${2}
 wifi_ssid=${3}
 wifi_passphrase=${4}
+firmware_nonfree=${5}
 
 ##
 ## These arguments are optional but YunoHost is not yet able to handle them with the web installer
 ## See manifest.json.options
 ##
 #
-#ip6_net=${5}
+#ip6_net=${6}
 
 # Check arguments
 if [ -z "${wifi_ssid}" -o -z "${wifi_passphrase}" ]; then
@@ -59,7 +60,11 @@ packages='php5-fpm sipcalc hostapd iptables wireless-tools dnsmasq'
 
 # Packaged USB Wireless Device firmwares
 # Based on https://wiki.debian.org/WiFi#USB_Devices
-packages="$packages firmware-atheros atmel-firmware firmware-linux-free firmware-linux-nonfree firmware-realtek firmware-ralink firmware-libertas zd1211-firmware"
+if [ "${firmware_nonfree}" == yes ]; then
+  packages="$packages firmware-atheros atmel-firmware firmware-linux-free firmware-linux-nonfree firmware-realtek firmware-ralink firmware-libertas zd1211-firmware"
+else
+  packages="$packages firmware-linux-free"
+fi
 
 sudo apt-get --assume-yes --force-yes install ${packages}
 
@@ -109,7 +114,9 @@ if [ $? -eq 0 ]; then
 fi
 
 # Save arguments
+sudo yunohost app setting hotspot service_enabled -v 1
 sudo yunohost app setting hotspot wifi_ssid -v "${wifi_ssid}"
+sudo yunohost app setting hotspot wifi_secure -v 1
 sudo yunohost app setting hotspot wifi_passphrase -v "${wifi_passphrase}"
 sudo yunohost app setting hotspot wifi_device -v "${wifi_device}"
 sudo yunohost app setting hotspot wifi_channel -v 6

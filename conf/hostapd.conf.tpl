@@ -27,8 +27,8 @@ macaddr_acl=0
 auth_algs=1
 ignore_broadcast_ssid=0
 
-wpa=2
-wpa_passphrase=<TPL:WIFI_PASSPHRASE>
-wpa_key_mgmt=WPA-PSK
-wpa_pairwise=TKIP
-rsn_pairwise=CCMP
+<TPL:SEC_COMMENT>wpa=2
+<TPL:SEC_COMMENT>wpa_passphrase=<TPL:WIFI_PASSPHRASE>
+<TPL:SEC_COMMENT>wpa_key_mgmt=WPA-PSK
+<TPL:SEC_COMMENT>wpa_pairwise=TKIP
+<TPL:SEC_COMMENT>rsn_pairwise=CCMP

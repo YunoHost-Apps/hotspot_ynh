@@ -150,6 +150,12 @@ start_hostapd() {
     sed "s|<TPL:N_COMMENT>|#|g" -i /etc/hostapd/hostapd.conf
   fi
 
+  if [ "${ynh_wifi_secure}" -eq 1 ]; then
+    sed "s|<TPL:SEC_COMMENT>||g" -i /etc/hostapd/hostapd.conf
+  else
+    sed "s|<TPL:SEC_COMMENT>|#|g" -i /etc/hostapd/hostapd.conf
+  fi
+
   service hostapd start
 }
 
@@ -235,8 +241,10 @@ if [ "$1" != restart ]; then
   
   echo -n "Retrieving Yunohost settings... "
   
+  ynh_service_enabled=$(moulinette_get service_enabled)
   ynh_wifi_device=$(moulinette_get wifi_device)
   ynh_wifi_ssid=$(moulinette_get wifi_ssid)
+  ynh_wifi_secure=$(moulinette_get wifi_secure)
   ynh_wifi_passphrase=$(moulinette_get wifi_passphrase)
   ynh_wifi_channel=$(moulinette_get wifi_channel)
   ynh_wifi_n=$(moulinette_get wifi_n)
@@ -284,6 +292,8 @@ case "$1" in
   start)
     if is_running; then
       echo "Already started"
+    elif [ "${ynh_service_enabled}" -eq 0 ]; then
+      echo "Disabled service"
     else
       echo "[hotspot] Starting..."
       touch /tmp/.ynh-hotspot-started
@@ -385,6 +395,11 @@ case "$1" in
   ;;
   status)
     exitcode=0
+
+    if [ "${ynh_service_enabled}" -eq 0 ]; then
+      echo "[ERR] Hotspot Service disabled"
+      exitcode=1
+    fi
 
     echo "[INFO] Autodetected internet interface: ${new_internet_device} (last start: ${old_internet_device})"
 

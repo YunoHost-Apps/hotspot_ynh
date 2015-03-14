@@ -65,6 +65,23 @@
 
       <div class="panel panel-default">
         <div class="panel-heading">
+          <h3 class="panel-title"><?= T_("Service") ?></h3>
+        </div>
+
+        <div style="padding: 14px 14px 0 10px">
+          <div class="form-group">
+            <label for="wifi_secure" class="col-sm-3 control-label"><?= T_('Hotspot Enabled') ?></label>
+            <div class="col-sm-9 input-group-btn" data-toggle="tooltip" ?>">
+              <div class="input-group">
+                <input type="checkbox" class="form-control switch" name="service_enabled" id="service_enabled" value="1" <?= $service_enabled == 1 ? 'checked="checked"' : '' ?> />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel panel-default enabled" <?= $service_enabled == 0 ? 'style="display: none"' : '' ?>>
+        <div class="panel-heading">
           <h3 class="panel-title"><?= T_("Wifi") ?></h3>
         </div>
 
@@ -75,8 +92,17 @@
               <input type="text" class="form-control" name="wifi_ssid" id="wifi_ssid" placeholder="myNeutralNetwork" value="<?= $wifi_ssid ?>" />
             </div>
           </div>
-  
+
           <div class="form-group">
+            <label for="wifi_secure" class="col-sm-3 control-label"><?= T_('Secure') ?></label>
+            <div class="col-sm-9 input-group-btn" data-toggle="tooltip" data-title="<?= T_('Disabling the Secure Wifi allows everyone to join the hotspot and spy the traffic (but it\'s perfect for a PirateBox)') ?>">
+              <div class="input-group">
+                <input type="checkbox" class="form-control switch" name="wifi_secure" id="wifi_secure" value="1" <?= $wifi_secure == 1 ? 'checked="checked"' : '' ?> />
+              </div>
+            </div>
+          </div>
+  
+          <div class="form-group secure" <?= $wifi_secure == 0 ? 'style="display: none"' : '' ?>>
             <label for="wifi_passphrase" class="col-sm-3 control-label"><?= T_('Password (WPA2)') ?></label>
             <div class="input-group col-sm-9" style="padding: 0 15px">
               <input type="text" data-toggle="tooltip" data-title="<?= T_('At least 8 characters') ?>" class="form-control" name="wifi_passphrase" id="wifi_passphrase" placeholder="VhegT8oev0jZI" value="<?= $wifi_passphrase ?>" />
@@ -107,8 +133,8 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="wifi_passphrase" class="col-sm-3 control-label"><?= T_('Wifi N') ?></label>
+          <div class="form-group" style="display: none">
+            <label for="wifi_n" class="col-sm-3 control-label"><?= T_('Wifi N') ?></label>
             <div class="col-sm-9 input-group-btn" data-toggle="tooltip" data-title="<?= T_('Only if your antenna is 802.11n compliant') ?>">
               <div class="input-group">
                 <input type="checkbox" class="form-control switch" name="wifi_n" id="wifi_n" value="1" <?= $wifi_n == 1 ? 'checked="checked"' : '' ?> />
@@ -131,7 +157,7 @@
         </div>
       </div>
 
-      <div class="panel panel-success">
+      <div class="panel panel-success enabled" <?= $service_enabled == 0 ? 'style="display: none"' : '' ?>>
         <div class="panel-heading">
           <h3 class="panel-title" data-toggle="tooltip" data-title="<?= T_('Real Internet') ?>"><?= T_("IPv6") ?></h3>
         </div>
@@ -168,7 +194,7 @@
         </div>
       </div>
 
-      <div class="panel panel-danger">
+      <div class="panel panel-danger enabled" <?= $service_enabled == 0 ? 'style="display: none"' : '' ?>>
         <div class="panel-heading">
           <h3 class="panel-title" data-toggle="tooltip" data-title="<?= T_('Old Internet') ?>"><?= T_("IPv4") ?></h3>
         </div>
