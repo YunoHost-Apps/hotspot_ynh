@@ -131,9 +131,6 @@ set_dhcpd() {
   sed "s|<TPL:IP4_DNS1>|${ynh_ip4_dns1}|g" -i /etc/dnsmasq.d/dhcpdv4.conf
   sed "s|<TPL:WIFI_DEVICE>|${ynh_wifi_device}|g" -i /etc/dnsmasq.d/dhcpdv4.conf
   sed "s|<TPL:IP4_NAT_PREFIX>|${ynh_ip4_nat_prefix}|g" -i /etc/dnsmasq.d/dhcpdv4.conf
-
-  service bind9 stop &> /dev/null
-  service dnsmasq restart
 }
 
 start_hostapd() {
@@ -335,17 +332,20 @@ case "$1" in
         set_forwarding
       fi
 
+      # Run hostapd
+      if ! is_hostapd_running; then
+        echo "Run hostapd"
+        start_hostapd
+      fi
+
       # Run DHCP servers
       if ( has_ip6delegatedprefix && ! is_dhcpdv6_set ) || ! is_dhcpdv4_set; then
         echo "Set DHCP servers (dnsmasq)"
         set_dhcpd
       fi
 
-      # Run hostapd
-      if ! is_hostapd_running; then
-        echo "Run hostapd"
-        start_hostapd
-      fi
+      service bind9 stop &> /dev/null
+      service dnsmasq restart
 
       # Update dynamic settings
       moulinette_set internet_device "${new_internet_device}"

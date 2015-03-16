@@ -57,6 +57,7 @@ fi
 
 # Install packages
 packages='php5-fpm sipcalc hostapd iptables wireless-tools dnsmasq'
+export DEBIAN_FRONTEND=noninteractive
 
 # Packaged USB Wireless Device firmwares
 # Based on https://wiki.debian.org/WiFi#USB_Devices
