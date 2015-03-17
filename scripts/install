@@ -136,6 +136,7 @@ sudo install -o root -g root -m 0755 ../conf/ipv6_expanded /usr/local/bin/
 sudo install -o root -g root -m 0755 ../conf/ipv6_compressed /usr/local/bin/
 
 # Copy confs
+sudo mkdir -pm 0755 /var/log/nginx/
 sudo mkdir -pm 0755 /etc/dnsmasq.d.tpl/
 sudo chown root: /etc/dnsmasq.d.tpl/
 
