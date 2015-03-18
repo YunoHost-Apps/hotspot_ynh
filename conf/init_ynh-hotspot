@@ -174,7 +174,6 @@ unset_ip6addr() {
 
 unset_dhcpd() {
   rm -f /etc/dnsmasq.d/dhcpdv?.conf
-  service dnsmasq restart
 }
 
 unset_forwarding() {
@@ -344,6 +343,7 @@ case "$1" in
         set_dhcpd
       fi
 
+      # Restart dhcpd
       service bind9 stop &> /dev/null
       service dnsmasq restart
 
@@ -388,6 +388,8 @@ case "$1" in
     if has_vpnclient_app; then
       service ynh-vpnclient start
     fi
+
+    service dnsmasq restart
   ;;
   restart)
     $0 stop
