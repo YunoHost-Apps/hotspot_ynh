@@ -113,6 +113,8 @@ dispatch_put('/settings', function() {
 
   $ip6_net = empty($_POST['ip6_net']) ? 'none' : $_POST['ip6_net'];
   $ip6_addr = 'none';
+  $ip6_dns0 = $_POST['ip6_dns0'];
+  $ip6_dns1 = $_POST['ip6_dns1'];
   $service_enabled = isset($_POST['service_enabled']) ? 1 : 0;
   $wifi_secure = isset($_POST['wifi_secure']) ? 1 : 0;
 
@@ -148,20 +150,25 @@ dispatch_put('/settings', function() {
         $ip6_addr = ipv6_compressed($ip6_addr);
       }
   
-      $ip6_dns0 = ipv6_expanded($ip6_dns0);
+      if(!empty($ip6_dns0)) {
+        $ip6_dns0 = ipv6_expanded($ip6_dns0);
   
-      if(empty($_POST['ip6_dns0'])) {
-        throw new Exception(T_('The format of the first IPv6 DNS Resolver looks bad'));
+        if(empty($ip6_dns0)) {
+          throw new Exception(T_('The format of the first IPv6 DNS Resolver looks bad'));
+        }
+
+        $ip6_dns0 = ipv6_compressed($ip6_dns0);
+
+        if(!empty($ip6_dns1)) {
+          $ip6_dns1 = ipv6_expanded($ip6_dns1);
+    
+          if(empty($ip6_dns1)) {
+             throw new Exception(T_('The format of the second IPv6 DNS Resolver looks bad'));
+          }
+
+          $ip6_dns1 = ipv6_compressed($ip6_dns1);
+        }
       }
-  
-      $ip6_dns0 = ipv6_compressed($ip6_dns0);
-      $ip6_dns1 = ipv6_expanded($ip6_dns1);
-  
-      if(empty($_POST['ip6_dns1'])) {
-        throw new Exception(T_('The format of the second IPv6 DNS Resolver looks bad'));
-      }
-  
-      $ip6_dns1 = ipv6_compressed($ip6_dns1);
   
       if(inet_pton($_POST['ip4_dns0']) === false) {
         throw new Exception(T_('The format of the first IPv4 DNS Resolver looks bad'));
