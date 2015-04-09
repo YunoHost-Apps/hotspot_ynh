@@ -168,7 +168,6 @@ sudo sed 's|<TPL:PHP_NAME>|wifiadmin|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
 sudo sed 's|<TPL:PHP_USER>|admin|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
 sudo sed 's|<TPL:PHP_GROUP>|admins|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
 sudo sed 's|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
-sudo sed 's|^;\?\s*max_execution_time.\+|max_execution_time = 600|' -i /etc/php5/fpm/php.ini
 
 # Fix sources
 sudo sed "s|<TPL:NGINX_LOCATION>|${url_path}|g" -i /var/www/wifiadmin/config.php
