@@ -36,6 +36,10 @@ sudo rm -f /etc/hostapd/hostapd.conf{.tpl,} /etc/radvd.conf{.tpl,} /etc/dhcp/dhc
 sudo rm -f /etc/nginx/conf.d/${domain}.d/wifiadmin.conf
 sudo rm -f /etc/php5/fpm/pool.d/wifiadmin.conf
 
+# Remove firmwares
+sudo rm -f /lib/firmware/htc-7010.fw
+sudo rm -f /lib/firmware/htc-9271.fw
+
 # Restart services
 sudo yunohost service stop php5-fpm
 sudo yunohost service start php5-fpm

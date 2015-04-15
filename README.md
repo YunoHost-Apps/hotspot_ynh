@@ -20,3 +20,13 @@ See the <a href="https://raw.githubusercontent.com/jvaubourg/hotspot_ynh/master/
 * Automatic clients configuration (IPv6 with SLAAC/DHCPv6 and IPv4 with DHCPv4)
 * Set an IPv6 from your delegated prefix (*prefix::42*) on the server, to use for the AAAA records
 * Web interface ([screenshot](https://raw.githubusercontent.com/jvaubourg/hotspot_ynh/master/screenshot.png))
+
+## Prerequisites
+
+This app works with a non-stable version of YunoHost.
+
+Until this version is available (coming soon!) as an official stable release, you need to execute some commands before installing this app:
+
+    # service bind9 stop
+    # update-rc.d bind9 remove
+    # apt-get install dnsmasq
