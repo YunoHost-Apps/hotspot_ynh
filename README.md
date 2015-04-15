@@ -3,8 +3,6 @@
 
 **Warning: work in progress**
 
-**Warning: use the dev branch with the daily version of yunohost (compatibility with dnsmasq)**
-
 Hotspot wifi app for [YunoHost](http://yunohost.org/).
 
 * Broadcast your own Wifi internet access in addition to your self-hosted web services.
