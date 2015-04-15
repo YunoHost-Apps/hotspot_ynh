@@ -1,3 +1,21 @@
+/* Wifi Hotspot app for YunoHost 
+ * Copyright (C) 2015 Julien Vaubourg <julien@vaubourg.com>
+ * Contribute at https://github.com/jvaubourg/hotspot_ynh
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 li.status-info {
   color: #5BC0DE;
 }
@@ -42,4 +60,83 @@ div#github {
 
 div#github a {
   margin-left: 17px;
+}
+
+div#saveconfirmation {
+  display: none;
+  padding-right: 15px;
+  width: 60%;
+  margin: 0 auto;
+}
+
+div#saveconfirmation div#confirm {
+  background-color: #fff;
+  padding: 10px;
+  margin: 15px 0 0 0;
+  border: 1px solid #F5E79E;
+}
+
+div#wifiparty_screen {
+  top: 0;
+  left: 0;
+  display: none;
+  position: fixed;
+  height: 100vh;
+  width: 100vw;
+  z-index: 998;
+  background-color: #fff;
+  text-align: center;
+}
+
+div#wifiparty_screen div.btn-group {
+  display: block;
+  margin: 5px;
+  opacity: 0.3;
+}
+
+div#wifiparty_screen div.btn-group:hover {
+  opacity: 0.7;
+}
+
+div#wifiparty_ssid_part {
+  background: #5CB85C;
+  color: #fff;
+}
+
+div#wifiparty_ssid_part div.btn-group {
+  float: left;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 999;
+  opacity: 0.2;
+}
+
+div#wifiparty_ssid_part div.btn-group:hover {
+  opacity: 0.8;
+}
+
+span#wifiparty_ssid {
+  font-size: 70px;
+}
+
+div#wifiparty_passphrase {
+  clear: both;
+  font-size: 140px;
+  font-style: italic;
+  margin: 50px 20px;
+  word-wrap: break-word;
+  line-height: 0.9;
+}
+
+div#wifiparty_passphrase span.passdigit {
+  color: #428BCA;
+}
+
+div#wifiparty_passphrase span.passother {
+  color: #D9534F;
+}
+
+div#wifiparty_passphrase span.passspace {
+  color: #CCC;
 }

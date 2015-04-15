@@ -1,5 +1,22 @@
 #!/bin/bash
 
+# Wifi Hotspot app for YunoHost 
+# Copyright (C) 2015 Julien Vaubourg <julien@vaubourg.com>
+# Contribute at https://github.com/jvaubourg/hotspot_ynh
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 # Retrieve arguments
 domain=$(sudo yunohost app setting hotspot domain)
 
@@ -9,10 +26,19 @@ sudo yunohost service remove ynh-hotspot
 sudo rm -f /etc/init.d/ynh-hotspot
 sudo rm -f /tmp/.ynh-hotspot-*
 
+# Update firewall for DHCP
+sudo yunohost firewall disallow --ipv6 UDP 547
+sudo yunohost firewall disallow UDP 67
+
 # Remove confs
+sudo rm -fr /etc/dnsmasq.d.tpl/
 sudo rm -f /etc/hostapd/hostapd.conf{.tpl,} /etc/radvd.conf{.tpl,} /etc/dhcp/dhcpd.conf{.tpl,}
 sudo rm -f /etc/nginx/conf.d/${domain}.d/wifiadmin.conf
 sudo rm -f /etc/php5/fpm/pool.d/wifiadmin.conf
+
+# Remove firmwares
+sudo rm -f /lib/firmware/htc-7010.fw
+sudo rm -f /lib/firmware/htc-9271.fw
 
 # Restart services
 sudo yunohost service stop php5-fpm
@@ -24,6 +50,7 @@ sudo rm -rf /var/www/wifiadmin/
 
 # Remove packets
 # The yunohost policy is currently to not uninstall packets (dependency problems)
-## sudo apt-get --assume-yes --force-yes remove hostapd radvd isc-dhcp-server iptables sipcalc wireless-tools
+## sudo apt-get --assume-yes --force-yes remove hostapd iptables sipcalc wireless-tools
+## sudo apt-get --assume-yes --force-yes remove firmware-atheros atmel-firmware firmware-linux-free firmware-linux-nonfree firmware-realtek firmware-ralink firmware-libertas zd1211-firmware
 
 exit 0

@@ -1,17 +1,35 @@
 #!/bin/bash
 
+# Wifi Hotspot app for YunoHost 
+# Copyright (C) 2015 Julien Vaubourg <julien@vaubourg.com>
+# Contribute at https://github.com/jvaubourg/hotspot_ynh
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 # Retrieve arguments
 domain=${1}
 url_path=${2}
 wifi_ssid=${3}
 wifi_passphrase=${4}
+firmware_nonfree=${5}
 
 ##
 ## These arguments are optional but YunoHost is not yet able to handle them with the web installer
 ## See manifest.json.options
 ##
 #
-#ip6_net=${5}
+#ip6_net=${6}
 
 # Check arguments
 if [ -z "${wifi_ssid}" -o -z "${wifi_passphrase}" ]; then
@@ -38,9 +56,17 @@ if [ ! $? -eq 0 ]; then
 fi
 
 # Install packages
-# TODO: Replace isc-dhcp-server by dnsmasq (currently negotiating with the YunoHost team to
-# also replace bind9 by dnsmasq)
-packages='php5-fpm sipcalc hostapd radvd isc-dhcp-server iptables wireless-tools wireless-tools'
+packages='php5-fpm sipcalc hostapd iptables wireless-tools dnsmasq'
+export DEBIAN_FRONTEND=noninteractive
+
+# Packaged USB Wireless Device firmwares
+# Based on https://wiki.debian.org/WiFi#USB_Devices
+if [ "${firmware_nonfree}" == yes ]; then
+  packages="$packages firmware-atheros atmel-firmware firmware-linux-free firmware-linux-nonfree firmware-realtek firmware-ralink firmware-libertas zd1211-firmware"
+else
+  packages="$packages firmware-linux-free"
+fi
+
 sudo apt-get --assume-yes --force-yes install ${packages}
 
 if [ $? -ne 0 ]; then
@@ -52,6 +78,16 @@ fi
 if [ -z "${ip6_net}" ]; then
   ip6_net=none
   ip6_addr=none
+
+  if [ -e /tmp/.ynh-vpnclient-started ]; then
+    vpnclient_ip6_net=$(sudo yunohost app setting vpnclient ip6_net 2>&1)
+    vpnclient_ip6_addr=$(sudo yunohost app setting vpnclient ip6_addr 2>&1)
+
+    if [[ "${vpnclient_ip6_net}" =~ :: && "${vpnclient_ip6_addr}" =~ :: ]]; then
+      ip6_net=${vpnclient_ip6_net}
+      ip6_addr=${vpnclient_ip6_addr}
+    fi
+  fi
 #else
 #  ip6_net=$(bash ../conf/ipv6_expanded "${ip6_net}")
 #
@@ -79,7 +115,9 @@ if [ $? -eq 0 ]; then
 fi
 
 # Save arguments
+sudo yunohost app setting hotspot service_enabled -v 1
 sudo yunohost app setting hotspot wifi_ssid -v "${wifi_ssid}"
+sudo yunohost app setting hotspot wifi_secure -v 1
 sudo yunohost app setting hotspot wifi_passphrase -v "${wifi_passphrase}"
 sudo yunohost app setting hotspot wifi_device -v "${wifi_device}"
 sudo yunohost app setting hotspot wifi_channel -v 6
@@ -98,11 +136,21 @@ sudo install -o root -g root -m 0755 ../conf/ipv6_expanded /usr/local/bin/
 sudo install -o root -g root -m 0755 ../conf/ipv6_compressed /usr/local/bin/
 
 # Copy confs
+sudo mkdir -pm 0755 /var/log/nginx/
+sudo mkdir -pm 0755 /etc/dnsmasq.d.tpl/
+sudo chown root: /etc/dnsmasq.d.tpl/
+
 sudo install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl /etc/hostapd/
-sudo install -b -o root -g root -m 0644 ../conf/radvd.conf.tpl /etc/
-sudo install -b -o root -g root -m 0644 ../conf/dhcpd.conf.tpl /etc/dhcp/
+sudo install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.d.tpl/dhcpdv6.conf.tpl
+sudo install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.d.tpl/dhcpdv4.conf.tpl
 sudo install -b -o root -g root -m 0644 ../conf/nginx_wifiadmin.conf "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
 sudo install -b -o root -g root -m 0644 ../conf/phpfpm_wifiadmin.conf /etc/php5/fpm/pool.d/wifiadmin.conf
+
+# Copy (free) firmwares
+# Extract from http://packages.trisquel.info/toutatis-updates/open-ath9k-htc-firmware
+# https://www.fsf.org/news/ryf-certification-thinkpenguin-usb-with-atheros-chip
+sudo install -b -o root -g root -m 0644 ../conf/firmware_htc-7010.fw /lib/firmware/htc-7010.fw
+sudo install -b -o root -g root -m 0644 ../conf/firmware_htc-9271.fw /lib/firmware/htc-9271.fw
 
 # Copy web sources
 sudo mkdir -pm 0755 /var/www/wifiadmin/
@@ -126,7 +174,6 @@ sudo sed 's|<TPL:PHP_NAME>|wifiadmin|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
 sudo sed 's|<TPL:PHP_USER>|admin|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
 sudo sed 's|<TPL:PHP_GROUP>|admins|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
 sudo sed 's|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
-sudo sed 's|^;\?\s*max_execution_time.\+|max_execution_time = 600|' -i /etc/php5/fpm/php.ini
 
 # Fix sources
 sudo sed "s|<TPL:NGINX_LOCATION>|${url_path}|g" -i /var/www/wifiadmin/config.php
@@ -134,18 +181,14 @@ sudo sed "s|<TPL:NGINX_LOCATION>|${url_path}|g" -i /var/www/wifiadmin/config.php
 # Copy init script
 sudo install -o root -g root -m 0755 ../conf/init_ynh-hotspot /etc/init.d/ynh-hotspot
 
+# Update firewall for DHCP
+sudo yunohost firewall allow --no-upnp --ipv6 UDP 547
+sudo yunohost firewall allow --no-upnp UDP 67
+
 # Set default inits
 # The boot order of these services are important, so they are disabled by default
 # and the ynh-hotspot service handles them.
 # All services are registred by yunohost in order to prevent conflicts after the uninstall.
-sudo yunohost service add isc-dhcp-server
-sudo yunohost service stop isc-dhcp-server
-sudo yunohost service disable isc-dhcp-server
-
-sudo yunohost service add radvd
-sudo yunohost service stop radvd
-sudo yunohost service disable radvd
-
 sudo yunohost service add hostapd 
 sudo yunohost service stop hostapd 
 sudo yunohost service disable hostapd 

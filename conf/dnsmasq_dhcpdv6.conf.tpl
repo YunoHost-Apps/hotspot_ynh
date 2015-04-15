@@ -15,26 +15,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-location <TPL:NGINX_LOCATION> {
-  alias <TPL:NGINX_REALPATH>;
+# Do DHCP and Router Advertisements for this subnet. Set the A bit in the RA
+# so that clients can use SLAAC addresses as well as DHCP ones.
+dhcp-range=interface:<TPL:WIFI_DEVICE>,<TPL:IP6_NET>,slaac,64,4h
 
-  if ($scheme = http) {
-    rewrite ^ https://$server_name$request_uri? permanent;
-  }
-
-  client_max_body_size 10G;
-  index index.php;
-  try_files $uri $uri/ index.php;
-
-  location ~ [^/]\.php(/|$) {
-    fastcgi_split_path_info ^(.+?\.php)(/.*)$;
-    fastcgi_pass unix:/var/run/php5-fpm-<TPL:PHP_NAME>.sock;
-    fastcgi_index index.php;
-    include fastcgi_params;
-    fastcgi_read_timeout 600;
-    fastcgi_param REMOTE_USER $remote_user;
-    fastcgi_param PATH_INFO $fastcgi_path_info;
-  }
-
-  include conf.d/yunohost_panel.conf.inc;
-}
+# Send DHCPv6 option. Note [] around IPv6 addresses.
+dhcp-option=option6:dns-server,[<TPL:IP6_DNS0>],[<TPL:IP6_DNS1>]

@@ -18,7 +18,17 @@ See the <a href="https://raw.githubusercontent.com/jvaubourg/hotspot_ynh/master/
 * WPA2 encryption
 * 802.11n compliant
 * IPv6 compliant (with a delegated prefix)
-* Automatic clients configuration (IPv6 and IPv4)
-* Announce DNS resolvers (IPv6 and IPv4)
+* Announce DNS resolvers (IPv6 with RDNSS/DHCPv6 and IPv4 with DHCPv4)
+* Automatic clients configuration (IPv6 with SLAAC/DHCPv6 and IPv4 with DHCPv4)
 * Set an IPv6 from your delegated prefix (*prefix::42*) on the server, to use for the AAAA records
 * Web interface ([screenshot](https://raw.githubusercontent.com/jvaubourg/hotspot_ynh/master/screenshot.png))
+
+## Prerequisites
+
+This app works with a non-stable version of YunoHost.
+
+Until this version is available (coming soon!) as an official stable release, you need to execute some commands before installing this app:
+
+    # service bind9 stop
+    # update-rc.d bind9 remove
+    # apt-get install dnsmasq

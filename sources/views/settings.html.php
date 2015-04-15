@@ -1,3 +1,47 @@
+<!--
+  Wifi Hotspot app for YunoHost 
+  Copyright (C) 2015 Julien Vaubourg <julien@vaubourg.com>
+  Contribute at https://github.com/jvaubourg/hotspot_ynh
+  
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<div id="wifiparty_screen">
+<div id="wifiparty_ssid_part">
+  <div class="btn-group" role="group">
+    <button type="button" class="btn btn-default" id="wifiparty_close"><span class="glyphicon glyphicon-eye-close"></span></button>
+    <button type="button" class="btn btn-default" id="wifiparty_zoomin_ssid"><span class="glyphicon glyphicon-zoom-in"></span></button>
+    <button type="button" class="btn btn-default" id="wifiparty_zoomout_ssid"><span class="glyphicon glyphicon-zoom-out"></span></button>
+  </div>
+
+  <span id="wifiparty_ssid"><span class="glyphicon glyphicon-signal"></span> <?= $wifi_ssid ?></span>
+</div>
+
+<div class="btn-group" role="group">
+  <button type="button" class="btn btn-default" id="wifiparty_zoomin_passphrase"><span class="glyphicon glyphicon-zoom-in"></span></button>
+  <button type="button" class="btn btn-default" id="wifiparty_zoomout_passphrase"><span class="glyphicon glyphicon-zoom-out"></span></button>
+</div>
+
+<div id="wifiparty_passphrase"><?php
+  $pw = preg_replace('/[^0-9a-z ]/i', '<span-class="passother">$0</span>', $wifi_passphrase);
+  $pw = preg_replace('/\d/', '<span-class="passdigit">$0</span>', $pw);
+  $pw = preg_replace('/ /', '<span class="passspace">&#x25AE;</span>', $pw);
+  $pw = preg_replace('/span-class/', 'span class', $pw);
+  echo $pw;
+?></div>
+</div>
+
 <h2><?= T_("Wifi Hotspot Configuration") ?></h2>
 <?php if($faststatus): ?>
   <span class="label label-success" data-toggle="tooltip" data-title="<?= T_('This is a fast status. Click on More details to show the complete status.') ?>"><?= T_('Running') ?></span>
@@ -21,6 +65,23 @@
 
       <div class="panel panel-default">
         <div class="panel-heading">
+          <h3 class="panel-title"><?= T_("Service") ?></h3>
+        </div>
+
+        <div style="padding: 14px 14px 0 10px">
+          <div class="form-group">
+            <label for="wifi_secure" class="col-sm-3 control-label"><?= T_('Hotspot Enabled') ?></label>
+            <div class="col-sm-9 input-group-btn">
+              <div class="input-group">
+                <input type="checkbox" class="form-control switch" name="service_enabled" id="service_enabled" value="1" <?= $service_enabled == 1 ? 'checked="checked"' : '' ?> />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel panel-default enabled" <?= $service_enabled == 0 ? 'style="display: none"' : '' ?>>
+        <div class="panel-heading">
           <h3 class="panel-title"><?= T_("Wifi") ?></h3>
         </div>
 
@@ -31,11 +92,21 @@
               <input type="text" class="form-control" name="wifi_ssid" id="wifi_ssid" placeholder="myNeutralNetwork" value="<?= $wifi_ssid ?>" />
             </div>
           </div>
-  
+
           <div class="form-group">
+            <label for="wifi_secure" class="col-sm-3 control-label"><?= T_('Secure') ?></label>
+            <div class="col-sm-9 input-group-btn" data-toggle="tooltip" data-title="<?= T_('Disabling the Secure Wifi allows everyone to join the hotspot and spy the traffic (but it\'s perfect for a PirateBox)') ?>">
+              <div class="input-group">
+                <input type="checkbox" class="form-control switch" name="wifi_secure" id="wifi_secure" value="1" <?= $wifi_secure == 1 ? 'checked="checked"' : '' ?> />
+              </div>
+            </div>
+          </div>
+  
+          <div class="form-group secure" <?= $wifi_secure == 0 ? 'style="display: none"' : '' ?>>
             <label for="wifi_passphrase" class="col-sm-3 control-label"><?= T_('Password (WPA2)') ?></label>
-            <div class="col-sm-9">
+            <div class="input-group col-sm-9" style="padding: 0 15px">
               <input type="text" data-toggle="tooltip" data-title="<?= T_('At least 8 characters') ?>" class="form-control" name="wifi_passphrase" id="wifi_passphrase" placeholder="VhegT8oev0jZI" value="<?= $wifi_passphrase ?>" />
+              <a class="btn input-group-addon" id="wifiparty" data-toggle="tooltip" data-title="<?= T_('Show to your friends how to access to your hotspot') ?>"><span class="glyphicon glyphicon-fullscreen"></span></a>
             </div>
           </div>
   
@@ -62,8 +133,8 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="wifi_passphrase" class="col-sm-3 control-label"><?= T_('Wifi N') ?></label>
+          <div class="form-group" style="display: none">
+            <label for="wifi_n" class="col-sm-3 control-label"><?= T_('Wifi N') ?></label>
             <div class="col-sm-9 input-group-btn" data-toggle="tooltip" data-title="<?= T_('Only if your antenna is 802.11n compliant') ?>">
               <div class="input-group">
                 <input type="checkbox" class="form-control switch" name="wifi_n" id="wifi_n" value="1" <?= $wifi_n == 1 ? 'checked="checked"' : '' ?> />
@@ -86,7 +157,7 @@
         </div>
       </div>
 
-      <div class="panel panel-success">
+      <div class="panel panel-success enabled" <?= $service_enabled == 0 ? 'style="display: none"' : '' ?>>
         <div class="panel-heading">
           <h3 class="panel-title" data-toggle="tooltip" data-title="<?= T_('Real Internet') ?>"><?= T_("IPv6") ?></h3>
         </div>
@@ -123,7 +194,7 @@
         </div>
       </div>
 
-      <div class="panel panel-danger">
+      <div class="panel panel-danger enabled" <?= $service_enabled == 0 ? 'style="display: none"' : '' ?>>
         <div class="panel-heading">
           <h3 class="panel-title" data-toggle="tooltip" data-title="<?= T_('Old Internet') ?>"><?= T_("IPv4") ?></h3>
         </div>
@@ -154,7 +225,18 @@
 
       <div class="form-group">
         <div style="text-align: center">
+<?php if($is_connected_through_hotspot): ?>
+          <div class="alert alert-dismissible alert-warning fade in" role="alert" id="saveconfirmation">
+            <strong><?= T_('Notice') ?>:</strong> <?= T_("You are currently connected through the wifi hotspot. Please, confirm the reloading, wait for the wifi disconnect/reconnect and go back here to check that everything is okay.") ?>
+            <div id="confirm">
+              <button type="submit" class="btn btn-default" data-toggle="tooltip" id="save" data-title="<?= T_('Reloading may take a few minutes. Be patient.') ?>"><?= T_('Confirm') ?></button> <img src="public/img/loading.gif" id="save-loading" alt="Loading..." />
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-default" id="saveconfirm"><?= T_('Save and reload') ?></button>
+<?php else: ?>
           <button type="submit" class="btn btn-default" data-toggle="tooltip" id="save" data-title="<?= T_('Reloading may take a few minutes. Be patient.') ?>"><?= T_('Save and reload') ?></button> <img src="public/img/loading.gif" id="save-loading" alt="Loading..." />
+<?php endif; ?>
         </div>
       </div>
     </form>

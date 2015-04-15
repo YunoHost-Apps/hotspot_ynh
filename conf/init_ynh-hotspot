@@ -9,6 +9,23 @@
 # Description:       Set prerequisites for wifi hotspot.
 ### END INIT INFO
 
+# Wifi Hotspot app for YunoHost 
+# Copyright (C) 2015 Julien Vaubourg <julien@vaubourg.com>
+# Contribute at https://github.com/jvaubourg/hotspot_ynh
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 # Functions
 ## State functions
 
@@ -18,11 +35,6 @@ has_vpnclient_app() {
 
 has_ip6delegatedprefix() {
   [ "${ynh_ip6_net}" != none ]
-}
-
-is_ndproxy_set() {
-  proxy=$(ip -6 neighbour show proxy)
-  [ ! -z "${proxy}" ]
 }
 
 is_nat_set() {
@@ -46,29 +58,42 @@ is_forwarding_set() {
   [ "${ip6}" -eq 1 -a "${ip4}" -eq 1 ]
 }
 
+is_dhcpdv6_set() {
+  [ -e /etc/dnsmasq.d/dhcpdv6.conf ]
+}
+
+is_dhcpdv4_set() {
+  [ -e /etc/dnsmasq.d/dhcpdv4.conf ]
+}
+
 is_hostapd_running() {
   service hostapd status &> /dev/null
+
+  if [ $? -eq 0 ]; then
+
+    # If the wifi antenna was unplugged
+    if ip link show dev "${ynh_wifi_device}" | grep -q DOWN; then
+      service hostapd stop &> /dev/null
+      return 1
+    fi
+
+    return 0
+  fi
+
+  return 1
 }
 
-is_radvd_running() {
-  service radvd status &> /dev/null
-}
-
-is_dhcpd_running() {
-  service isc-dhcp-server status &> /dev/null
+is_dnsmasq_running() {
+  service dnsmasq status &> /dev/null
 }
 
 is_running() {
-  ( has_ip6delegatedprefix && is_ip6addr_set && is_radvd_running && is_ndproxy_set || ! has_ip6delegatedprefix )\
+  ( has_ip6delegatedprefix && is_ip6addr_set && is_dhcpdv6_set || ! has_ip6delegatedprefix )\
   && is_nat_set "${new_internet_device}" && is_ip4nataddr_set && is_forwarding_set && is_hostapd_running\
-  && is_dhcpd_running
+  && is_dhcpdv4_set && is_dnsmasq_running
 }
 
 ## Setters
-
-set_ndproxy() {
-  ip -6 neighbour add proxy "${ynh_ip6_addr}" dev "${ynh_wifi_device}"
-}
 
 set_nat() {
   internet_device=${1}
@@ -90,6 +115,24 @@ set_forwarding() {
   sysctl -w net.ipv4.conf.all.forwarding=1 > /dev/null
 }
 
+set_dhcpd() {
+  if has_ip6delegatedprefix; then
+    cp /etc/dnsmasq.d.tpl/dhcpdv6.conf.tpl /etc/dnsmasq.d/dhcpdv6.conf
+  
+    sed "s|<TPL:WIFI_DEVICE>|${ynh_wifi_device}|g" -i /etc/dnsmasq.d/dhcpdv6.conf
+    sed "s|<TPL:IP6_NET>|${ynh_ip6_net}|g" -i /etc/dnsmasq.d/dhcpdv6.conf
+    sed "s|<TPL:IP6_DNS0>|${ynh_ip6_dns0}|g" -i /etc/dnsmasq.d/dhcpdv6.conf
+    sed "s|<TPL:IP6_DNS1>|${ynh_ip6_dns1}|g" -i /etc/dnsmasq.d/dhcpdv6.conf
+  fi
+
+  cp /etc/dnsmasq.d.tpl/dhcpdv4.conf.tpl /etc/dnsmasq.d/dhcpdv4.conf
+
+  sed "s|<TPL:IP4_DNS0>|${ynh_ip4_dns0}|g" -i /etc/dnsmasq.d/dhcpdv4.conf
+  sed "s|<TPL:IP4_DNS1>|${ynh_ip4_dns1}|g" -i /etc/dnsmasq.d/dhcpdv4.conf
+  sed "s|<TPL:WIFI_DEVICE>|${ynh_wifi_device}|g" -i /etc/dnsmasq.d/dhcpdv4.conf
+  sed "s|<TPL:IP4_NAT_PREFIX>|${ynh_ip4_nat_prefix}|g" -i /etc/dnsmasq.d/dhcpdv4.conf
+}
+
 start_hostapd() {
   cp /etc/hostapd/hostapd.conf{.tpl,}
 
@@ -104,36 +147,16 @@ start_hostapd() {
     sed "s|<TPL:N_COMMENT>|#|g" -i /etc/hostapd/hostapd.conf
   fi
 
+  if [ "${ynh_wifi_secure}" -eq 1 ]; then
+    sed "s|<TPL:SEC_COMMENT>||g" -i /etc/hostapd/hostapd.conf
+  else
+    sed "s|<TPL:SEC_COMMENT>|#|g" -i /etc/hostapd/hostapd.conf
+  fi
+
   service hostapd start
 }
 
-start_radvd() {
-  cp /etc/radvd.conf{.tpl,}
-
-  sed "s|<TPL:WIFI_DEVICE>|${ynh_wifi_device}|g" -i /etc/radvd.conf
-  sed "s|<TPL:IP6_NET>|${ynh_ip6_net}|g" -i /etc/radvd.conf
-  sed "s|<TPL:IP6_DNS0>|${ynh_ip6_dns0}|g" -i /etc/radvd.conf
-  sed "s|<TPL:IP6_DNS1>|${ynh_ip6_dns1}|g" -i /etc/radvd.conf
-
-  service radvd start
-}
-
-start_dhcpd() {
-  cp /etc/dhcp/dhcpd.conf{.tpl,}
-
-  sed "s|<TPL:IP4_DNS0>|${ynh_ip4_dns0}|g" -i /etc/dhcp/dhcpd.conf
-  sed "s|<TPL:IP4_DNS1>|${ynh_ip4_dns1}|g" -i /etc/dhcp/dhcpd.conf
-  sed "s|<TPL:WIFI_DEVICE>|${ynh_wifi_device}|g" -i /etc/dhcp/dhcpd.conf
-  sed "s|<TPL:IP4_NAT_PREFIX>|${ynh_ip4_nat_prefix}|g" -i /etc/dhcp/dhcpd.conf
-
-  service isc-dhcp-server start
-}
-
 ## Unsetters
-
-unset_ndproxy() {
-  ip -6 neighbour delete proxy "${ynh_ip6_addr}" dev "${ynh_wifi_device}"
-}
 
 unset_nat() {
   internet_device=${1}
@@ -149,6 +172,10 @@ unset_ip6addr() {
   ip address delete "${ynh_ip6_addr}/64" dev "${ynh_wifi_device}"
 }
 
+unset_dhcpd() {
+  rm -f /etc/dnsmasq.d/dhcpdv?.conf
+}
+
 unset_forwarding() {
   sysctl -w net.ipv6.conf.all.forwarding=0 > /dev/null
   sysctl -w net.ipv4.conf.all.forwarding=0 > /dev/null
@@ -156,14 +183,6 @@ unset_forwarding() {
 
 stop_hostapd() {
   service hostapd stop
-}
-
-stop_radvd() {
-  service radvd stop
-}
-
-stop_dhcpd() {
-  service isc-dhcp-server stop
 }
 
 ## Tools
@@ -206,55 +225,61 @@ moulinette_set() {
   fi
 }
 
-# Restart php5-fpm at the first start (it needs to be restarted after the slapd start)
-if [ ! -e /tmp/.ynh-hotspot-boot ]; then
-  touch /tmp/.ynh-hotspot-boot
-  service php5-fpm restart
-fi
+if [ "$1" != restart ]; then
 
-# Variables
-
-echo -n "Retrieving Yunohost settings... "
-
-ynh_wifi_device=$(moulinette_get wifi_device)
-ynh_wifi_ssid=$(moulinette_get wifi_ssid)
-ynh_wifi_passphrase=$(moulinette_get wifi_passphrase)
-ynh_wifi_channel=$(moulinette_get wifi_channel)
-ynh_wifi_n=$(moulinette_get wifi_n)
-ynh_ip6_addr=$(moulinette_get ip6_addr)
-ynh_ip6_net=$(moulinette_get ip6_net)
-ynh_ip6_dns0=$(moulinette_get ip6_dns0)
-ynh_ip6_dns1=$(moulinette_get ip6_dns1)
-ynh_ip4_dns0=$(moulinette_get ip4_dns0)
-ynh_ip4_dns1=$(moulinette_get ip4_dns1)
-ynh_ip4_nat_prefix=$(moulinette_get ip4_nat_prefix)
-
-old_internet_device=$(moulinette_get internet_device)
-new_internet_device=$(ip route | awk '/default via/ { print $NF; }')
-
-# Switch the NAT interface if there is a VPN
-ip link show dev tun0 &> /dev/null
-if [ "$?" -eq 0 ]; then
-  new_internet_device=tun0
-fi
-
-echo "OK"
-
-# Check IPv6 delegated prefix from vpnclient
-vpnclient_ip6_net=$(moulinette_vpnclient_get ip6_net)
-
-if [ ! -z "${vpnclient_ip6_addr}" ]; then
-  if [ "${ynh_ip6_net}" == none ]; then
-    ynh_ip6_net=$vpnclient_ip6_net
-    ynh_ip6_addr=$(moulinette_vpnclient_get ip6_addr)
+  # Restart php5-fpm at the first start (it needs to be restarted after the slapd start)
+  if [ ! -e /tmp/.ynh-hotspot-boot ]; then
+    touch /tmp/.ynh-hotspot-boot
+    service php5-fpm restart
+  fi
   
-    moulinette_set ip6_net "${ynh_ip6_net}"
-    moulinette_set ip6_addr "${ynh_ip6_addr}"
-  else
-    if [ "${ynh_ip6_net}" != "${vpnclient_ip6_net}" ]; then
-      echo "[WARN] The IPv6 delegated prefix is different from the vpnclient one"
+  # Variables
+  
+  echo -n "Retrieving Yunohost settings... "
+  
+  ynh_service_enabled=$(moulinette_get service_enabled)
+  ynh_wifi_device=$(moulinette_get wifi_device)
+  ynh_wifi_ssid=$(moulinette_get wifi_ssid)
+  ynh_wifi_secure=$(moulinette_get wifi_secure)
+  ynh_wifi_passphrase=$(moulinette_get wifi_passphrase)
+  ynh_wifi_channel=$(moulinette_get wifi_channel)
+  ynh_wifi_n=$(moulinette_get wifi_n)
+  ynh_ip6_addr=$(moulinette_get ip6_addr)
+  ynh_ip6_net=$(moulinette_get ip6_net)
+  ynh_ip6_dns0=$(moulinette_get ip6_dns0)
+  ynh_ip6_dns1=$(moulinette_get ip6_dns1)
+  ynh_ip4_dns0=$(moulinette_get ip4_dns0)
+  ynh_ip4_dns1=$(moulinette_get ip4_dns1)
+  ynh_ip4_nat_prefix=$(moulinette_get ip4_nat_prefix)
+  
+  old_internet_device=$(moulinette_get internet_device)
+  new_internet_device=$(ip route | awk '/default via/ { print $NF; }')
+  
+  # Switch the NAT interface if there is a VPN
+  ip link show dev tun0 &> /dev/null
+  if [ "$?" -eq 0 ]; then
+    new_internet_device=tun0
+  fi
+  
+  echo "OK"
+  
+  # Check IPv6 delegated prefix from vpnclient
+  vpnclient_ip6_net=$(moulinette_vpnclient_get ip6_net)
+  
+  if [ ! -z "${vpnclient_ip6_addr}" ]; then
+    if [ "${ynh_ip6_net}" == none ]; then
+      ynh_ip6_net=$vpnclient_ip6_net
+      ynh_ip6_addr=$(moulinette_vpnclient_get ip6_addr)
+    
+      moulinette_set ip6_net "${ynh_ip6_net}"
+      moulinette_set ip6_addr "${ynh_ip6_addr}"
+    else
+      if [ "${ynh_ip6_net}" != "${vpnclient_ip6_net}" ]; then
+        echo "[WARN] The IPv6 delegated prefix is different from the vpnclient one"
+      fi
     fi
   fi
+
 fi
 
 # Script
@@ -263,6 +288,8 @@ case "$1" in
   start)
     if is_running; then
       echo "Already started"
+    elif [ "${ynh_service_enabled}" -eq 0 ]; then
+      echo "Disabled service"
     else
       echo "[hotspot] Starting..."
       touch /tmp/.ynh-hotspot-started
@@ -271,12 +298,6 @@ case "$1" in
         moulinette_set vpnclient yes
       else
         moulinette_set vpnclient no
-      fi
-
-      # Set NDP proxy
-      if has_ip6delegatedprefix && ! is_ndproxy_set; then
-        echo "Set NDP proxy"
-        set_ndproxy
       fi
 
       # Check old state of the ipv4 NAT settings
@@ -314,22 +335,17 @@ case "$1" in
       if ! is_hostapd_running; then
         echo "Run hostapd"
         start_hostapd
-        sleep 1
       fi
 
-      # Run radvd
-      # must be running after hostapd
-      if has_ip6delegatedprefix && ! is_radvd_running; then
-        echo "Run radvd"
-        start_radvd
+      # Run DHCP servers
+      if ( has_ip6delegatedprefix && ! is_dhcpdv6_set ) || ! is_dhcpdv4_set; then
+        echo "Set DHCP servers (dnsmasq)"
+        set_dhcpd
       fi
 
-      # Run dhcpd
-      # "options routers" addr (is_ip6addr_set) must be set before
-      if ! is_dhcpd_running; then
-        echo "Run dhcpd"
-        start_dhcpd
-      fi
+      # Restart dhcpd
+      service bind9 stop &> /dev/null
+      service dnsmasq restart
 
       # Update dynamic settings
       moulinette_set internet_device "${new_internet_device}"
@@ -337,13 +353,8 @@ case "$1" in
   ;;
   stop)
     echo "[hotspot] Stopping..."
-    rm /tmp/.ynh-hotspot-started
+    rm -f /tmp/.ynh-hotspot-started
 
-    if has_ip6delegatedprefix && is_ndproxy_set; then
-      echo "Unset NDP proxy"
-      unset_ndproxy
-    fi
-  
     if is_nat_set "${old_internet_device}"; then
       echo "Unset NAT"
       unset_nat "${old_internet_device}"
@@ -364,27 +375,33 @@ case "$1" in
       unset_forwarding
     fi
   
+    if is_dhcpdv6_set || is_dhcpdv4_set; then
+      echo "Stop DHCP servers"
+      unset_dhcpd
+    fi
+
     if is_hostapd_running; then
       echo "Stop hostapd"
       stop_hostapd
-    fi
-  
-    if has_ip6delegatedprefix && is_radvd_running; then
-      echo "Stop radvd"
-      stop_radvd
-    fi
-  
-    if is_dhcpd_running; then
-      echo "Stop dhcpd"
-      stop_dhcpd
     fi
 
     if has_vpnclient_app; then
       service ynh-vpnclient start
     fi
+
+    service dnsmasq restart
+  ;;
+  restart)
+    $0 stop
+    $0 start
   ;;
   status)
     exitcode=0
+
+    if [ "${ynh_service_enabled}" -eq 0 ]; then
+      echo "[ERR] Hotspot Service disabled"
+      exitcode=1
+    fi
 
     echo "[INFO] Autodetected internet interface: ${new_internet_device} (last start: ${old_internet_device})"
 
@@ -392,28 +409,28 @@ case "$1" in
       echo "[INFO] IPv6 delegated prefix found"
       echo "[INFO] IPv6 address computed from the delegated prefix: ${ynh_ip6_addr}"
 
-      if is_ndproxy_set; then
-        echo "[OK] NDP proxy set"
-      else
-        echo "[ERR] No NDP proxy set"
-        exitcode=1
-      fi
-  
       if is_ip6addr_set; then
         echo "[OK] IPv6 address set"
       else
         echo "[ERR] No IPv6 address set"
         exitcode=1
       fi
-  
-      if is_radvd_running; then
-        echo "[OK] Radvd is running"
+
+      if is_dhcpdv6_set; then
+        echo "[OK] SLAAC & DHCPv6 server set"
       else
-        echo "[ERR] Radvd is not running"
+        echo "[ERR] No SLAAC & DHCPv6 server set"
         exitcode=1
       fi
     else
       echo "[INFO] No IPv6 delegated prefix found"
+    fi
+
+    if is_dhcpdv4_set; then
+      echo "[OK] DHCPv4 server set"
+    else
+      echo "[ERR] No DHCPv4 server set"
+      exitcode=1
     fi
 
     if is_nat_set "${new_internet_device}"; then
@@ -437,6 +454,13 @@ case "$1" in
       exitcode=1
     fi
 
+    if is_dnsmasq_running; then
+      echo "[OK] Dnsmasq is running"
+    else
+      echo "[ERR] Dnsmasq is not running"
+      exitcode=1
+    fi
+
     if is_hostapd_running; then
       echo "[OK] Hostapd is running"
     else
@@ -444,17 +468,10 @@ case "$1" in
       exitcode=1
     fi
 
-    if is_dhcpd_running; then
-      echo "[OK] Dhcpd is running"
-    else
-      echo "[ERR] Dhcpd is not running"
-      exitcode=1
-    fi
-
     exit ${exitcode}
   ;;
   *)
-    echo "Usage: $0 {start|stop|status}"
+    echo "Usage: $0 {start|stop|restart|status}"
     exit 1
   ;;
 esac
