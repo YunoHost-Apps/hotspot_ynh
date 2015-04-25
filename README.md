@@ -9,7 +9,7 @@ Hotspot wifi app for [YunoHost](http://yunohost.org/).
 * Without internet access, it's a [PirateBox](https://en.wikipedia.org/wiki/PirateBox).
 * With the [VPN Client app for YunoHost](https://github.com/jvaubourg/vpnclient_ynh), it's an encrypted Wifi internet access (eventually with [neutral access](https://en.wikipedia.org/wiki/Net_neutrality), without filters, and with IPv6, depending on your VPN provider).
 
-See the <a href="https://raw.githubusercontent.com/jvaubourg/hotspot_ynh/master/docs/box-project_french.pdf?raw=true">box project explanations</a> (box for a ready-made and nomad self-hosting with YunoHost+VPN, a VPN access through a wifi hotspot, and/or a <a href="https://en.wikipedia.org/wiki/Customer-premises_equipment">CPE</a> for non-profit ISP) in French. An example of hardware associated is the <a href="https://www.olimex.com/Products/OLinuXino/A20/A20-OLinuXino-LIME/open-source-hardware">A20-OLinuXino-LIME</a> with the <a href="https://www.olimex.com/Products/USB-Modules/MOD-WIFI-R5370-ANT/">MOD-WIFI-R5370-ANT</a> (<a href="https://raw.githubusercontent.com/jvaubourg/hotspot_ynh/master/docs/box-project.png">photo</a>). See also the <a href="https://github.com/bleuchtang/olinuxino-a20-lime">YunoHost image project</a> for OLinuXino.
+This YunoHost app is a part of the "[La Brique Internet](http://labriqueinter.net)" project but can be used independently.
 
 ## Features
 
