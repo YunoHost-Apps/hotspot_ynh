@@ -77,11 +77,14 @@ function is_connected_through_hotspot($ip6_net, $ip4_nat_prefix) {
 }
 
 dispatch('/', function() {
-  exec('sudo iwconfig', $devs);
-  $wifi_device = moulinette_get('wifi_device');
-  $multissid = moulinette_get('multissid');
   $ssids = array();
   $devs_list = '';
+
+  exec('sudo iwconfig', $devs);
+
+  $wifi_device = moulinette_get('wifi_device');
+  $multissid = moulinette_get('multissid');
+  $wifi_channel = moulinette_get('wifi_channel');
 
   foreach($devs AS $dev) {
     if(preg_match('/802.11/', $dev)) {
@@ -96,7 +99,6 @@ dispatch('/', function() {
   $wifi_ssid = getArray(moulinette_get('wifi_ssid'));
   $wifi_secure = getArray(moulinette_get('wifi_secure'));
   $wifi_passphrase = getArray(moulinette_get('wifi_passphrase'));
-  $wifi_channel = getArray(moulinette_get('wifi_channel'));
   $ip6_net = getArray(moulinette_get('ip6_net'));
   $ip6_dns0 = getArray(moulinette_get('ip6_dns0'));
   $ip6_dns1 = getArray(moulinette_get('ip6_dns1'));
@@ -110,7 +112,6 @@ dispatch('/', function() {
       'wifi_ssid' => noneValue($wifi_ssid[$i]),
       'wifi_secure' => noneValue($wifi_secure[$i]),
       'wifi_passphrase' => noneValue($wifi_passphrase[$i]),
-      'wifi_channel' => noneValue($wifi_channel[$i]),
       'ip6_net' => noneValue($ip6_net[$i]),
       'ip6_dns0' => noneValue($ip6_dns0[$i]),
       'ip6_dns1' => noneValue($ip6_dns1[$i]),
@@ -129,6 +130,7 @@ dispatch('/', function() {
   set('service_enabled', moulinette_get('service_enabled'));
   set('ssids', $ssids);
   set('wifi_device', $wifi_device);
+  set('wifi_channel', $wifi_channel);
   set('wifi_device_list', $devs_list);
   set('faststatus', service_faststatus() == 0);
   set('is_connected_through_hotspot', is_connected_through_hotspot($ip6_net, $ip4_nat_prefix));
@@ -157,8 +159,8 @@ dispatch_put('/settings', function() {
           $ssid['wifi_passphrase'] = 'none';
         }
     
-        if(empty($ssid['wifi_ssid']) || empty($ssid['wifi_passphrase']) || empty($ssid['wifi_channel'])) {
-          throw new Exception(T_('Your Wifi Hotspot needs a name, a password and a channel'));
+        if(empty($ssid['wifi_ssid']) || empty($ssid['wifi_passphrase'])) {
+          throw new Exception(T_('Your Wifi Hotspot needs a name and a password'));
         }
      
         if($ssid['wifi_secure'] && (strlen($ssid['wifi_passphrase']) < 8 || strlen($ssid['wifi_passphrase']) > 63)) {
@@ -231,7 +233,7 @@ dispatch_put('/settings', function() {
     }
   }
 
-  //stop_service();
+  stop_service();
 
   moulinette_set('service_enabled', $service_enabled);
   $settings = array();
@@ -244,12 +246,14 @@ dispatch_put('/settings', function() {
     }
 
     moulinette_set('multissid', count($ssids));
+    moulinette_set('wifi_device', $_POST['wifi_device']);
+    moulinette_set('wifi_channel', $_POST['wifi_channel']);
 
     foreach($settings as $setting => $value) {
       moulinette_set($setting, preg_replace('/\|$/', '', $value));
     }
 
-    //$retcode = start_service();
+    $retcode = start_service();
 
     if($retcode == 0) {
       flash('success', T_('Configuration updated and service successfully reloaded'));

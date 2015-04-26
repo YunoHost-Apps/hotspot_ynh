@@ -15,20 +15,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-interface=<TPL:WIFI_DEVICE>
-ssid=<TPL:WIFI_SSID>
+# Do DHCP and Router Advertisements for this subnet. Set the A bit in the RA
+# so that clients can use SLAAC addresses as well as DHCP ones.
+dhcp-range=interface:<TPL:WIFI_DEVICE>,<TPL:IP6_NET>,slaac,64,4h
 
-hw_mode=g
-<TPL:N_COMMENT>ieee80211n=1
-<TPL:N_COMMENT>wmm_enabled=1
-
-channel=<TPL:WIFI_CHANNEL>
-macaddr_acl=0
-auth_algs=1
-ignore_broadcast_ssid=0
-
-<TPL:SEC_COMMENT>wpa=2
-<TPL:SEC_COMMENT>wpa_passphrase=<TPL:WIFI_PASSPHRASE>
-<TPL:SEC_COMMENT>wpa_key_mgmt=WPA-PSK
-<TPL:SEC_COMMENT>wpa_pairwise=TKIP
-<TPL:SEC_COMMENT>rsn_pairwise=CCMP
+# Send DHCPv6 option. Note [] around IPv6 addresses.
+dhcp-option=option6:dns-server,[<TPL:IP6_DNS0>],[<TPL:IP6_DNS1>]

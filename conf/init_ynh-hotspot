@@ -34,7 +34,9 @@ has_vpnclient_app() {
 }
 
 has_ip6delegatedprefix() {
-  [ "${ynh_ip6_net}" != none ]
+  i=${1}
+
+  [ "${ynh_ip6_net[${i}]}" != none ]
 }
 
 is_nat_set() {
@@ -44,11 +46,15 @@ is_nat_set() {
 }
 
 is_ip4nataddr_set() {
-  ip address show dev "${ynh_wifi_device}" 2> /dev/null | grep -q "${ynh_ip4_nat_prefix}.1/24"
+  i=${1}
+
+  ip address show dev "ssid${i}" 2> /dev/null | grep -q "${ynh_ip4_nat_prefix[${i}]}.1/24"
 }
 
 is_ip6addr_set() {
-  ip address show dev "${ynh_wifi_device}" 2> /dev/null | grep -q "${ynh_ip6_addr}/64"
+  i=${1}
+
+  ip address show dev "ssid${i}" 2> /dev/null | grep -q "${ynh_ip6_addr[${i}]}/64"
 }
 
 is_forwarding_set() {
@@ -58,39 +64,27 @@ is_forwarding_set() {
   [ "${ip6}" -eq 1 -a "${ip4}" -eq 1 ]
 }
 
-is_dhcpdv6_set() {
-  [ -e /etc/dnsmasq.d/dhcpdv6.conf ]
-}
+is_dhcpd_running() {
+  i=${1}
 
-is_dhcpdv4_set() {
-  [ -e /etc/dnsmasq.d/dhcpdv4.conf ]
+  $(ps aux | grep "dhcpdv.-ssid${i}" | grep -qv grep)
 }
 
 is_hostapd_running() {
   service hostapd status &> /dev/null
-
-  if [ $? -eq 0 ]; then
-
-    # If the wifi antenna was unplugged
-    if ip link show dev "${ynh_wifi_device}" | grep -q DOWN; then
-      service hostapd stop &> /dev/null
-      return 1
-    fi
-
-    return 0
-  fi
-
-  return 1
-}
-
-is_dnsmasq_running() {
-  service dnsmasq status &> /dev/null
 }
 
 is_running() {
-  ( has_ip6delegatedprefix && is_ip6addr_set && is_dhcpdv6_set || ! has_ip6delegatedprefix )\
-  && is_nat_set "${new_internet_device}" && is_ip4nataddr_set && is_forwarding_set && is_hostapd_running\
-  && is_dhcpdv4_set && is_dnsmasq_running
+  for i in $(seq 0 $((${ynh_multissid} - 1))); do
+    ( has_ip6delegatedprefix ${i} && is_ip6addr_set ${i} || ! has_ip6delegatedprefix ${i} )\
+    && is_ip4nataddr_set ${i} && is_dhcpd_running ${i}
+
+    if [ ! $? -eq 0 ]; then
+      return 1
+    fi
+  done
+
+  is_hostapd_running && is_forwarding_set && is_nat_set "${new_internet_device}"
 }
 
 ## Setters
@@ -102,12 +96,16 @@ set_nat() {
 }
 
 set_ip4nataddr() {
-  ip address add "${ynh_ip4_nat_prefix}.1/24" dev "${ynh_wifi_device}"
+  i=${1}
+
+  ip address add "${ynh_ip4_nat_prefix[${i}]}.1/24" dev "ssid${i}"
 }
 
 set_ip6addr() {
-  ip address delete "${ynh_ip6_addr}/64" dev tun0 &> /dev/null
-  ip address add "${ynh_ip6_addr}/64" dev "${ynh_wifi_device}"
+  i=${1}
+
+  ip address delete "${ynh_ip6_addr[${i}]}/64" dev tun0 &> /dev/null
+  ip address add "${ynh_ip6_addr[${i}]}/64" dev "ssid${i}"
 }
 
 set_forwarding() {
@@ -115,43 +113,63 @@ set_forwarding() {
   sysctl -w net.ipv4.conf.all.forwarding=1 > /dev/null
 }
 
-set_dhcpd() {
-  if has_ip6delegatedprefix; then
-    cp /etc/dnsmasq.d.tpl/dhcpdv6.conf.tpl /etc/dnsmasq.d/dhcpdv6.conf
+start_dhcpd() {
+  i=${1}
+
+  rm -f /etc/dnsmasq.dhcpd/dhcpdv?-ssid*.conf
+
+  if has_ip6delegatedprefix ${i}; then
+    cp /etc/dnsmasq.dhcpdhcpd/dhcpdv6{.conf.tpl,-ssid${i}.conf}
   
-    sed "s|<TPL:WIFI_DEVICE>|${ynh_wifi_device}|g" -i /etc/dnsmasq.d/dhcpdv6.conf
-    sed "s|<TPL:IP6_NET>|${ynh_ip6_net}|g" -i /etc/dnsmasq.d/dhcpdv6.conf
-    sed "s|<TPL:IP6_DNS0>|${ynh_ip6_dns0}|g" -i /etc/dnsmasq.d/dhcpdv6.conf
-    sed "s|<TPL:IP6_DNS1>|${ynh_ip6_dns1}|g" -i /etc/dnsmasq.d/dhcpdv6.conf
+    sed "s|<TPL:WIFI_DEVICE>|ssid${i}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
+    sed "s|<TPL:IP6_NET>|${ynh_ip6_net[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
+    sed "s|<TPL:IP6_DNS0>|${ynh_ip6_dns0[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
+    sed "s|<TPL:IP6_DNS1>|${ynh_ip6_dns1[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
+
+    dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf -p0
   fi
 
-  cp /etc/dnsmasq.d.tpl/dhcpdv4.conf.tpl /etc/dnsmasq.d/dhcpdv4.conf
+  cp /etc/dnsmasq.dhcpd/dhcpdv4{.conf.tpl,-ssid${i}.conf}
 
-  sed "s|<TPL:IP4_DNS0>|${ynh_ip4_dns0}|g" -i /etc/dnsmasq.d/dhcpdv4.conf
-  sed "s|<TPL:IP4_DNS1>|${ynh_ip4_dns1}|g" -i /etc/dnsmasq.d/dhcpdv4.conf
-  sed "s|<TPL:WIFI_DEVICE>|${ynh_wifi_device}|g" -i /etc/dnsmasq.d/dhcpdv4.conf
-  sed "s|<TPL:IP4_NAT_PREFIX>|${ynh_ip4_nat_prefix}|g" -i /etc/dnsmasq.d/dhcpdv4.conf
+  sed "s|<TPL:IP4_DNS0>|${ynh_ip4_dns0[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
+  sed "s|<TPL:IP4_DNS1>|${ynh_ip4_dns1[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
+  sed "s|<TPL:WIFI_DEVICE>|ssid${i}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
+  sed "s|<TPL:IP4_NAT_PREFIX>|${ynh_ip4_nat_prefix[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
+
+  dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf -p0
 }
 
 start_hostapd() {
-  cp /etc/hostapd/hostapd.conf{.tpl,}
+  cp /etc/hostapd/hostapd.conf{.tpl1,}
+
+  ip link set addr 02:42:42:13:37:00 dev "${ynh_wifi_device}"
 
   sed "s|<TPL:WIFI_DEVICE>|${ynh_wifi_device}|g" -i /etc/hostapd/hostapd.conf
-  sed "s|<TPL:WIFI_SSID>|${ynh_wifi_ssid}|g" -i /etc/hostapd/hostapd.conf
-  sed "s|<TPL:WIFI_PASSPHRASE>|${ynh_wifi_passphrase}|g" -i /etc/hostapd/hostapd.conf
   sed "s|<TPL:WIFI_CHANNEL>|${ynh_wifi_channel}|g" -i /etc/hostapd/hostapd.conf
 
-  if [ "${ynh_wifi_n}" -eq 1 ]; then
+  iwconfig "${ynh_wifi_device}" | grep -q 'n *ESSID'
+  if [ $? -eq 0 ]; then
     sed "s|<TPL:N_COMMENT>||g" -i /etc/hostapd/hostapd.conf
   else
     sed "s|<TPL:N_COMMENT>|#|g" -i /etc/hostapd/hostapd.conf
   fi
 
-  if [ "${ynh_wifi_secure}" -eq 1 ]; then
-    sed "s|<TPL:SEC_COMMENT>||g" -i /etc/hostapd/hostapd.conf
-  else
-    sed "s|<TPL:SEC_COMMENT>|#|g" -i /etc/hostapd/hostapd.conf
-  fi
+  for i in $(seq 0 $((${ynh_multissid} - 1))); do
+    cp /etc/hostapd/hostapd.conf{.tpl2,.tmp}
+
+    sed "s|<TPL:WIFI_INTERFACE>|ssid${i}|g" -i /etc/hostapd/hostapd.conf.tmp
+    sed "s|<TPL:WIFI_SSID>|${ynh_wifi_ssid[${i}]}|g" -i /etc/hostapd/hostapd.conf.tmp
+    sed "s|<TPL:WIFI_PASSPHRASE>|${ynh_wifi_passphrase[${i}]}|g" -i /etc/hostapd/hostapd.conf.tmp
+  
+    if [ "${ynh_wifi_secure[${i}]}" -eq 1 ]; then
+      sed "s|<TPL:SEC_COMMENT>||g" -i /etc/hostapd/hostapd.conf.tmp
+    else
+      sed "s|<TPL:SEC_COMMENT>|#|g" -i /etc/hostapd/hostapd.conf.tmp
+    fi
+
+    cat /etc/hostapd/hostapd.conf.tmp >> /etc/hostapd/hostapd.conf
+    rm /etc/hostapd/hostapd.conf.tmp
+  done
 
   service hostapd start
 }
@@ -165,20 +183,25 @@ unset_nat() {
 }
 
 unset_ip4nataddr() {
-  ip address delete "${ynh_ip4_nat_prefix}.1/24" dev "${ynh_wifi_device}"
+  i=${1}
+
+  ip address delete "${ynh_ip4_nat_prefix[${i}]}.1/24" dev "ssid${i}"
 }
 
 unset_ip6addr() {
-  ip address delete "${ynh_ip6_addr}/64" dev "${ynh_wifi_device}"
-}
+  i=${1}
 
-unset_dhcpd() {
-  rm -f /etc/dnsmasq.d/dhcpdv?.conf
+  ip address delete "${ynh_ip6_addr[${i}]}/64" dev "ssid${i}"
 }
 
 unset_forwarding() {
   sysctl -w net.ipv6.conf.all.forwarding=0 > /dev/null
   sysctl -w net.ipv4.conf.all.forwarding=0 > /dev/null
+}
+
+stop_dhcpd() {
+  kill $(ps aux | grep 'dhcpdv.-ssid' | grep -v grep | awk '{ print $2 }')
+  rm -f /etc/dnsmasq.d/dhcpdv?-ssid*.conf
 }
 
 stop_hostapd() {
@@ -239,19 +262,20 @@ if [ "$1" != restart ]; then
   
   ynh_service_enabled=$(moulinette_get service_enabled)
   ynh_wifi_device=$(moulinette_get wifi_device)
-  ynh_wifi_ssid=$(moulinette_get wifi_ssid)
-  ynh_wifi_secure=$(moulinette_get wifi_secure)
-  ynh_wifi_passphrase=$(moulinette_get wifi_passphrase)
   ynh_wifi_channel=$(moulinette_get wifi_channel)
-  ynh_wifi_n=$(moulinette_get wifi_n)
-  ynh_ip6_addr=$(moulinette_get ip6_addr)
-  ynh_ip6_net=$(moulinette_get ip6_net)
-  ynh_ip6_dns0=$(moulinette_get ip6_dns0)
-  ynh_ip6_dns1=$(moulinette_get ip6_dns1)
-  ynh_ip4_dns0=$(moulinette_get ip4_dns0)
-  ynh_ip4_dns1=$(moulinette_get ip4_dns1)
-  ynh_ip4_nat_prefix=$(moulinette_get ip4_nat_prefix)
-  
+  ynh_multissid=$(moulinette_get multissid)
+
+  IFS='|' read -a ynh_wifi_ssid <<< "$(moulinette_get wifi_ssid)"
+  IFS='|' read -a ynh_wifi_secure <<< "$(moulinette_get wifi_secure)"
+  IFS='|' read -a ynh_wifi_passphrase <<< "$(moulinette_get wifi_passphrase)"
+  IFS='|' read -a ynh_ip6_addr <<< "$(moulinette_get ip6_addr)"
+  IFS='|' read -a ynh_ip6_net <<< "$(moulinette_get ip6_net)"
+  IFS='|' read -a ynh_ip6_dns0 <<< "$(moulinette_get ip6_dns0)"
+  IFS='|' read -a ynh_ip6_dns1 <<< "$(moulinette_get ip6_dns1)"
+  IFS='|' read -a ynh_ip4_dns0 <<< "$(moulinette_get ip4_dns0)"
+  IFS='|' read -a ynh_ip4_dns1 <<< "$(moulinette_get ip4_dns1)"
+  IFS='|' read -a ynh_ip4_nat_prefix <<< "$(moulinette_get ip4_nat_prefix)"
+
   old_internet_device=$(moulinette_get internet_device)
   new_internet_device=$(ip route | awk '/default via/ { print $NF; }')
   
@@ -264,21 +288,21 @@ if [ "$1" != restart ]; then
   echo "OK"
   
   # Check IPv6 delegated prefix from vpnclient
-  vpnclient_ip6_net=$(moulinette_vpnclient_get ip6_net)
-  
-  if [ ! -z "${vpnclient_ip6_addr}" ]; then
-    if [ "${ynh_ip6_net}" == none ]; then
-      ynh_ip6_net=$vpnclient_ip6_net
-      ynh_ip6_addr=$(moulinette_vpnclient_get ip6_addr)
-    
-      moulinette_set ip6_net "${ynh_ip6_net}"
-      moulinette_set ip6_addr "${ynh_ip6_addr}"
-    else
-      if [ "${ynh_ip6_net}" != "${vpnclient_ip6_net}" ]; then
-        echo "[WARN] The IPv6 delegated prefix is different from the vpnclient one"
-      fi
-    fi
-  fi
+#  vpnclient_ip6_net=$(moulinette_vpnclient_get ip6_net)
+#  
+#  if [ ! -z "${vpnclient_ip6_addr}" ]; then
+#    if [ "${ynh_ip6_net}" == none ]; then
+#      ynh_ip6_net=$vpnclient_ip6_net
+#      ynh_ip6_addr=$(moulinette_vpnclient_get ip6_addr)
+#    
+#      moulinette_set ip6_net "${ynh_ip6_net}"
+#      moulinette_set ip6_addr "${ynh_ip6_addr}"
+#    else
+#      if [ "${ynh_ip6_net}" != "${vpnclient_ip6_net}" ]; then
+#        echo "[WARN] The IPv6 delegated prefix is different from the vpnclient one"
+#      fi
+#    fi
+#  fi
 
 fi
 
@@ -313,18 +337,6 @@ case "$1" in
         set_nat "${new_internet_device}"
       fi
 
-      # Set ipv4 NAT address
-      if ! is_ip4nataddr_set; then
-        echo "Set IPv4 NAT address"
-        set_ip4nataddr
-      fi
-
-      # Set the ipv6 address
-      if has_ip6delegatedprefix && ! is_ip6addr_set; then
-        echo "Set IPv6 address"
-        set_ip6addr
-      fi
-
       # Set forwarding for ipv6 and ipv4
       if ! is_forwarding_set; then
         echo "Set forwarding"
@@ -334,18 +346,41 @@ case "$1" in
       # Run hostapd
       if ! is_hostapd_running; then
         echo "Run hostapd"
-        start_hostapd
+        start_hostapd ${i}
+
+        if [ ! $? -eq 0 ]; then
+          exit 1
+        fi
+
+        i=0; false || while [ $? -ne 0 ]; do
+          sleep 1 && (( i++ ))
+          [ ${i} -gt 20 ] && stop_hostapd
+          [ ${i} -gt 20 ] && exit 1
+          ip link show dev ssid0 &> /dev/null
+        done
       fi
 
-      # Run DHCP servers
-      if ( has_ip6delegatedprefix && ! is_dhcpdv6_set ) || ! is_dhcpdv4_set; then
-        echo "Set DHCP servers (dnsmasq)"
-        set_dhcpd
-      fi
+      # For each registred ssid
+      for i in $(seq 0 $((${ynh_multissid} - 1))); do
 
-      # Restart dhcpd
-      service bind9 stop &> /dev/null
-      service dnsmasq restart
+        # Set ipv4 NAT address
+        if ! is_ip4nataddr_set ${i}; then
+          echo "Set IPv4 NAT address"
+          set_ip4nataddr ${i}
+        fi
+  
+        # Set the ipv6 address
+        if has_ip6delegatedprefix ${i} && ! is_ip6addr_set ${i}; then
+          echo "Set IPv6 address"
+          set_ip6addr ${i}
+        fi
+  
+        # Run DHCP servers
+        if ! is_dhcpd_running ${i}; then
+          echo "Set DHCP servers (dnsmasq)"
+          start_dhcpd ${i}
+        fi
+      done
 
       # Update dynamic settings
       moulinette_set internet_device "${new_internet_device}"
@@ -360,25 +395,27 @@ case "$1" in
       unset_nat "${old_internet_device}"
     fi
 
-    if is_ip4nataddr_set; then
-      echo "Unset IPv4 NAT address"
-      unset_ip4nataddr
-    fi
-
-    if has_ip6delegatedprefix && is_ip6addr_set; then
-      echo "Unset IPv6 address"
-      unset_ip6addr
-    fi 
-
     if is_forwarding_set; then
       echo "Unset forwarding"
       unset_forwarding
     fi
-  
-    if is_dhcpdv6_set || is_dhcpdv4_set; then
-      echo "Stop DHCP servers"
-      unset_dhcpd
-    fi
+
+    for i in $(seq 0 $((${ynh_multissid} - 1))); do
+      if is_ip4nataddr_set ${i}; then
+        echo "Unset IPv4 NAT address"
+        unset_ip4nataddr ${i}
+      fi
+
+      if has_ip6delegatedprefix ${i} && is_ip6addr_set ${i}; then
+        echo "Unset IPv6 address"
+        unset_ip6addr ${i}
+      fi 
+ 
+      if is_dhcpd_running ${i}; then
+        echo "Stop DHCP servers"
+        stop_dhcpd ${i}
+      fi
+    done
 
     if is_hostapd_running; then
       echo "Stop hostapd"
@@ -388,8 +425,6 @@ case "$1" in
     if has_vpnclient_app; then
       service ynh-vpnclient start
     fi
-
-    service dnsmasq restart
   ;;
   restart)
     $0 stop
@@ -405,45 +440,10 @@ case "$1" in
 
     echo "[INFO] Autodetected internet interface: ${new_internet_device} (last start: ${old_internet_device})"
 
-    if has_ip6delegatedprefix; then
-      echo "[INFO] IPv6 delegated prefix found"
-      echo "[INFO] IPv6 address computed from the delegated prefix: ${ynh_ip6_addr}"
-
-      if is_ip6addr_set; then
-        echo "[OK] IPv6 address set"
-      else
-        echo "[ERR] No IPv6 address set"
-        exitcode=1
-      fi
-
-      if is_dhcpdv6_set; then
-        echo "[OK] SLAAC & DHCPv6 server set"
-      else
-        echo "[ERR] No SLAAC & DHCPv6 server set"
-        exitcode=1
-      fi
-    else
-      echo "[INFO] No IPv6 delegated prefix found"
-    fi
-
-    if is_dhcpdv4_set; then
-      echo "[OK] DHCPv4 server set"
-    else
-      echo "[ERR] No DHCPv4 server set"
-      exitcode=1
-    fi
-
     if is_nat_set "${new_internet_device}"; then
       echo "[OK] IPv4 NAT set"
     else
       echo "[ERR] No IPv4 NAT set"
-      exitcode=1
-    fi
-
-    if is_ip4nataddr_set; then
-      echo "[OK] IPv4 NAT address set"
-    else
-      echo "[ERR] No IPv4 NAT address set"
       exitcode=1
     fi
 
@@ -454,19 +454,42 @@ case "$1" in
       exitcode=1
     fi
 
-    if is_dnsmasq_running; then
-      echo "[OK] Dnsmasq is running"
-    else
-      echo "[ERR] Dnsmasq is not running"
-      exitcode=1
-    fi
-
     if is_hostapd_running; then
       echo "[OK] Hostapd is running"
     else
       echo "[ERR] Hostapd is not running"
       exitcode=1
     fi
+
+    for i in $(seq 0 $((${ynh_multissid} - 1))); do
+      if has_ip6delegatedprefix ${i}; then
+        echo "[INFO] SSID ${i}: IPv6 delegated prefix found"
+        echo "[INFO] SSID ${i}: IPv6 address computed from the delegated prefix: ${ynh_ip6_addr}"
+  
+        if is_ip6addr_set ${i}; then
+          echo "[OK] SSID ${i}: IPv6 address set"
+        else
+          echo "[ERR] SSID ${i}: No IPv6 address set"
+          exitcode=1
+        fi
+      else
+        echo "[INFO] SSID ${i}: No IPv6 delegated prefix found"
+      fi
+  
+      if is_dhcpd_running ${i}; then
+        echo "[OK] SSID ${i}: DHCP servers set"
+      else
+        echo "[ERR] SSID ${i}: No DHCP servers set"
+        exitcode=1
+      fi
+  
+      if is_ip4nataddr_set ${i}; then
+        echo "[OK] SSID ${i}: IPv4 NAT address set"
+      else
+        echo "[ERR] SSID ${i}: No IPv4 NAT address set"
+        exitcode=1
+      fi
+    done
 
     exit ${exitcode}
   ;;

@@ -102,26 +102,20 @@ if [ -z "${ip6_net}" ]; then
 fi
 
 wifi_device=$(sudo iwconfig 2>&1 | grep 802.11 | head -n1 | awk '{ print $1 }')
-wifi_n=0
 
 if [ -z "${wifi_device}" ]; then
   echo "ERROR: No wifi interface found" >&2
   exit 1
 fi
 
-sudo iwconfig "${wifi_device}" | grep -q 'n *ESSID'
-if [ $? -eq 0 ]; then
-  wifi_n=1
-fi
-
 # Save arguments
 sudo yunohost app setting hotspot service_enabled -v 1
+sudo yunohost app setting hotspot multissid -v 1
 sudo yunohost app setting hotspot wifi_ssid -v "${wifi_ssid}"
 sudo yunohost app setting hotspot wifi_secure -v 1
 sudo yunohost app setting hotspot wifi_passphrase -v "${wifi_passphrase}"
 sudo yunohost app setting hotspot wifi_device -v "${wifi_device}"
 sudo yunohost app setting hotspot wifi_channel -v 6
-sudo yunohost app setting hotspot wifi_n -v "${wifi_n}"
 sudo yunohost app setting hotspot ip6_addr -v "${ip6_addr}"
 sudo yunohost app setting hotspot ip6_net -v "${ip6_net}"
 sudo yunohost app setting hotspot ip6_dns0 -v 2001:913::8
@@ -137,12 +131,12 @@ sudo install -o root -g root -m 0755 ../conf/ipv6_compressed /usr/local/bin/
 
 # Copy confs
 sudo mkdir -pm 0755 /var/log/nginx/
-sudo mkdir -pm 0755 /etc/dnsmasq.d.tpl/
-sudo chown root: /etc/dnsmasq.d.tpl/
+sudo mkdir -pm 0755 /etc/dnsmasq.dhcpd/
+sudo chown root: /etc/dnsmasq.dhcpd/
 
-sudo install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl /etc/hostapd/
-sudo install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.d.tpl/dhcpdv6.conf.tpl
-sudo install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.d.tpl/dhcpdv4.conf.tpl
+sudo install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl? /etc/hostapd/
+sudo install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl
+sudo install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl
 sudo install -b -o root -g root -m 0644 ../conf/nginx_wifiadmin.conf "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
 sudo install -b -o root -g root -m 0644 ../conf/phpfpm_wifiadmin.conf /etc/php5/fpm/pool.d/wifiadmin.conf
 

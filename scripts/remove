@@ -31,8 +31,8 @@ sudo yunohost firewall disallow --ipv6 UDP 547
 sudo yunohost firewall disallow UDP 67
 
 # Remove confs
-sudo rm -fr /etc/dnsmasq.d.tpl/
-sudo rm -f /etc/hostapd/hostapd.conf{.tpl,} /etc/radvd.conf{.tpl,} /etc/dhcp/dhcpd.conf{.tpl,}
+sudo rm -fr /etc/dnsmasq.dhcpd/
+sudo rm -f /etc/hostapd/hostapd.conf{.tpl?,}
 sudo rm -f /etc/nginx/conf.d/${domain}.d/wifiadmin.conf
 sudo rm -f /etc/php5/fpm/pool.d/wifiadmin.conf
 

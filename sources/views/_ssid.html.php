@@ -34,29 +34,6 @@
         <a class="btn input-group-addon wifiparty" data-toggle="tooltip" data-title="<?= T_('Show to your friends how to access to your hotspot') ?>"><span class="glyphicon glyphicon-fullscreen"></span></a>
       </div>
     </div>
-
-    <div class="form-group">
-      <label class="col-sm-3 control-label"><?= T_('Channel') ?></label>
-      <div class="col-sm-9 input-group-btn">
-        <div class="input-group dropdownmenu">
-            <input type="text" name="ssid[<?= $ssid['id'] ?>][wifi_channel]" value="<?= $ssid['wifi_channel'] ?>" style="display: none" />
-            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><?= $ssid['wifi_channel'] ?> <span class="caret"></span></button>
-            <ul class="dropdown-menu dropdown-menu-left" role="menu">
-              <li <?= $ssid['wifi_channel'] == 1 ? 'class="active"' : '' ?>><a href="javascript:;">1</a></li>
-              <li <?= $ssid['wifi_channel'] == 2 ? 'class="active"' : '' ?>><a href="javascript:;">2</a></li>
-              <li <?= $ssid['wifi_channel'] == 3 ? 'class="active"' : '' ?>><a href="javascript:;">3</a></li>
-              <li <?= $ssid['wifi_channel'] == 4 ? 'class="active"' : '' ?>><a href="javascript:;">4</a></li>
-              <li <?= $ssid['wifi_channel'] == 5 ? 'class="active"' : '' ?>><a href="javascript:;">5</a></li>
-              <li <?= $ssid['wifi_channel'] == 6 ? 'class="active"' : '' ?>><a href="javascript:;">6</a></li>
-              <li <?= $ssid['wifi_channel'] == 7 ? 'class="active"' : '' ?>><a href="javascript:;">7</a></li>
-              <li <?= $ssid['wifi_channel'] == 8 ? 'class="active"' : '' ?>><a href="javascript:;">8</a></li>
-              <li <?= $ssid['wifi_channel'] == 9 ? 'class="active"' : '' ?>><a href="javascript:;">9</a></li>
-              <li <?= $ssid['wifi_channel'] == 10 ? 'class="active"' : '' ?>><a href="javascript:;">10</a></li>
-              <li <?= $ssid['wifi_channel'] == 11 ? 'class="active"' : '' ?>><a href="javascript:;">11</a></li>
-            </ul>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- IPv6 -->
