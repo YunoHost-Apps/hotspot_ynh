@@ -60,6 +60,14 @@ function ipv6_compressed($ip) {
   return $output[0];
 }
 
+function getArray($str) {
+  return explode('|', $str);
+}
+
+function noneValue($str) {
+  return $str == 'none' ? '' : $str;
+}
+
 function is_connected_through_hotspot($ip6_net, $ip4_nat_prefix) {
   $ip = $_SERVER['REMOTE_ADDR'];
   $ip6_regex = '/^'.preg_quote(preg_replace('/::$/', '', $ip6_net)).':/';
@@ -71,6 +79,8 @@ function is_connected_through_hotspot($ip6_net, $ip4_nat_prefix) {
 dispatch('/', function() {
   exec('sudo iwconfig', $devs);
   $wifi_device = moulinette_get('wifi_device');
+  $multissid = moulinette_get('multissid');
+  $ssids = array();
   $devs_list = '';
 
   foreach($devs AS $dev) {
@@ -83,24 +93,43 @@ dispatch('/', function() {
     }
   }
 
+  $wifi_ssid = getArray(moulinette_get('wifi_ssid'));
+  $wifi_secure = getArray(moulinette_get('wifi_secure'));
+  $wifi_passphrase = getArray(moulinette_get('wifi_passphrase'));
+  $wifi_channel = getArray(moulinette_get('wifi_channel'));
+  $ip6_net = getArray(moulinette_get('ip6_net'));
+  $ip6_dns0 = getArray(moulinette_get('ip6_dns0'));
+  $ip6_dns1 = getArray(moulinette_get('ip6_dns1'));
+  $ip4_nat_prefix = getArray(moulinette_get('ip4_nat_prefix'));
+  $ip4_dns0 = getArray(moulinette_get('ip4_dns0'));
+  $ip4_dns1 = getArray(moulinette_get('ip4_dns1'));
+
+  for($i = 0; $i < $multissid; $i++) {
+    $ssid = [
+      'id' => $i,
+      'wifi_ssid' => noneValue($wifi_ssid[$i]),
+      'wifi_secure' => noneValue($wifi_secure[$i]),
+      'wifi_passphrase' => noneValue($wifi_passphrase[$i]),
+      'wifi_channel' => noneValue($wifi_channel[$i]),
+      'ip6_net' => noneValue($ip6_net[$i]),
+      'ip6_dns0' => noneValue($ip6_dns0[$i]),
+      'ip6_dns1' => noneValue($ip6_dns1[$i]),
+      'ip4_nat_prefix' => noneValue($ip4_nat_prefix[$i]),
+      'ip4_dns0' => noneValue($ip4_dns0[$i]),
+      'ip4_dns1' => noneValue($ip4_dns1[$i]),
+    ];
+
+    array_push($ssids, $ssid);
+  }
+
   $ip6_net = moulinette_get('ip6_net');
   $ip6_net = ($ip6_net == 'none') ? '' : $ip6_net;
   $ip4_nat_prefix = moulinette_get('ip4_nat_prefix');
 
   set('service_enabled', moulinette_get('service_enabled'));
-  set('wifi_ssid', moulinette_get('wifi_ssid'));
-  set('wifi_secure', moulinette_get('wifi_secure'));
-  set('wifi_passphrase', moulinette_get('wifi_passphrase'));
-  set('wifi_channel', moulinette_get('wifi_channel'));
-  set('wifi_n', moulinette_get('wifi_n'));
+  set('ssids', $ssids);
   set('wifi_device', $wifi_device);
   set('wifi_device_list', $devs_list);
-  set('ip6_net', $ip6_net);
-  set('ip6_dns0', moulinette_get('ip6_dns0'));
-  set('ip6_dns1', moulinette_get('ip6_dns1'));
-  set('ip4_nat_prefix', $ip4_nat_prefix);
-  set('ip4_dns0', moulinette_get('ip4_dns0'));
-  set('ip4_dns1', moulinette_get('ip4_dns1'));
   set('faststatus', service_faststatus() == 0);
   set('is_connected_through_hotspot', is_connected_through_hotspot($ip6_net, $ip4_nat_prefix));
 
@@ -109,113 +138,118 @@ dispatch('/', function() {
 
 dispatch_put('/settings', function() {
   exec('ip link show '.escapeshellarg($_POST['wifi_device']), $output, $retcode);
-  $wifi_device_exists = ($retcode == 0);
 
-  $ip6_net = empty($_POST['ip6_net']) ? 'none' : $_POST['ip6_net'];
-  $ip6_addr = 'none';
-  $ip6_dns0 = $_POST['ip6_dns0'];
-  $ip6_dns1 = $_POST['ip6_dns1'];
+  $wifi_device_exists = ($retcode == 0);
   $service_enabled = isset($_POST['service_enabled']) ? 1 : 0;
-  $wifi_secure = isset($_POST['wifi_secure']) ? 1 : 0;
+  $ssids = array();
+  $id = 0;
 
   if($service_enabled == 1) {
     try {
-      if(empty($_POST['wifi_ssid']) || empty($_POST['wifi_passphrase']) || empty($_POST['wifi_channel'])) {
-        throw new Exception(T_('Your Wifi Hotspot needs a name, a password and a channel'));
-      }
-  
-      if(strlen($_POST['wifi_passphrase']) < 8 || strlen($_POST['wifi_passphrase']) > 63) {
-        throw new Exception(T_('Your password must from 8 to 63 characters (WPA2 passphrase)'));
-      }
-  
-      if(preg_match('/[^[:print:]]/', $_POST['wifi_passphrase'])) {
-        throw new Exception(T_('Only printable ASCII characters are permitted in your password'));
-      }
-  
-      if(!$wifi_device_exists) {
-        throw new Exception(T_('The wifi antenna interface seems not exist on the system'));
-      }
-  
-      if($ip6_net != 'none') {
-        $ip6_net = ipv6_expanded($ip6_net);
-    
-        if(empty($ip6_net)) {
-          throw new Exception(T_('The IPv6 Delegated Prefix format looks bad'));
+      foreach($_POST['ssid'] as $key => $ssid) {
+        $id = $key + 1;
+
+        $ssid['ip6_net'] = empty($ssid['ip6_net']) ? 'none' : $ssid['ip6_net'];
+        $ssid['ip6_addr'] = 'none';
+        $ssid['wifi_secure'] = isset($ssid['wifi_secure']) ? 1 : 0;
+
+        if(!$ssid['wifi_secure']) {
+          $ssid['wifi_passphrase'] = 'none';
         }
     
-        $ip6_blocs = explode(':', $ip6_net);
-        $ip6_addr = "${ip6_blocs[0]}:${ip6_blocs[1]}:${ip6_blocs[2]}:${ip6_blocs[3]}:${ip6_blocs[4]}:${ip6_blocs[5]}:${ip6_blocs[6]}:42";
-    
-        $ip6_net = ipv6_compressed($ip6_net);
-        $ip6_addr = ipv6_compressed($ip6_addr);
-      }
-  
-      if(!empty($ip6_dns0)) {
-        $ip6_dns0 = ipv6_expanded($ip6_dns0);
-  
-        if(empty($ip6_dns0)) {
-          throw new Exception(T_('The format of the first IPv6 DNS Resolver looks bad'));
+        if(empty($ssid['wifi_ssid']) || empty($ssid['wifi_passphrase']) || empty($ssid['wifi_channel'])) {
+          throw new Exception(T_('Your Wifi Hotspot needs a name, a password and a channel'));
         }
-
-        $ip6_dns0 = ipv6_compressed($ip6_dns0);
-
-        if(!empty($ip6_dns1)) {
-          $ip6_dns1 = ipv6_expanded($ip6_dns1);
-    
-          if(empty($ip6_dns1)) {
-             throw new Exception(T_('The format of the second IPv6 DNS Resolver looks bad'));
+     
+        if($ssid['wifi_secure'] && (strlen($ssid['wifi_passphrase']) < 8 || strlen($ssid['wifi_passphrase']) > 63)) {
+          throw new Exception(T_('Your password must from 8 to 63 characters (WPA2 passphrase)'));
+        }
+     
+        if($ssid['wifi_secure'] && preg_match('/[^[:print:]]/', $ssid['wifi_passphrase'])) {
+          throw new Exception(T_('Only printable ASCII characters are permitted in your password'));
+        }
+     
+        if(!$wifi_device_exists) {
+          throw new Exception(T_('The wifi antenna interface seems not exist on the system'));
+        }
+     
+        if($ssid['ip6_net'] != 'none') {
+          $ssid['ip6_net'] = ipv6_expanded($ssid['ip6_net']);
+      
+          if(empty($ssid['ip6_net'])) {
+            throw new Exception(T_('The IPv6 Delegated Prefix format looks bad'));
           }
-
-          $ip6_dns1 = ipv6_compressed($ip6_dns1);
+      
+          $ip6_blocs = explode(':', $ssid['ip6_net']);
+          $ssid['ip6_addr'] = "${ip6_blocs[0]}:${ip6_blocs[1]}:${ip6_blocs[2]}:${ip6_blocs[3]}:${ip6_blocs[4]}:${ip6_blocs[5]}:${ip6_blocs[6]}:42";
+      
+          $ssid['ip6_net'] = ipv6_compressed($ssid['ip6_net']);
+          $ssid['ip6_addr'] = ipv6_compressed($ssid['ip6_addr']);
         }
+     
+        if(!empty($ssid['ip6_dns0'])) {
+          $ssid['ip6_dns0'] = ipv6_expanded($ssid['ip6_dns0']);
+     
+          if(empty($ssid['ip6_dns0'])) {
+            throw new Exception(T_('The format of the first IPv6 DNS Resolver looks bad'));
+          }
+     
+          $ssid['ip6_dns0'] = ipv6_compressed($ssid['ip6_dns0']);
+     
+          if(!empty($ssid['ip6_dns1'])) {
+            $ssid['ip6_dns1'] = ipv6_expanded($ssid['ip6_dns1']);
+      
+            if(empty($ssid['ip6_dns1'])) {
+               throw new Exception(T_('The format of the second IPv6 DNS Resolver looks bad'));
+            }
+     
+            $ssid['ip6_dns1'] = ipv6_compressed($ssid['ip6_dns1']);
+          }
+        }
+     
+        if(inet_pton($ssid['ip4_dns0']) === false) {
+          throw new Exception(T_('The format of the first IPv4 DNS Resolver looks bad'));
+        }
+     
+        if(inet_pton($ssid['ip4_dns1']) === false) {
+          throw new Exception(T_('The format of the second IPv4 DNS Resolver looks bad'));
+        }
+     
+        if(inet_pton("${ssid['ip4_nat_prefix']}.0") === false) {
+          throw new Exception(T_('The format of the IPv4 NAT Prefix (/24) looks bad : x.x.x expected)'));
+        }
+     
+        if(filter_var("${ssid['ip4_nat_prefix']}.0", FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE) !== false) {
+          throw new Exception(T_('The IPv4 NAT Prefix must be from a private range'));
+        }
+
+        array_push($ssids, $ssid);
       }
-  
-      if(inet_pton($_POST['ip4_dns0']) === false) {
-        throw new Exception(T_('The format of the first IPv4 DNS Resolver looks bad'));
-      }
-  
-      if(inet_pton($_POST['ip4_dns1']) === false) {
-        throw new Exception(T_('The format of the second IPv4 DNS Resolver looks bad'));
-      }
-  
-      if(inet_pton("${_POST['ip4_nat_prefix']}.0") === false) {
-        throw new Exception(T_('The format of the IPv4 NAT Prefix (/24) looks bad : x.x.x expected)'));
-      }
-  
-      if(filter_var("${_POST['ip4_nat_prefix']}.0", FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE) !== false) {
-        throw new Exception(T_('The IPv4 NAT Prefix must be from a private range'));
-      }
-  
     } catch(Exception $e) {
-      flash('error', $e->getMessage().' ('.T_('configuration not updated').').');
+      flash('error', T_('SSID')." $id: ".$e->getMessage().' ('.T_('configuration not updated').').');
       goto redirect;
     }
   }
 
-  stop_service();
+  //stop_service();
 
   moulinette_set('service_enabled', $service_enabled);
+  $settings = array();
 
   if($service_enabled == 1) {
-    moulinette_set('wifi_ssid', $_POST['wifi_ssid']);
-    moulinette_set('wifi_secure', $wifi_secure);
-
-    if($wifi_secure == 1) {
-      moulinette_set('wifi_passphrase', $_POST['wifi_passphrase']);
+    foreach($ssids as $ssid) {
+      foreach($ssid as $setting => $value) {
+        $settings[$setting] .= "$value|";
+      }
     }
 
-    moulinette_set('wifi_channel', $_POST['wifi_channel']);
-    moulinette_set('wifi_n', isset($_POST['wifi_n']) ? 1 : 0);
-    moulinette_set('wifi_device', $_POST['wifi_device']);
-    moulinette_set('ip6_net', $ip6_net);
-    moulinette_set('ip6_addr', $ip6_addr);
-    moulinette_set('ip6_dns0', $_POST['ip6_dns0']);
-    moulinette_set('ip6_dns1', $_POST['ip6_dns1']);
-    moulinette_set('ip4_nat_prefix', $_POST['ip4_nat_prefix']);
-    moulinette_set('ip4_dns0', $_POST['ip4_dns0']);
-    moulinette_set('ip4_dns1', $_POST['ip4_dns1']);
+    moulinette_set('multissid', count($ssids));
 
-    $retcode = start_service();
+    foreach($settings as $setting => $value) {
+      moulinette_set($setting, preg_replace('/\|$/', '', $value));
+    }
+
+    //$retcode = start_service();
 
     if($retcode == 0) {
       flash('success', T_('Configuration updated and service successfully reloaded'));

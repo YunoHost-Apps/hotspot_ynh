@@ -16,35 +16,47 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+function wifiSecureBtn() {
+  if($(this).parent().hasClass('off')) {
+    $(this).closest('.form-group').next().hide('slow');
+  } else {
+    $(this).closest('.form-group').next().show('slow');
+  }
+}
+
+function tabsClick() {
+  var ssid = $(this).closest('.ssid');
+  var tab = $(this).parent().attr('data-tab');
+
+  ssid.find('li.active').removeClass('active');
+  $(this).parent().addClass('active');
+
+  ssid.find('.tabs').hide();
+  ssid.find('.tab' + tab).show();
+
+  return false;
+}
+
+function dropDownClick() {
+  var menu = $(this).parent();
+  var items = menu.children();
+  var button = menu.prev();
+  var input = button.prev();
+
+  items.removeClass('active');
+  $(this).addClass('active');
+
+  button.text($(this).text());
+  button.append(' <span class="caret"></span>');
+
+  input.val($(this).text());
+}
+
 $(document).ready(function() {
   $('.btn-group').button();
   $('[data-toggle="tooltip"]').tooltip();
 
-  $('.fileinput').click(function() {
-    var realinputid = '#' + $(this).attr('id').replace(/_chooser.*/, '');
-    $(realinputid).click();
-  });
-
-  $('input[type="file"]').change(function() {
-    var choosertxtid = '#' + $(this).attr('id') + '_choosertxt';
-
-    $(choosertxtid).val($(this).val().replace(/^.*[\/\\]/, ''));
-  });
-
-  $('.dropdown-menu li').click(function() {
-    var menu = $(this).parent();
-    var items = menu.children();
-    var button = menu.prev();
-    var input = button.prev();
-
-    items.removeClass('active');
-    $(this).addClass('active');
-
-    button.text($(this).text());
-    button.append(' <span class="caret"></span>');
-
-    input.attr('value', $(this).text());
-  });
+  $('.dropdown-menu li').click(dropDownClick);
 
   $('.switch').bootstrapToggle();
 
@@ -78,7 +90,7 @@ $(document).ready(function() {
     }
   });
 
-  $('#wifiparty').click(function() {
+  $('.wifiparty').click(function() {
     $('#wifiparty_screen').show('slow');
   });
 
@@ -102,13 +114,7 @@ $(document).ready(function() {
     $('#wifiparty_screen').hide();
   });
 
-  $('#wifi_secure').change(function() {
-    if($('#wifi_secure').parent().hasClass('off')) {
-      $('.secure').hide('slow');
-    } else {
-      $('.secure').show('slow');
-    }
-  });
+  $('.wifi_secure').change(wifiSecureBtn);
 
   $('#service_enabled').change(function() {
     if($('#service_enabled').parent().hasClass('off')) {
@@ -116,6 +122,54 @@ $(document).ready(function() {
     } else {
       $('.enabled').show('slow');
     }
+  });
+
+  $('.nav-tabs a').click(tabsClick);
+
+  $('#newssid').click(function() {
+    var clone = $('#ssids').children().first().clone();
+    var id = parseInt($('.ssid').length);
+
+    clone.find('.dropdownmenu').each(function(i) {
+      var initial = $('#ssids').children().first().find('.dropdownmenu');
+      var clone = initial.eq(i).clone(true, true);
+
+      $(this).after(clone);
+      $(this).remove();
+    });
+
+    clone.find('[name]').each(function() {
+      $(this).attr('name', $(this).attr('name').replace('[0]', '[' + id + ']'));
+    });
+
+    clone.find('[data-toggle="tooltip"]').tooltip();
+
+    clone.find('input[type=text]').each(function() {
+      if($(this).attr('name').match('dns')) {
+        $(this).val($(this).attr('placeholder'));
+
+      } else {
+        $(this).val('');
+      }
+    });
+
+    clone.find('input[type=checkbox]').each(function() {
+      $(this).parent().after($(this));
+      $(this).prev().remove();
+      $(this).attr('checked', false);
+    });
+
+    clone.find('.switch').bootstrapToggle();
+    clone.find('.wifi_secure').change(wifiSecureBtn);
+    clone.find('.nav-tabs a').click(tabsClick);
+    clone.find('.dropdown-menu li').click(dropDownClick);
+    clone.find('.wifi_passphrase').hide();
+
+    clone.find('h3').each(function() {
+      $(this).text($(this).data('label') + ' ' + (id + 1));
+    });
+
+    $('#ssids').append(clone);
   });
 });
 

@@ -140,3 +140,15 @@ div#wifiparty_passphrase span.passother {
 div#wifiparty_passphrase span.passspace {
   color: #CCC;
 }
+
+ul.nav-tabs {
+  margin-top: 5px;
+}
+
+div.tabs {
+  padding: 14px 14px 0 10px;
+}
+
+div.tabs a {
+  outline: none;
+}
