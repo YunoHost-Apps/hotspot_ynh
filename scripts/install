@@ -56,7 +56,7 @@ if [ ! $? -eq 0 ]; then
 fi
 
 # Install packages
-packages='php5-fpm sipcalc hostapd iptables wireless-tools dnsmasq'
+packages='php5-fpm sipcalc hostapd iptables iw dnsmasq'
 export DEBIAN_FRONTEND=noninteractive
 
 # Packaged USB Wireless Device firmwares
@@ -101,7 +101,7 @@ if [ -z "${ip6_net}" ]; then
 #  ip6_addr=$(bash ../conf/ipv6_compressed "${ip6_addr}")
 fi
 
-wifi_device=$(sudo iwconfig 2>&1 | grep 802.11 | head -n1 | awk '{ print $1 }')
+wifi_device=$(sudo bash ../conf/iw_devices | awk -F\| '{ print $1 }')
 
 if [ -z "${wifi_device}" ]; then
   echo "ERROR: No wifi interface found" >&2
@@ -125,7 +125,10 @@ sudo yunohost app setting hotspot ip4_dns1 -v 80.67.169.12
 sudo yunohost app setting hotspot ip4_nat_prefix -v 10.0.242
 sudo yunohost app setting hotspot vpnclient -v no
 
-# Install IPv6 scripts
+# Install custom scripts
+sudo install -o root -g root -m 0755 ../conf/iw_multissid /usr/local/bin/
+sudo install -o root -g root -m 0755 ../conf/iw_devices /usr/local/bin/
+sudo install -o root -g root -m 0755 ../conf/iw_ssids /usr/local/bin/
 sudo install -o root -g root -m 0755 ../conf/ipv6_expanded /usr/local/bin/
 sudo install -o root -g root -m 0755 ../conf/ipv6_compressed /usr/local/bin/
 

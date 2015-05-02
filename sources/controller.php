@@ -60,12 +60,24 @@ function ipv6_compressed($ip) {
   return $output[0];
 }
 
+function iw_multissid($nic) {
+  exec('sudo iw_multissid '.escapeshellarg($nic), $output);
+
+  return $output[0];
+}
+
+function iw_devices() {
+  exec('sudo iw_devices', $output);
+
+  return getArray($output[0]);
+}
+
 function getArray($str) {
   return explode('|', $str);
 }
 
 function noneValue($str) {
-  return $str == 'none' ? '' : $str;
+  return ($str == 'none') ? '' : $str;
 }
 
 function is_connected_through_hotspot($ip6_net, $ip4_nat_prefix) {
@@ -78,22 +90,18 @@ function is_connected_through_hotspot($ip6_net, $ip4_nat_prefix) {
 
 dispatch('/', function() {
   $ssids = array();
+  $devs = iw_devices();
   $devs_list = '';
-
-  exec('sudo iwconfig', $devs);
 
   $wifi_device = moulinette_get('wifi_device');
   $multissid = moulinette_get('multissid');
   $wifi_channel = moulinette_get('wifi_channel');
 
   foreach($devs AS $dev) {
-    if(preg_match('/802.11/', $dev)) {
-      $dev = explode(' ', $dev);
-      $dev = $dev[0];
+    $dev_multissid = iw_multissid($dev);
 
-      $active = ($dev == $wifi_device) ? 'class="active"' : '';
-      $devs_list .= "<li $active><a href='#'>$dev</a></li>\n";
-    }
+    $active = ($dev == $wifi_device) ? 'class="active"' : '';
+    $devs_list .= "<li $active data-multissid='$dev_multissid'><a href='javascript:'>$dev</a></li>\n";
   }
 
   $wifi_ssid = getArray(moulinette_get('wifi_ssid'));

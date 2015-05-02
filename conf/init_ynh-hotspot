@@ -48,13 +48,25 @@ is_nat_set() {
 is_ip4nataddr_set() {
   i=${1}
 
-  ip address show dev "ssid${i}" 2> /dev/null | grep -q "${ynh_ip4_nat_prefix[${i}]}.1/24"
+  if [ "${i}" -eq 0 ]; then
+    dev=${ynh_wifi_device}
+  else
+    dev="hotspot${i}"
+  fi
+
+  ip address show dev "${dev}" 2> /dev/null | grep -q "${ynh_ip4_nat_prefix[${i}]}.1/24"
 }
 
 is_ip6addr_set() {
   i=${1}
 
-  ip address show dev "ssid${i}" 2> /dev/null | grep -q "${ynh_ip6_addr[${i}]}/64"
+  if [ "${i}" -eq 0 ]; then
+    dev=${ynh_wifi_device}
+  else
+    dev="hotspot${i}"
+  fi
+
+  ip address show dev "${dev}" 2> /dev/null | grep -q "${ynh_ip6_addr[${i}]}/64"
 }
 
 is_forwarding_set() {
@@ -98,14 +110,26 @@ set_nat() {
 set_ip4nataddr() {
   i=${1}
 
-  ip address add "${ynh_ip4_nat_prefix[${i}]}.1/24" dev "ssid${i}"
+  if [ "${i}" -eq 0 ]; then
+    dev=${ynh_wifi_device}
+  else
+    dev="hotspot${i}"
+  fi
+
+  ip address add "${ynh_ip4_nat_prefix[${i}]}.1/24" dev "${dev}"
 }
 
 set_ip6addr() {
   i=${1}
 
+  if [ "${i}" -eq 0 ]; then
+    dev=${ynh_wifi_device}
+  else
+    dev="hotspot${i}"
+  fi
+
   ip address delete "${ynh_ip6_addr[${i}]}/64" dev tun0 &> /dev/null
-  ip address add "${ynh_ip6_addr[${i}]}/64" dev "ssid${i}"
+  ip address add "${ynh_ip6_addr[${i}]}/64" dev "${dev}"
 }
 
 set_forwarding() {
@@ -116,12 +140,18 @@ set_forwarding() {
 start_dhcpd() {
   i=${1}
 
+  if [ "${i}" -eq 0 ]; then
+    dev=${ynh_wifi_device}
+  else
+    dev="hotspot${i}"
+  fi
+
   rm -f /etc/dnsmasq.dhcpd/dhcpdv?-ssid*.conf
 
   if has_ip6delegatedprefix ${i}; then
     cp /etc/dnsmasq.dhcpdhcpd/dhcpdv6{.conf.tpl,-ssid${i}.conf}
   
-    sed "s|<TPL:WIFI_DEVICE>|ssid${i}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
+    sed "s|<TPL:WIFI_DEVICE>|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
     sed "s|<TPL:IP6_NET>|${ynh_ip6_net[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
     sed "s|<TPL:IP6_DNS0>|${ynh_ip6_dns0[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
     sed "s|<TPL:IP6_DNS1>|${ynh_ip6_dns1[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
@@ -133,7 +163,7 @@ start_dhcpd() {
 
   sed "s|<TPL:IP4_DNS0>|${ynh_ip4_dns0[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
   sed "s|<TPL:IP4_DNS1>|${ynh_ip4_dns1[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
-  sed "s|<TPL:WIFI_DEVICE>|ssid${i}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
+  sed "s|<TPL:WIFI_DEVICE>|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
   sed "s|<TPL:IP4_NAT_PREFIX>|${ynh_ip4_nat_prefix[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
 
   dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf -p0
@@ -147,18 +177,12 @@ start_hostapd() {
 
   sed "s|<TPL:WIFI_DEVICE>|${ynh_wifi_device}|g" -i /etc/hostapd/hostapd.conf
   sed "s|<TPL:WIFI_CHANNEL>|${ynh_wifi_channel}|g" -i /etc/hostapd/hostapd.conf
-
-  iwconfig "${ynh_wifi_device}" | grep -q 'n *ESSID'
-  if [ $? -eq 0 ]; then
-    sed "s|<TPL:N_COMMENT>||g" -i /etc/hostapd/hostapd.conf
-  else
-    sed "s|<TPL:N_COMMENT>|#|g" -i /etc/hostapd/hostapd.conf
-  fi
+  sed "s|<TPL:N_COMMENT>||g" -i /etc/hostapd/hostapd.conf
 
   for i in $(seq 0 $((${ynh_multissid} - 1))); do
     cp /etc/hostapd/hostapd.conf{.tpl2,.tmp}
 
-    sed "s|<TPL:WIFI_INTERFACE>|ssid${i}|g" -i /etc/hostapd/hostapd.conf.tmp
+    sed "s|<TPL:WIFI_INTERFACE>|hotspot${i}|g" -i /etc/hostapd/hostapd.conf.tmp
     sed "s|<TPL:WIFI_SSID>|${ynh_wifi_ssid[${i}]}|g" -i /etc/hostapd/hostapd.conf.tmp
     sed "s|<TPL:WIFI_PASSPHRASE>|${ynh_wifi_passphrase[${i}]}|g" -i /etc/hostapd/hostapd.conf.tmp
   
@@ -192,13 +216,25 @@ unset_nat() {
 unset_ip4nataddr() {
   i=${1}
 
-  ip address delete "${ynh_ip4_nat_prefix[${i}]}.1/24" dev "ssid${i}"
+  if [ "${i}" -eq 0 ]; then
+    dev=${ynh_wifi_device}
+  else
+    dev="hotspot${i}"
+  fi
+
+  ip address delete "${ynh_ip4_nat_prefix[${i}]}.1/24" dev "${dev}"
 }
 
 unset_ip6addr() {
   i=${1}
 
-  ip address delete "${ynh_ip6_addr[${i}]}/64" dev "ssid${i}"
+  if [ "${i}" -eq 0 ]; then
+    dev=${ynh_wifi_device}
+  else
+    dev="hotspot${i}"
+  fi
+
+  ip address delete "${ynh_ip6_addr[${i}]}/64" dev "${dev}"
 }
 
 unset_forwarding() {
@@ -372,19 +408,19 @@ case "$1" in
 
         # Set ipv4 NAT address
         if ! is_ip4nataddr_set ${i}; then
-          echo "SSID ${i}: Set IPv4 NAT address"
+          echo "Hotspot ${i}: Set IPv4 NAT address"
           set_ip4nataddr ${i}
         fi
   
         # Set the ipv6 address
         if has_ip6delegatedprefix ${i} && ! is_ip6addr_set ${i}; then
-          echo "SSID ${i}: Set IPv6 address"
+          echo "Hotspot ${i}: Set IPv6 address"
           set_ip6addr ${i}
         fi
   
         # Run DHCP servers
         if ! is_dhcpd_running ${i}; then
-          echo "SSID ${i}: Set DHCP servers (dnsmasq)"
+          echo "Hotspot ${i}: Set DHCP servers (dnsmasq)"
           start_dhcpd ${i}
         fi
       done
@@ -409,17 +445,17 @@ case "$1" in
 
     for i in $(seq 0 $((${ynh_multissid} - 1))); do
       if is_ip4nataddr_set ${i}; then
-        echo "SSID ${i}: Unset IPv4 NAT address"
+        echo "Hotspot ${i}: Unset IPv4 NAT address"
         unset_ip4nataddr ${i}
       fi
 
       if has_ip6delegatedprefix ${i} && is_ip6addr_set ${i}; then
-        echo "SSID ${i}: Unset IPv6 address"
+        echo "Hotspot ${i}: Unset IPv6 address"
         unset_ip6addr ${i}
       fi 
  
       if is_dhcpd_running ${i}; then
-        echo "SSID ${i}: Stop DHCP servers"
+        echo "Hotspot ${i}: Stop DHCP servers"
         stop_dhcpd ${i}
       fi
     done
@@ -470,30 +506,30 @@ case "$1" in
 
     for i in $(seq 0 $((${ynh_multissid} - 1))); do
       if has_ip6delegatedprefix ${i}; then
-        echo "[INFO] SSID ${i}: IPv6 delegated prefix found"
-        echo "[INFO] SSID ${i}: IPv6 address computed from the delegated prefix: ${ynh_ip6_addr}"
+        echo "[INFO] Hotspot ${i}: IPv6 delegated prefix found"
+        echo "[INFO] Hotspot ${i}: IPv6 address computed from the delegated prefix: ${ynh_ip6_addr}"
   
         if is_ip6addr_set ${i}; then
-          echo "[OK] SSID ${i}: IPv6 address set"
+          echo "[OK] Hotspot ${i}: IPv6 address set"
         else
-          echo "[ERR] SSID ${i}: No IPv6 address set"
+          echo "[ERR] Hotspot ${i}: No IPv6 address set"
           exitcode=1
         fi
       else
-        echo "[INFO] SSID ${i}: No IPv6 delegated prefix found"
+        echo "[INFO] Hotspot ${i}: No IPv6 delegated prefix found"
       fi
   
       if is_dhcpd_running ${i}; then
-        echo "[OK] SSID ${i}: DHCP servers set"
+        echo "[OK] Hotspot ${i}: DHCP servers set"
       else
-        echo "[ERR] SSID ${i}: No DHCP servers set"
+        echo "[ERR] Hotspot ${i}: No DHCP servers set"
         exitcode=1
       fi
   
       if is_ip4nataddr_set ${i}; then
-        echo "[OK] SSID ${i}: IPv4 NAT address set"
+        echo "[OK] Hotspot ${i}: IPv4 NAT address set"
       else
-        echo "[ERR] SSID ${i}: No IPv4 NAT address set"
+        echo "[ERR] Hotspot ${i}: No IPv4 NAT address set"
         exitcode=1
       fi
     done

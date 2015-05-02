@@ -17,35 +17,4 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Retrieve arguments
-domain=$(sudo yunohost app setting hotspot domain)
-
-# The End
-sudo service ynh-hotspot stop
-sudo yunohost service remove ynh-hotspot
-sudo rm -f /etc/init.d/ynh-hotspot
-sudo rm -f /tmp/.ynh-hotspot-*
-
-# Update firewall for DHCP
-sudo yunohost firewall disallow --ipv6 UDP 547
-sudo yunohost firewall disallow UDP 67
-
-# Remove confs
-sudo rm -fr /etc/dnsmasq.dhcpd/
-sudo rm -f /etc/hostapd/hostapd.conf{.tpl?,}
-sudo rm -f /etc/nginx/conf.d/${domain}.d/wifiadmin.conf
-sudo rm -f /etc/php5/fpm/pool.d/wifiadmin.conf
-
-# Remove firmwares
-sudo rm -f /lib/firmware/htc-7010.fw
-sudo rm -f /lib/firmware/htc-9271.fw
-
-# Restart services
-sudo yunohost service stop php5-fpm
-sudo yunohost service start php5-fpm
-sudo service nginx reload
-
-# Remove sources
-sudo rm -rf /var/www/wifiadmin/
-
-exit 0
+echo -n hotspot0 $(iw dev | grep Interface | grep hotspot | awk '{ print $NF }') | tr ' ' \|

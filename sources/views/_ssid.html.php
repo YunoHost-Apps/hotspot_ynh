@@ -1,6 +1,6 @@
 <div class="panel panel-default ssid enabled" <?= $service_enabled == 0 ? 'style="display: none"' : '' ?>>
   <div class="panel-heading">
-    <h3 class="panel-title" data-label="<?= T_("SSID") ?>"><?= T_("SSID") ?> <?= $ssid['id'] + 1 ?></h3>
+    <h3 class="panel-title" data-label="<?= T_("Hotspot") ?>"><?= T_("Hotspot") ?> <?= $ssid['id'] + 1 ?></h3>
   </div>
 
   <ul class="nav nav-tabs nav-justified">
