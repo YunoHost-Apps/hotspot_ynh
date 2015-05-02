@@ -115,7 +115,7 @@ dispatch('/', function() {
     $dev_multissid = iw_multissid($dev);
 
     $active = ($dev == $wifi_device) ? 'class="active"' : '';
-    $devs_list .= "<li $active data-multissid='$dev_multissid'><a href='javascript:'>$dev</a></li>\n";
+    $devs_list .= "<li $active data-multissid='$dev_multissid'><a href='#'>$dev</a></li>\n";
   }
 
   $wifi_ssid = getArray(moulinette_get('wifi_ssid'));
