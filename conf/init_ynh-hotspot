@@ -142,7 +142,8 @@ start_dhcpd() {
 start_hostapd() {
   cp /etc/hostapd/hostapd.conf{.tpl1,}
 
-  ip link set addr 02:42:42:13:37:00 dev "${ynh_wifi_device}"
+  ethaddr=$(ip link show dev "${ynh_wifi_device}" | grep link/ether | awk -F: '{ printf "02:%s:%s:%s:%s:00", $2, $3, $4, $5 }')
+  ip link set addr "${ethaddr}" dev "${ynh_wifi_device}"
 
   sed "s|<TPL:WIFI_DEVICE>|${ynh_wifi_device}|g" -i /etc/hostapd/hostapd.conf
   sed "s|<TPL:WIFI_CHANNEL>|${ynh_wifi_channel}|g" -i /etc/hostapd/hostapd.conf
