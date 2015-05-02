@@ -167,6 +167,12 @@ start_hostapd() {
       sed "s|<TPL:SEC_COMMENT>|#|g" -i /etc/hostapd/hostapd.conf.tmp
     fi
 
+    if [ "${i}" -eq 0 ]; then
+      sed "s|<TPL:BSS_COMMENT>|#|g" -i /etc/hostapd/hostapd.conf.tmp
+    else
+      sed "s|<TPL:BSS_COMMENT>||g" -i /etc/hostapd/hostapd.conf.tmp
+    fi
+
     cat /etc/hostapd/hostapd.conf.tmp >> /etc/hostapd/hostapd.conf
     rm /etc/hostapd/hostapd.conf.tmp
   done
@@ -356,7 +362,7 @@ case "$1" in
           sleep 1 && (( i++ ))
           [ ${i} -gt 20 ] && stop_hostapd
           [ ${i} -gt 20 ] && exit 1
-          ip link show dev ssid0 &> /dev/null
+          ip link show dev "mon.${ynh_wifi_device}" &> /dev/null
         done
       fi
 
@@ -365,19 +371,19 @@ case "$1" in
 
         # Set ipv4 NAT address
         if ! is_ip4nataddr_set ${i}; then
-          echo "Set IPv4 NAT address"
+          echo "SSID ${i}: Set IPv4 NAT address"
           set_ip4nataddr ${i}
         fi
   
         # Set the ipv6 address
         if has_ip6delegatedprefix ${i} && ! is_ip6addr_set ${i}; then
-          echo "Set IPv6 address"
+          echo "SSID ${i}: Set IPv6 address"
           set_ip6addr ${i}
         fi
   
         # Run DHCP servers
         if ! is_dhcpd_running ${i}; then
-          echo "Set DHCP servers (dnsmasq)"
+          echo "SSID ${i}: Set DHCP servers (dnsmasq)"
           start_dhcpd ${i}
         fi
       done
@@ -402,17 +408,17 @@ case "$1" in
 
     for i in $(seq 0 $((${ynh_multissid} - 1))); do
       if is_ip4nataddr_set ${i}; then
-        echo "Unset IPv4 NAT address"
+        echo "SSID ${i}: Unset IPv4 NAT address"
         unset_ip4nataddr ${i}
       fi
 
       if has_ip6delegatedprefix ${i} && is_ip6addr_set ${i}; then
-        echo "Unset IPv6 address"
+        echo "SSID ${i}: Unset IPv6 address"
         unset_ip6addr ${i}
       fi 
  
       if is_dhcpd_running ${i}; then
-        echo "Stop DHCP servers"
+        echo "SSID ${i}: Stop DHCP servers"
         stop_dhcpd ${i}
       fi
     done
