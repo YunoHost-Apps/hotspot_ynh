@@ -188,6 +188,15 @@ $(document).ready(function() {
       if($(this).attr('name').match('dns')) {
         $(this).val($(this).attr('placeholder'));
 
+      } else if($(this).attr('name').match('ip4_nat_prefix')) {
+        var o1 = parseInt(Math.random() * (255 - 1) + 1);
+        var o2 = parseInt(Math.random() * (255 - 1) + 1);
+
+        $(this).val('10.' + o1 + '.' + o2);
+
+      } else if($(this).attr('name').match('wifi_ssid')) {
+        $(this).val('myNeutralNetwork' + (id + 1));
+
       } else {
         $(this).val('');
       }
