@@ -82,10 +82,24 @@ function noneValue($str) {
 
 function is_connected_through_hotspot($ip6_net, $ip4_nat_prefix) {
   $ip = $_SERVER['REMOTE_ADDR'];
-  $ip6_regex = '/^'.preg_quote(preg_replace('/::$/', '', $ip6_net)).':/';
-  $ip4_regex = '/^'.preg_quote($ip4_nat_prefix).'\./';
 
-  return (preg_match($ip6_regex, $ip) || preg_match($ip4_regex, $ip));
+  foreach($ip6_net as $net) {
+    $ip6_regex = '/^'.preg_quote(preg_replace('/::$/', '', $net)).':/';
+
+    if(preg_match($ip6_regex, $ip)) {
+      return true;
+    }
+  }
+
+  foreach($ip4_nat_prefix as $prefix) {
+    $ip4_regex = '/^'.preg_quote($prefix).'\./';
+
+    if(preg_match($ip4_regex, $ip)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 dispatch('/', function() {

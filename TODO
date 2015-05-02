@@ -1,6 +1,4 @@
 * Translate PHP interface in French
 
 * multissid
-** WEB: update is_connected_through_hotspot feature
-** INIT: differentiate ipv6 and ipv4 in is_dhcpd_running
 ** INIT: use insserv instead of update-rc.d and update service dependencies
