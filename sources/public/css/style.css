@@ -120,24 +120,25 @@ span#wifiparty_ssid {
   font-size: 70px;
 }
 
-div#wifiparty_passphrase {
+div.wifiparty_passphrase {
   clear: both;
   font-size: 140px;
   font-style: italic;
   margin: 50px 20px;
   word-wrap: break-word;
   line-height: 0.9;
+  display: none;
 }
 
-div#wifiparty_passphrase span.passdigit {
+div.wifiparty_passphrase span.passdigit {
   color: #428BCA;
 }
 
-div#wifiparty_passphrase span.passother {
+div.wifiparty_passphrase span.passother {
   color: #D9534F;
 }
 
-div#wifiparty_passphrase span.passspace {
+div.wifiparty_passphrase span.passspace {
   color: #CCC;
 }
 

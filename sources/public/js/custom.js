@@ -130,7 +130,15 @@ $(document).ready(function() {
   });
 
   $('.wifiparty').click(function() {
-    $('#wifiparty_screen').show('slow');
+    var screen = $('#wifiparty_screen');
+    var passphrase = $(this).closest('.ssid').find('.wifiparty_passphrase').clone();
+
+    screen.find('#wifiparty_ssid span').last().text($(this).closest('.ssid').find('input[type=text]').first().val());
+    screen.find('.wifiparty_passphrase').remove();
+    screen.append(passphrase);
+    screen.find('.wifiparty_passphrase').show();
+
+    screen.show('slow');
   });
 
   $('#wifiparty_zoomin_ssid').mousedown(function() {
@@ -142,11 +150,11 @@ $(document).ready(function() {
   });
 
   $('#wifiparty_zoomin_passphrase').mousedown(function() {
-    $('#wifiparty_passphrase').css('fontSize', (parseInt($('#wifiparty_passphrase').css('fontSize')) + 7) + "px");
+    $('#wifiparty_screen .wifiparty_passphrase').css('fontSize', (parseInt($('#wifiparty_screen .wifiparty_passphrase').css('fontSize')) + 7) + "px");
   });
 
   $('#wifiparty_zoomout_passphrase').mousedown(function() {
-    $('#wifiparty_passphrase').css('fontSize', (parseInt($('#wifiparty_passphrase').css('fontSize')) - 7) + "px");
+    $('#wifiparty_screen .wifiparty_passphrase').css('fontSize', (parseInt($('#wifiparty_screen .wifiparty_passphrase').css('fontSize')) - 7) + "px");
   });
 
   $('#wifiparty_close').click(function() {
@@ -183,6 +191,8 @@ $(document).ready(function() {
 
     clone.find('[data-toggle="tooltip"]').tooltip();
     clone.find('.deletessid').click(deleteClick);
+    clone.find('.wifiparty_passphrase').remove();
+    clone.find('.wifiparty').attr('disabled', true);
 
     clone.find('input[type=text]').each(function() {
       if($(this).attr('name').match('dns')) {

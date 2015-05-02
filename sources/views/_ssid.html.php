@@ -95,5 +95,14 @@
   <div class="deletessid" style="display: none">
     <button type="button" class="btn btn-danger"><?= T_("Delete") ?></button>
   </div>
+
+  <div class="wifiparty_passphrase"><?php
+    $pw = preg_replace('/[^0-9a-z ]/i', '<span-class="passother">$0</span>', $ssid['wifi_passphrase']);
+    $pw = preg_replace('/\d/', '<span-class="passdigit">$0</span>', $pw);
+    $pw = preg_replace('/ /', '<span class="passspace">&#x25AE;</span>', $pw);
+    $pw = preg_replace('/span-class/', 'span class', $pw);
+
+    echo $pw;
+  ?></div>
 </div>
 
