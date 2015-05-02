@@ -1,8 +1,6 @@
 * Translate PHP interface in French
 
 * multissid
-** WEB: limit to N ssid max depending on the antenna specs
-** WEB: add ssid delete feature
 ** WEB: update is_connected_through_hotspot feature
 ** WEB: autocomplete ipv4 nat prefix (.242, .243, .244, etc)
 ** WEB: check if ipv6 delgated prefixes and ipv4 nat prefixes are unique

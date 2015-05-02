@@ -83,7 +83,7 @@
               <div class="input-group">
                   <input type="text" name="wifi_device" id="wifi_device" value="<?= $wifi_device ?>" style="display: none" />
                   <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><?= $wifi_device ?> <span class="caret"></span></button>
-                  <ul class="dropdown-menu dropdown-menu-left" role="menu">
+                  <ul class="dropdown-menu dropdown-menu-left" id="devlist" role="menu">
                     <?= $wifi_device_list ?>
                   </ul>
               </div>
@@ -121,7 +121,7 @@
       <?php endforeach; ?>
       </div>
 
-<button id="newssid" type="button" class="btn btn-default">Add</button>
+      <button id="newssid" type="button" class="btn btn-success"><?= T_("Add a hotspot") ?> <span class="badge">0</span></button>
 
       <div class="form-group">
         <div style="text-align: center">

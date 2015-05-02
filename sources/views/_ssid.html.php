@@ -91,5 +91,9 @@
       </div>
     </div>
   </div>
+
+  <div class="deletessid" style="display: none">
+    <button type="button" class="btn btn-danger"><?= T_("Delete") ?></button>
+  </div>
 </div>
 

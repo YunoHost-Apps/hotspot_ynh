@@ -52,6 +52,45 @@ function dropDownClick() {
   input.val($(this).text());
 }
 
+function updateNbSsidRemaining() {
+  multissid = $('#devlist .active').data('multissid');
+  current = $('.ssid').length;
+  remaining = multissid - current;
+
+  $('.ssid').each(function(i) {
+    if(i >= multissid) {
+      $(this).removeClass('panel-default');
+      $(this).addClass('panel-danger');
+
+    } else {
+      $(this).removeClass('panel-danger');
+      $(this).addClass('panel-default');
+    }
+  });
+
+  $('.ssid').find('.deletessid').hide();
+  $('.ssid').last().find('.deletessid').show();
+  $('.ssid').first().find('.deletessid').hide();
+
+  if(remaining <= 0) {
+    $('#newssid').attr('disabled', true);
+    $('#newssid').removeClass('btn-success');
+    $('#newssid').addClass('btn-danger');
+
+  } else {
+    $('#newssid').attr('disabled', false);
+    $('#newssid').removeClass('btn-danger');
+    $('#newssid').addClass('btn-success');
+  }
+
+  $('#newssid span').text(remaining);
+}
+
+function deleteClick() {
+  $(this).closest('.ssid').remove();
+  updateNbSsidRemaining();
+}
+
 $(document).ready(function() {
   $('.btn-group').button();
   $('[data-toggle="tooltip"]').tooltip();
@@ -143,6 +182,7 @@ $(document).ready(function() {
     });
 
     clone.find('[data-toggle="tooltip"]').tooltip();
+    clone.find('.deletessid').click(deleteClick);
 
     clone.find('input[type=text]').each(function() {
       if($(this).attr('name').match('dns')) {
@@ -170,7 +210,13 @@ $(document).ready(function() {
     });
 
     $('#ssids').append(clone);
+
+    updateNbSsidRemaining(); 
   });
+
+  $('.deletessid').click(deleteClick);
+
+  updateNbSsidRemaining(); 
 });
 
 $(document).keydown(function(e) {
