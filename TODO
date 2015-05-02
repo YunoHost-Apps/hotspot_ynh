@@ -2,7 +2,5 @@
 
 * multissid
 ** WEB: update is_connected_through_hotspot feature
-** WEB: check if ipv6 delgated prefixes and ipv4 nat prefixes are unique
-** WEB: fix the now broken wifiparty button
 ** INIT: differentiate ipv6 and ipv4 in is_dhcpd_running
 ** INIT: use insserv instead of update-rc.d and update service dependencies

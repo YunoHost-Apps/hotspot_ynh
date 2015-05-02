@@ -37,7 +37,7 @@ function tabsClick() {
   return false;
 }
 
-function dropDownClick() {
+function deviceDropDownClick() {
   var menu = $(this).parent();
   var items = menu.children();
   var button = menu.prev();
@@ -50,6 +50,8 @@ function dropDownClick() {
   button.append(' <span class="caret"></span>');
 
   input.val($(this).text());
+
+  updateNbSsidRemaining();
 }
 
 function updateNbSsidRemaining() {
@@ -95,7 +97,7 @@ $(document).ready(function() {
   $('.btn-group').button();
   $('[data-toggle="tooltip"]').tooltip();
 
-  $('.dropdown-menu li').click(dropDownClick);
+  $('.dropdown-menu li').click(deviceDropDownClick);
 
   $('.switch').bootstrapToggle();
 
@@ -177,14 +179,6 @@ $(document).ready(function() {
     var clone = $('#ssids').children().first().clone();
     var id = parseInt($('.ssid').length);
 
-    clone.find('.dropdownmenu').each(function(i) {
-      var initial = $('#ssids').children().first().find('.dropdownmenu');
-      var clone = initial.eq(i).clone(true, true);
-
-      $(this).after(clone);
-      $(this).remove();
-    });
-
     clone.find('[name]').each(function() {
       $(this).attr('name', $(this).attr('name').replace('[0]', '[' + id + ']'));
     });
@@ -221,7 +215,6 @@ $(document).ready(function() {
     clone.find('.switch').bootstrapToggle();
     clone.find('.wifi_secure').change(wifiSecureBtn);
     clone.find('.nav-tabs a').click(tabsClick);
-    clone.find('.dropdown-menu li').click(dropDownClick);
     clone.find('.wifi_passphrase').hide();
 
     clone.find('h3').each(function() {

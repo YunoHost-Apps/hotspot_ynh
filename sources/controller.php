@@ -151,6 +151,9 @@ dispatch_put('/settings', function() {
 
   $wifi_device_exists = ($retcode == 0);
   $service_enabled = isset($_POST['service_enabled']) ? 1 : 0;
+  $wifi_ssid_uniqueness = array();
+  $ip4_nat_prefix_uniqueness = array();
+  $ip6_net_uniqueness = array();
   $ssids = array();
   $id = 0;
 
@@ -166,7 +169,25 @@ dispatch_put('/settings', function() {
         if(!$ssid['wifi_secure']) {
           $ssid['wifi_passphrase'] = 'none';
         }
+
+        if(in_array($ssid['wifi_ssid'], $wifi_ssid_uniqueness)) {
+          throw new Exception(T_('All Wifi names must be unique'));
+        } else {
+          array_push($wifi_ssid_uniqueness, $ssid['wifi_ssid']);
+        }
     
+        if(in_array($ssid['ip4_nat_prefix'], $ip4_nat_prefix_uniqueness)) {
+          throw new Exception(T_('All IPv4 NAT prefixes must be unique'));
+        } else {
+          array_push($ip4_nat_prefix_uniqueness, $ssid['ip4_nat_prefix']);
+        }
+
+        if($ssid['ip6_net'] != 'none' && in_array($ssid['ip6_net'], $ip6_net_uniqueness)) {
+          throw new Exception(T_('All IPv6 delegated prefixes must be unique'));
+        } else {
+          array_push($ip6_net_uniqueness, $ssid['ip6_net']);
+        }
+
         if(empty($ssid['wifi_ssid']) || empty($ssid['wifi_passphrase'])) {
           throw new Exception(T_('Your Wifi Hotspot needs a name and a password'));
         }
@@ -236,7 +257,7 @@ dispatch_put('/settings', function() {
         array_push($ssids, $ssid);
       }
     } catch(Exception $e) {
-      flash('error', T_('SSID')." $id: ".$e->getMessage().' ('.T_('configuration not updated').').');
+      flash('error', T_('Hotspot')." $id: ".$e->getMessage().' ('.T_('configuration not updated').').');
       goto redirect;
     }
   }
