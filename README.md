@@ -21,6 +21,26 @@ This YunoHost app is a part of the "[La Brique Internet](http://labriqueinter.ne
 * Set an IPv6 from your delegated prefix (*prefix::42*) on the server, to use for the AAAA records
 * Web interface ([screenshot](https://raw.githubusercontent.com/jvaubourg/hotspot_ynh/master/screenshot.png))
 
+## Friendly apps
+
+Some other YunoHost apps have this Hotspot wifi app as prerequisite, in order to offer a service through a wifi access point.
+
+With a multissid wireless card (most can do that), you can create multiple access points with this Hotspot wifi app.
+
+For example, you can create 3 hotspots:
+
+1. *PirateBox*
+2. *myTorNetwork*
+3. *myNeutralNetwork*
+
+You can then install and configure 3 other dependent apps on your YunoHost:
+
+1. [PirateBox](https://github.com/jvaubourg/piratebox_ynh) configured to use *PirateBox*,
+2. [Tor Client](https://github.com/bleuchtang/torclient_ynh/) configured to use *myTorNetwork*,
+3. [VPN Client](https://github.com/jvaubourg/vpnclient_ynh/) configured by default to use *myNeutralNetwork* because this hotspot is not used by another app in this case.
+
+In this manner, with this example, you can provide 3 access points at the same time with 3 different services and only one wireless card.
+
 ## Prerequisites
 
 This app works with a non-stable version of YunoHost.
