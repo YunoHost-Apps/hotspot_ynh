@@ -5,9 +5,7 @@
 
 Hotspot wifi app for [YunoHost](http://yunohost.org/).
 
-* Broadcast your own Wifi internet access in addition to your self-hosted web services.
-* Without internet access, it's a [PirateBox](https://en.wikipedia.org/wiki/PirateBox).
-* With the [VPN Client app for YunoHost](https://github.com/jvaubourg/vpnclient_ynh), it's an encrypted Wifi internet access (eventually with [neutral access](https://en.wikipedia.org/wiki/Net_neutrality), without filters, and with IPv6, depending on your VPN provider).
+Broadcast your internet access (and your self-hosted web services) by wifi (see [Friendly apps](#friendly-apps)).
 
 This YunoHost app is a part of the "[La Brique Internet](http://labriqueinter.net)" project but can be used independently.
 
