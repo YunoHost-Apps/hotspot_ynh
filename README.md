@@ -25,13 +25,13 @@ This YunoHost app is a part of the "[La Brique Internet](http://labriqueinter.ne
 
 Some other YunoHost apps have this Hotspot wifi app as prerequisite, in order to offer a service through a wifi access point.
 
-With a multissid wireless card (most can do that), you can create multiple access points with this Hotspot wifi app.
+With a multissid wireless card (most can do that), you can create multiple access points.
 
 For example, you can create 3 hotspots:
 
 1. *PirateBox*
-2. *myTorNetwork*
-3. *myNeutralNetwork*
+2. *torNetwork*
+3. *neutralNetwork*
 
 You can then install and configure 3 other dependent apps on your YunoHost:
 
