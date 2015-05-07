@@ -154,7 +154,7 @@ start_dhcpd6() {
 
   rm -f /etc/dnsmasq.dhcpd/dhcpdv6-ssid*.conf
 
-  cp /etc/dnsmasq.dhcpdhcpd/dhcpdv6{.conf.tpl,-ssid${i}.conf}
+  cp /etc/dnsmasq.dhcp/dhcpdv6{.conf.tpl,-ssid${i}.conf}
 
   sed "s|<TPL:WIFI_DEVICE>|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
   sed "s|<TPL:IP6_NET>|${ynh_ip6_net[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
