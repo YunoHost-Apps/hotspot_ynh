@@ -31,6 +31,21 @@ firmware_nonfree=${5}
 #
 #ip6_net=${6}
 
+# Check YunoHost version
+ynh_version=$(sudo dpkg -l yunohost | grep ii | awk '{ print $3 }' | sed 's/\.//g')
+
+if [ "${ynh_version}" -lt 220 ]; then
+  echo "ERROR: You need a YunoHost version equals or greater than 2.2.0"
+  exit 1
+fi
+
+sudo service dnsmasq status &> /dev/null
+
+if [ $? -ne 0 ]; then
+  echo "ERROR: You need to enable dnsmasq instead of bind9 (apt-get remove bind9 && service dnsmasq start)"
+  exit 1
+fi
+
 # Check arguments
 if [ -z "${wifi_ssid}" -o -z "${wifi_passphrase}" ]; then
   echo "ERROR: Your Wifi Hotspot needs a name and a password" >&2
