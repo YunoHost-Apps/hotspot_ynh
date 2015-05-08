@@ -74,6 +74,12 @@ if [ $? -ne 0 ]; then
   sudo apt-get --assume-yes --force-yes install ${packages}
 fi
 
+# Copy (free) firmwares
+# Extract from http://packages.trisquel.info/toutatis-updates/open-ath9k-htc-firmware
+# https://www.fsf.org/news/ryf-certification-thinkpenguin-usb-with-atheros-chip
+sudo install -b -o root -g root -m 0644 ../conf/firmware_htc-7010.fw /lib/firmware/htc-7010.fw
+sudo install -b -o root -g root -m 0644 ../conf/firmware_htc-9271.fw /lib/firmware/htc-9271.fw
+
 # Compute extra arguments
 if [ -z "${ip6_net}" ]; then
   ip6_net=none
@@ -142,12 +148,6 @@ sudo install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dn
 sudo install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl
 sudo install -b -o root -g root -m 0644 ../conf/nginx_wifiadmin.conf "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
 sudo install -b -o root -g root -m 0644 ../conf/phpfpm_wifiadmin.conf /etc/php5/fpm/pool.d/wifiadmin.conf
-
-# Copy (free) firmwares
-# Extract from http://packages.trisquel.info/toutatis-updates/open-ath9k-htc-firmware
-# https://www.fsf.org/news/ryf-certification-thinkpenguin-usb-with-atheros-chip
-sudo install -b -o root -g root -m 0644 ../conf/firmware_htc-7010.fw /lib/firmware/htc-7010.fw
-sudo install -b -o root -g root -m 0644 ../conf/firmware_htc-9271.fw /lib/firmware/htc-9271.fw
 
 # Copy web sources
 sudo mkdir -pm 0755 /var/www/wifiadmin/
