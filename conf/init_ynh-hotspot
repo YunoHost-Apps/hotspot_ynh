@@ -89,7 +89,7 @@ is_dhcpd4_running() {
 }
 
 is_hostapd_running() {
-  service hostapd status &> /dev/null
+  systemctl is-active hostapd --quiet &> /dev/null
 }
 
 is_running() {
@@ -218,7 +218,7 @@ start_hostapd() {
     rm /etc/hostapd/hostapd.conf.tmp
   done
 
-  service hostapd start
+  systemctl start hostapd --quiet
 }
 
 ## Unsetters
@@ -269,7 +269,7 @@ stop_dhcpd4() {
 }
 
 stop_hostapd() {
-  service hostapd stop
+  systemctl stop hostapd --quiet
 }
 
 ## Tools
@@ -317,7 +317,7 @@ if [ "$1" != restart ]; then
   # Restart php5-fpm at the first start (it needs to be restarted after the slapd start)
   if [ ! -e /tmp/.ynh-hotspot-boot ]; then
     touch /tmp/.ynh-hotspot-boot
-    service php5-fpm restart
+    systemctl restart php5-fpm --quiet
   fi
   
   # Variables
@@ -499,7 +499,7 @@ case "$1" in
     fi
 
     if has_vpnclient_app; then
-      service ynh-vpnclient start
+      systemctl start ynh-vpnclient --quiet
     fi
   ;;
   restart)

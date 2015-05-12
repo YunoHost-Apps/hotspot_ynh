@@ -27,23 +27,23 @@ function moulinette_set($var, $value) {
 }
 
 function stop_service() {
-  exec('sudo service ynh-hotspot stop');
+  exec('sudo systemctl stop ynh-hotspot');
 }
 
 function start_service() {
-  exec('sudo service ynh-hotspot start', $output, $retcode);
+  exec('sudo systemctl start ynh-hotspot', $output, $retcode);
 
   return $retcode;
 }
 
 function service_status() {
-  exec('sudo service ynh-hotspot status', $output);
+  exec('sudo systemctl is-active ynh-hotspot', $output);
 
   return $output;
 }
 
 function service_faststatus() {
-  exec('sudo service hostapd status', $output, $retcode);
+  exec('sudo systemctl is-active hostapd', $output, $retcode);
 
   return $retcode;
 }

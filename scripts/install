@@ -39,10 +39,10 @@ if [ "${ynh_version}" -lt 220 ]; then
   exit 1
 fi
 
-sudo service dnsmasq status &> /dev/null
+sudo systemctl status dnsmasq status --quiet &> /dev/null
 
 if [ $? -ne 0 ]; then
-  echo "ERROR: You need to enable dnsmasq instead of bind9 (apt-get remove bind9 && service dnsmasq start)"
+  echo "ERROR: You need to enable dnsmasq instead of bind9 (apt-get remove bind && systemctl start dnsmasq)"
   exit 1
 fi
 
@@ -191,7 +191,7 @@ sudo sed 's|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g' -i /etc/php5/fpm/pool.d/
 sudo sed "s|<TPL:NGINX_LOCATION>|${url_path}|g" -i /var/www/wifiadmin/config.php
 
 # Copy init script
-sudo install -o root -g root -m 0755 ../conf/init_ynh-hotspot /etc/init.d/ynh-hotspot
+sudo install -o root -g root -m 0755 ../conf/ynh-hotspot.service /lib/systemd/system/ynh-hotspot.service
 
 # Update firewall for DHCP
 sudo yunohost firewall allow --no-upnp --ipv6 UDP 547
@@ -208,7 +208,7 @@ sudo yunohost service disable hostapd
 sudo yunohost service add php5-fpm
 sudo yunohost service enable php5-fpm
 
-sudo service nginx reload
+sudo systemcld reload nginx
 
 # Remove IPv6 address set if there is a VPN installed
 if [ "${ip6_addr}" != none ]; then
@@ -220,7 +220,8 @@ fi
 
 sudo yunohost service add ynh-hotspot
 sudo yunohost service enable ynh-hotspot
-sudo service ynh-hotspot start
+sudo systemctl reenable ynh-hotspot
+sudo systemcld start ynh-hotspot
 
 # Update SSO for wifiadmin
 sudo yunohost app ssowatconf
