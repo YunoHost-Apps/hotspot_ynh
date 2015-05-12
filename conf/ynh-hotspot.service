@@ -1,0 +1,15 @@
+[Unit]
+Description=YunoHost Wifi Hotspot.
+Requires=network.target
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/ynh-hotspot start
+ExecRestart=/usr/local/bin/ynh-hotspot restart
+ExecStop=/usr/local/bin/ynh-hotspot stop
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+Alias=ynh-hotspot.service
