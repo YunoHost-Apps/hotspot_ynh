@@ -1,28 +1,19 @@
 #!/bin/bash
-### BEGIN INIT INFO
-# Provides: ynh-hotspot
-# Required-Start:    $network $remote_fs $syslog yunohost-api
-# Required-Stop:     $network $remote_fs $syslog
-# Default-Start:     2 3 4 5
-# Default-Stop:      0 1 6
-# Short-Description: Set prerequisites for wifi hotspot.
-# Description:       Set prerequisites for wifi hotspot.
-### END INIT INFO
-
-# Wifi Hotspot app for YunoHost 
+#
+# Wifi Hotspot app for YunoHost
 # Copyright (C) 2015 Julien Vaubourg <julien@vaubourg.com>
 # Contribute at https://github.com/jvaubourg/hotspot_ynh
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Affero General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -201,7 +192,7 @@ start_hostapd() {
     sed "s|<TPL:WIFI_INTERFACE>|hotspot${i}|g" -i /etc/hostapd/hostapd.conf.tmp
     sed "s|<TPL:WIFI_SSID>|${ynh_wifi_ssid[${i}]}|g" -i /etc/hostapd/hostapd.conf.tmp
     sed "s|<TPL:WIFI_PASSPHRASE>|${ynh_wifi_passphrase[${i}]}|g" -i /etc/hostapd/hostapd.conf.tmp
-  
+
     if [ "${ynh_wifi_secure[${i}]}" -eq 1 ]; then
       sed "s|<TPL:SEC_COMMENT>||g" -i /etc/hostapd/hostapd.conf.tmp
     else
@@ -285,7 +276,7 @@ moulinette_get() {
   fi
 
   echo "${value}"
-} 
+}
 
 moulinette_vpnclient_get() {
   var=${1}
@@ -319,11 +310,11 @@ if [ "$1" != restart ]; then
     touch /tmp/.ynh-hotspot-boot
     systemctl restart php5-fpm --quiet
   fi
-  
+
   # Variables
-  
+
   echo -n "Retrieving Yunohost settings... "
-  
+
   ynh_service_enabled=$(moulinette_get service_enabled)
   ynh_wifi_device=$(moulinette_get wifi_device)
   ynh_wifi_channel=$(moulinette_get wifi_channel)
@@ -342,23 +333,23 @@ if [ "$1" != restart ]; then
 
   old_internet_device=$(moulinette_get internet_device)
   new_internet_device=$(ip route | awk '/default via/ { print $NF; }')
-  
+
   # Switch the NAT interface if there is a VPN
   ip link show dev tun0 &> /dev/null
   if [ "$?" -eq 0 ]; then
     new_internet_device=tun0
   fi
-  
+
   echo "OK"
-  
+
   # Check IPv6 delegated prefix from vpnclient
 #  vpnclient_ip6_net=$(moulinette_vpnclient_get ip6_net)
-#  
+#
 #  if [ ! -z "${vpnclient_ip6_addr}" ]; then
 #    if [ "${ynh_ip6_net}" == none ]; then
 #      ynh_ip6_net=$vpnclient_ip6_net
 #      ynh_ip6_addr=$(moulinette_vpnclient_get ip6_addr)
-#    
+#
 #      moulinette_set ip6_net "${ynh_ip6_net}"
 #      moulinette_set ip6_addr "${ynh_ip6_addr}"
 #    else
@@ -432,13 +423,13 @@ case "$1" in
           echo "hotspot${i}: Set IPv4 NAT address"
           set_ip4nataddr ${i}
         fi
-  
+
         # Set the ipv6 address
         if has_ip6delegatedprefix ${i} && ! is_ip6addr_set ${i}; then
           echo "hotspot${i}: Set IPv6 address"
           set_ip6addr ${i}
         fi
-  
+
         # Run DHCPv6 server
         if has_ip6delegatedprefix ${i} && ! is_dhcpd6_running ${i}; then
           echo "hotspot${i}: Start the NDP and DHCPv6 server (dnsmasq)"
@@ -480,8 +471,8 @@ case "$1" in
       if has_ip6delegatedprefix ${i} && is_ip6addr_set ${i}; then
         echo "hotspot${i}: Unset IPv6 address"
         unset_ip6addr ${i}
-      fi 
- 
+      fi
+
       if is_dhcpd6_running ${i}; then
         echo "hotspot${i}: Stop the NDP and DHCPv6 server (dnsmasq)"
         stop_dhcpd6 ${i}
@@ -541,7 +532,7 @@ case "$1" in
       if has_ip6delegatedprefix ${i}; then
         echo "[INFO] hotspot${i}: IPv6 delegated prefix found"
         echo "[INFO] hotspot${i}: IPv6 address computed from the delegated prefix: ${ynh_ip6_addr}"
-  
+
         if is_ip6addr_set ${i}; then
           echo "[OK] hotspot${i}: IPv6 address set"
         else
@@ -558,14 +549,14 @@ case "$1" in
       else
         echo "[INFO] hotspot${i}: No IPv6 delegated prefix found"
       fi
-  
+
       if is_dhcpd4_running ${i}; then
         echo "[OK] hotspot${i}: DHCPv4 server (dnsmasq) is running"
       else
         echo "[ERR] hotspot${i}: NDP and DHCPv4 (dnsmasq) is not running"
         exitcode=1
       fi
-  
+
       if is_ip4nataddr_set ${i}; then
         echo "[OK] hotspot${i}: IPv4 NAT address set"
       else
