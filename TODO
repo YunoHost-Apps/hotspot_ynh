@@ -1,4 +1,1 @@
 * Translate PHP interface in French
-
-* multissid
-** INIT: use insserv instead of update-rc.d and update service dependencies
