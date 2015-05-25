@@ -22,9 +22,8 @@ domain=$(sudo yunohost app setting hotspot domain)
 
 # The End
 sudo systemctl stop ynh-hotspot
-sudo yunohost service remove ynh-hotspot
 sudo systemctl disable ynh-hotspot
-sudo rm -f /lib/systemd/system/ynh-hotspot.service /usr/local/bin/ynh-hotspot
+sudo rm -f /etc/systemd/system/ynh-hotspot.service /usr/local/bin/ynh-hotspot
 sudo rm -f /tmp/.ynh-hotspot-*
 
 # Update firewall for DHCP
@@ -42,8 +41,7 @@ sudo rm -f /lib/firmware/htc-7010.fw
 sudo rm -f /lib/firmware/htc-9271.fw
 
 # Restart services
-sudo yunohost service stop php5-fpm
-sudo yunohost service start php5-fpm
+sudo systemctl restart php5-fpm
 sudo systemctl reload nginx
 
 # Remove sources

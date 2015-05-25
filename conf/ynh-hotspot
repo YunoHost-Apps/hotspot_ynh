@@ -80,13 +80,13 @@ is_dhcpd4_running() {
 }
 
 is_hostapd_running() {
-  systemctl is-active hostapd --quiet &> /dev/null
+  systemctl is-active hostapd &> /dev/null
 }
 
 is_running() {
   for i in $(seq 0 $((${ynh_multissid} - 1))); do
-    ( has_ip6delegatedprefix ${i} && is_ip6addr_set ${i} || ! has_ip6delegatedprefix ${i} )\
-    && is_ip4nataddr_set ${i} && is_dhcpd6_running ${i} && is_dhcpd4_running ${i}
+    ( has_ip6delegatedprefix ${i} && is_ip6addr_set ${i} && is_dhcpd6_running ${i} || ! has_ip6delegatedprefix ${i} )\
+    && is_ip4nataddr_set ${i} && is_dhcpd4_running ${i}
 
     if [ ! $? -eq 0 ]; then
       return 1
@@ -143,9 +143,7 @@ start_dhcpd6() {
     dev="hotspot${i}"
   fi
 
-  rm -f /etc/dnsmasq.dhcpd/dhcpdv6-ssid*.conf
-
-  cp /etc/dnsmasq.dhcp/dhcpdv6{.conf.tpl,-ssid${i}.conf}
+  cp /etc/dnsmasq.dhcpd/dhcpdv6{.conf.tpl,-ssid${i}.conf}
 
   sed "s|<TPL:WIFI_DEVICE>|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
   sed "s|<TPL:IP6_NET>|${ynh_ip6_net[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
@@ -163,8 +161,6 @@ start_dhcpd4() {
   else
     dev="hotspot${i}"
   fi
-
-  rm -f /etc/dnsmasq.dhcpd/dhcpdv4-ssid*.conf
 
   cp /etc/dnsmasq.dhcpd/dhcpdv4{.conf.tpl,-ssid${i}.conf}
 
@@ -209,7 +205,7 @@ start_hostapd() {
     rm /etc/hostapd/hostapd.conf.tmp
   done
 
-  systemctl start hostapd --quiet
+  systemctl start hostapd
 }
 
 ## Unsetters
@@ -260,33 +256,41 @@ stop_dhcpd4() {
 }
 
 stop_hostapd() {
-  systemctl stop hostapd --quiet
+  systemctl stop hostapd
 }
 
 ## Tools
 
 moulinette_get() {
   var=${1}
+  gotcha=0
 
-  value=$(yunohost app setting hotspot "${var}")
+  while [ "${gotcha}" -eq 0 ]; do
+    value=$(yunohost app setting hotspot "${var}")
 
-  if [[ "${value}" =~ "An instance is already running" ]]; then
-    echo "${value}" >&2
-    exit 1
-  fi
+    if [[ "${value}" =~ "An instance is already running" ]]; then
+      sleep $(($((RANDOM%5)) + 1))
+    else
+      gotcha=1
+    fi
+  done
 
   echo "${value}"
 }
 
 moulinette_vpnclient_get() {
   var=${1}
+  gotcha=0
 
-  value=$(yunohost app setting vpnclient "${var}")
+  while [ "${gotcha}" -eq 0 ]; do
+    value=$(yunohost app setting vpnclient "${var}")
 
-  if [[ "${value}" =~ "An instance is already running" ]]; then
-    echo "${value}" >&2
-    exit 1
-  fi
+    if [[ "${value}" =~ "An instance is already running" ]]; then
+      sleep $(($((RANDOM%5)) + 1))
+    else
+      gotcha=1
+    fi
+  done
 
   echo "${value}"
 }
@@ -308,7 +312,7 @@ if [ "$1" != restart ]; then
   # Restart php5-fpm at the first start (it needs to be restarted after the slapd start)
   if [ ! -e /tmp/.ynh-hotspot-boot ]; then
     touch /tmp/.ynh-hotspot-boot
-    systemctl restart php5-fpm --quiet
+    systemctl restart php5-fpm
   fi
 
   # Variables
@@ -407,12 +411,16 @@ case "$1" in
           exit 1
         fi
 
-        i=0; false || while [ $? -ne 0 ]; do
-          sleep 1 && (( i++ ))
-          [ ${i} -gt 20 ] && stop_hostapd
-          [ ${i} -gt 20 ] && exit 1
-          ip link show dev "mon.${ynh_wifi_device}" &> /dev/null
-        done
+        if [ "${ynh_multissid}" -gt 1 ]; then
+          i=0; false || while [ $? -ne 0 ]; do
+            sleep 1 && (( i++ ))
+            [ ${i} -gt 20 ] && stop_hostapd
+            [ ${i} -gt 20 ] && exit 1
+            ip link show dev hotspot1 &> /dev/null
+          done
+        else
+          sleep 1
+        fi
       fi
 
       # For each registred ssid
@@ -489,8 +497,9 @@ case "$1" in
       stop_hostapd
     fi
 
+    # Fix configuration
     if has_vpnclient_app; then
-      systemctl start ynh-vpnclient --quiet
+      ynh-vpnclient start
     fi
   ;;
   restart)
