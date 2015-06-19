@@ -1,0 +1,168 @@
++# Copyright (C) 2015
++# This file is distributed under the same license as the project.
++#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-06-11 23:05+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: views/layout.html.php:27
+msgid "Wifi Hotspot"
+msgstr ""
+
+#: views/layout.html.php:49
+msgid "Error"
+msgstr ""
+
+#: views/layout.html.php:54 views/settings.html.php:122
+#: views/_ssid.html.php:44
+msgid "Notice"
+msgstr ""
+
+#: views/layout.html.php:66
+msgid "Any problem? Contribute!"
+msgstr ""
+
+#: views/settings.html.php:37
+msgid "Wifi Hotspot Configuration"
+msgstr ""
+
+#: views/settings.html.php:39 views/settings.html.php:41
+msgid ""
+"This is a fast status. Click on More details to show the complete status."
+msgstr ""
+
+#: views/settings.html.php:39
+msgid "Running"
+msgstr ""
+
+#: views/settings.html.php:41
+msgid "Not Running"
+msgstr ""
+
+#: views/settings.html.php:44
+msgid "Loading complete status may take a few minutes. Be patient."
+msgstr ""
+
+#: views/settings.html.php:44
+msgid "More details"
+msgstr ""
+
+#: views/settings.html.php:60
+msgid "Service"
+msgstr ""
+
+#: views/settings.html.php:65
+msgid "Hotspot Enabled"
+msgstr ""
+
+#: views/settings.html.php:73
+msgid "Device"
+msgstr ""
+
+#: views/settings.html.php:85
+msgid "Channel"
+msgstr ""
+
+#: views/settings.html.php:116
+msgid "Add a hotspot"
+msgstr ""
+
+#: views/settings.html.php:122
+msgid ""
+"You are currently connected through the wifi hotspot. Please, confirm the "
+"reloading, wait for the wifi disconnect/reconnect and go back here to check "
+"that everything is okay."
+msgstr ""
+
+#: views/settings.html.php:124 views/settings.html.php:130
+msgid "Reloading may take a few minutes. Be patient."
+msgstr ""
+
+#: views/settings.html.php:124
+msgid "Confirm"
+msgstr ""
+
+#: views/settings.html.php:128 views/settings.html.php:130
+msgid "Save and reload"
+msgstr ""
+
+#: views/_ssid.html.php:3
+msgid "Hotspot"
+msgstr ""
+
+#: views/_ssid.html.php:7
+msgid "Wifi"
+msgstr ""
+
+#: views/_ssid.html.php:8
+msgid "IPv6"
+msgstr ""
+
+#: views/_ssid.html.php:9
+msgid "IPv4"
+msgstr ""
+
+#: views/_ssid.html.php:15
+msgid "Name (SSID)"
+msgstr ""
+
+#: views/_ssid.html.php:22
+msgid "Secure"
+msgstr ""
+
+#: views/_ssid.html.php:23
+msgid ""
+"Disabling the Secure Wifi allows everyone to join the hotspot and spy the "
+"traffic (but it's perfect for a PirateBox)"
+msgstr ""
+
+#: views/_ssid.html.php:31
+msgid "Password (WPA2)"
+msgstr ""
+
+#: views/_ssid.html.php:33
+msgid "At least 8 characters"
+msgstr ""
+
+#: views/_ssid.html.php:34
+msgid "Show to your friends how to access to your hotspot"
+msgstr ""
+
+#: views/_ssid.html.php:44
+msgid ""
+"Currently, your wifi clients don't have IPv6 and it's a very bad thing. Ask "
+"your Internet Service Provider an IPv6 delegated prefix, or"
+msgstr ""
+
+#: views/_ssid.html.php:45
+msgid "change providers"
+msgstr ""
+
+#: views/_ssid.html.php:50
+msgid "Delegated prefix"
+msgstr ""
+
+#: views/_ssid.html.php:57 views/_ssid.html.php:81
+msgid "First DNS resolver"
+msgstr ""
+
+#: views/_ssid.html.php:64 views/_ssid.html.php:88
+msgid "Second DNS resolver"
+msgstr ""
+
+#: views/_ssid.html.php:74
+msgid "NAT prefix (/24)"
+msgstr ""
+
+#: views/_ssid.html.php:96
+msgid "Delete"
+msgstr ""

@@ -1,0 +1,171 @@
+# French translations
+# Traductions françaises
+# Copyright (C) 2015
+# This file is distributed under the same license as the project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-06-11 23:05+0200\n"
+"PO-Revision-Date: 2015-06-14 22:37+0200\n"
+"Last-Translator: root <root@ustelo>\n"
+"Language-Team: French\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: views/layout.html.php:27
+msgid "Wifi Hotspot"
+msgstr "Point d'accès WiFi"
+
+#: views/layout.html.php:49
+msgid "Error"
+msgstr "Erreur"
+
+#: views/layout.html.php:54 views/settings.html.php:122
+#: views/_ssid.html.php:44
+msgid "Notice"
+msgstr "Notice"
+
+#: views/layout.html.php:66
+msgid "Any problem? Contribute!"
+msgstr "Un souci ? Contribuez !"
+
+#: views/settings.html.php:37
+msgid "Wifi Hotspot Configuration"
+msgstr "Configuration du point d'accès"
+
+#: views/settings.html.php:39 views/settings.html.php:41
+msgid ""
+"This is a fast status. Click on More details to show the complete status."
+msgstr "Ceci est un résumé du statut. Cliquez sur Plus de détails pour consulter l'intégralité du statut."
+
+#: views/settings.html.php:39
+msgid "Running"
+msgstr "En cours d'exécution"
+
+#: views/settings.html.php:41
+msgid "Not Running"
+msgstr "Eteint"
+
+#: views/settings.html.php:44
+msgid "Loading complete status may take a few minutes. Be patient."
+msgstr "Le chargement du statut peut prendre quelques minutes. Soyez patient."
+
+#: views/settings.html.php:44
+msgid "More details"
+msgstr "Plus de détails"
+
+#: views/settings.html.php:60
+msgid "Service"
+msgstr "Service"
+
+#: views/settings.html.php:65
+msgid "Hotspot Enabled"
+msgstr "Point d'accès activé"
+
+#: views/settings.html.php:73
+msgid "Device"
+msgstr "Appareil"
+
+#: views/settings.html.php:85
+msgid "Channel"
+msgstr "Canal"
+
+#: views/settings.html.php:116
+msgid "Add a hotspot"
+msgstr "Ajouter un point d'accès"
+
+#: views/settings.html.php:122
+msgid ""
+"You are currently connected through the wifi hotspot. Please, confirm the "
+"reloading, wait for the wifi disconnect/reconnect and go back here to check "
+"that everything is okay."
+msgstr "Vous êtes actuellement connecté(e) au point d'accès WiFi. Veillez confirmer le rechargement, attendre que le WiFi se déconnecte/reconnecte et revenir ici pour vérifier que tout est correct."
+
+#: views/settings.html.php:124 views/settings.html.php:130
+msgid "Reloading may take a few minutes. Be patient."
+msgstr "Le rechargement peut prendre quelques minutes. Soyez patient."
+
+#: views/settings.html.php:124
+msgid "Confirm"
+msgstr "Confirmer"
+
+#: views/settings.html.php:128 views/settings.html.php:130
+msgid "Save and reload"
+msgstr "Sauvegarder et recharger"
+
+#: views/_ssid.html.php:3
+msgid "Hotspot"
+msgstr "Point d'accès"
+
+#: views/_ssid.html.php:7
+msgid "Wifi"
+msgstr "WiFi"
+
+#: views/_ssid.html.php:8
+msgid "IPv6"
+msgstr "IPv6"
+
+#: views/_ssid.html.php:9
+msgid "IPv4"
+msgstr "IPv4"
+
+#: views/_ssid.html.php:15
+msgid "Name (SSID)"
+msgstr "Nom (SSID)"
+
+#: views/_ssid.html.php:22
+msgid "Secure"
+msgstr "Sécurisé"
+
+#: views/_ssid.html.php:23
+msgid ""
+"Disabling the Secure Wifi allows everyone to join the hotspot and spy the "
+"traffic (but it's perfect for a PirateBox)"
+msgstr "Désactiver le WiFi sécurisé permet à tout individu de se connecter au point d'accès et d'espionner le trafic (Cependant c'est parfait pour une PirateBox)"
+
+#: views/_ssid.html.php:31
+msgid "Password (WPA2)"
+msgstr "Mot de passe (WPA2)"
+
+#: views/_ssid.html.php:33
+msgid "At least 8 characters"
+msgstr "Au moins 8 caractères"
+
+#: views/_ssid.html.php:34
+msgid "Show to your friends how to access to your hotspot"
+msgstr "Montrez à vos amis comment accèder à votre point d'accès"
+
+#: views/_ssid.html.php:44
+msgid ""
+"Currently, your wifi clients don't have IPv6 and it's a very bad thing. Ask "
+"your Internet Service Provider an IPv6 delegated prefix, or"
+msgstr "Actuellement vos clients WiFi n'utilisent pas IPv6, ce qui n'est pas une très bonne chose. Demandez à votre Fournisseur d'accès Internet un préfixe IPv6."
+
+#: views/_ssid.html.php:45
+msgid "change providers"
+msgstr "Changer de fournisseur"
+
+#: views/_ssid.html.php:50
+msgid "Delegated prefix"
+msgstr "Préfixe délégué"
+
+#: views/_ssid.html.php:57 views/_ssid.html.php:81
+msgid "First DNS resolver"
+msgstr "Premier résolveur DNS"
+
+#: views/_ssid.html.php:64 views/_ssid.html.php:88
+msgid "Second DNS resolver"
+msgstr "Second résolveur DNS"
+
+#: views/_ssid.html.php:74
+msgid "NAT prefix (/24)"
+msgstr "Préfixe NAT (/24')"
+
+#: views/_ssid.html.php:96
+msgid "Delete"
+msgstr "Supprimer"
