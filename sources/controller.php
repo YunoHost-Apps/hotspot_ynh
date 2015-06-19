@@ -27,23 +27,23 @@ function moulinette_set($var, $value) {
 }
 
 function stop_service() {
-  exec('sudo service ynh-hotspot stop');
+  exec('sudo systemctl stop ynh-hotspot');
 }
 
 function start_service() {
-  exec('sudo service ynh-hotspot start', $output, $retcode);
+  exec('sudo systemctl start ynh-hotspot', $output, $retcode);
 
   return $retcode;
 }
 
 function service_status() {
-  exec('sudo service ynh-hotspot status', $output);
+  exec('sudo ynh-hotspot status', $output);
 
   return $output;
 }
 
 function service_faststatus() {
-  exec('sudo service hostapd status', $output, $retcode);
+  exec('sudo systemctl is-active hostapd', $output, $retcode);
 
   return $retcode;
 }
@@ -146,8 +146,8 @@ dispatch('/', function() {
   }
 
   $ip6_net = moulinette_get('ip6_net');
-  $ip6_net = ($ip6_net == 'none') ? '' : $ip6_net;
-  $ip4_nat_prefix = moulinette_get('ip4_nat_prefix');
+  $ip6_net = ($ip6_net == 'none') ? '' : getArray($ip6_net);
+  $ip4_nat_prefix = getArray(moulinette_get('ip4_nat_prefix'));
 
   set('service_enabled', moulinette_get('service_enabled'));
   set('ssids', $ssids);

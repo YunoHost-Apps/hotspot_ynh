@@ -18,5 +18,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 phy=$(iw "${1}" info | grep wiphy | awk '{ print $NF }')
+multissid=$(iw "phy${phy}" info | grep -A1 'valid interface combinations' | tail -n1 | sed 's/.*{.*AP.*}\s<=\s\(.*\),.*/\1/')
 
-iw "phy${phy}" info | grep -A1 'valid interface combinations' | tail -n1 | sed 's/.*{.*AP.*}\s<=\s\(.*\),.*/\1/'
+if [ -z "${multissid}" ]; then
+  echo 1
+else
+  echo $multissid
+fi
