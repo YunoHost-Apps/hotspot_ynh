@@ -7,7 +7,7 @@ You can force a language by using (e.g. for French):
 /wifiadmin/?/lang/fr
 ```
 
-English is the default language if the browser language is not available.
+English is the default language when the browser language is not available.
 
 ## Update the default string list
 
