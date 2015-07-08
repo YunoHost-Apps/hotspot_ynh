@@ -34,14 +34,14 @@
   </div>
 </div>
 
-<h2><?= T_("Wifi Hotspot Configuration") ?></h2>
+<h2><?= _("Wifi Hotspot Configuration") ?></h2>
 <?php if($faststatus): ?>
-  <span class="label label-success" data-toggle="tooltip" data-title="<?= T_('This is a fast status. Click on More details to show the complete status.') ?>"><?= T_('Running') ?></span>
+  <span class="label label-success" data-toggle="tooltip" data-title="<?= _('This is a fast status. Click on More details to show the complete status.') ?>"><?= _('Running') ?></span>
 <?php else: ?>
-  <span class="label label-danger" data-toggle="tooltip" data-title="<?= T_('This is a fast status. Click on More details to show the complete status.') ?>"><?= T_('Not Running') ?></span>
+  <span class="label label-danger" data-toggle="tooltip" data-title="<?= _('This is a fast status. Click on More details to show the complete status.') ?>"><?= _('Not Running') ?></span>
 <?php endif; ?>
 
- &nbsp; <img src="public/img/loading.gif" id="status-loading" alt="Loading..." /><a href="#" id="statusbtn" data-toggle="tooltip" data-title="<?= T_('Loading complete status may take a few minutes. Be patient.') ?>"><?= T_('More details') ?></a>
+ &nbsp; <img src="public/img/loading.gif" id="status-loading" alt="Loading..." /><a href="#" id="statusbtn" data-toggle="tooltip" data-title="<?= _('Loading complete status may take a few minutes. Be patient.') ?>"><?= _('More details') ?></a>
 
 <div id="status" class="alert alert-dismissible alert-info fade in" style="margin-top: 10px" role="alert">
   <button type="button" class="close"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
@@ -57,12 +57,12 @@
 
       <div class="panel panel-default">
         <div class="panel-heading">
-          <h3 class="panel-title"><?= T_("Service") ?></h3>
+          <h3 class="panel-title"><?= _("Service") ?></h3>
         </div>
 
         <div style="padding: 14px 14px 0 10px">
           <div class="form-group">
-            <label for="service_enabled" class="col-sm-3 control-label"><?= T_('Hotspot Enabled') ?></label>
+            <label for="service_enabled" class="col-sm-3 control-label"><?= _('Hotspot Enabled') ?></label>
             <div class="col-sm-9 input-group-btn">
               <div class="input-group">
                 <input type="checkbox" class="form-control switch" name="service_enabled" id="service_enabled" value="1" <?= $service_enabled == 1 ? 'checked="checked"' : '' ?> />
@@ -70,7 +70,7 @@
             </div>
           </div>
           <div class="form-group">
-            <label for="wifi_device" class="col-sm-3 control-label"><?= T_('Device') ?></label>
+            <label for="wifi_device" class="col-sm-3 control-label"><?= _('Device') ?></label>
             <div class="col-sm-9 input-group-btn">
               <div class="input-group">
                   <input type="text" name="wifi_device" id="wifi_device" value="<?= $wifi_device ?>" style="display: none" />
@@ -82,7 +82,7 @@
             </div>
           </div>
           <div class="form-group">
-            <label class="col-sm-3 control-label"><?= T_('Channel') ?></label>
+            <label class="col-sm-3 control-label"><?= _('Channel') ?></label>
             <div class="col-sm-9 input-group-btn">
               <div class="input-group dropdownmenu">
                   <input type="text" name="wifi_channel" value="<?= $wifi_channel ?>" style="display: none" />
@@ -113,21 +113,21 @@
       <?php endforeach; ?>
       </div>
 
-      <button id="newssid" type="button" class="btn btn-success"><?= T_("Add a hotspot") ?> <span class="badge">0</span></button>
+      <button id="newssid" type="button" class="btn btn-success"><?= _("Add a hotspot") ?> <span class="badge">0</span></button>
 
       <div class="form-group">
         <div style="text-align: center">
 <?php if($is_connected_through_hotspot): ?>
           <div class="alert alert-dismissible alert-warning fade in" role="alert" id="saveconfirmation">
-            <strong><?= T_('Notice') ?>:</strong> <?= T_("You are currently connected through the wifi hotspot. Please, confirm the reloading, wait for the wifi disconnect/reconnect and go back here to check that everything is okay.") ?>
+            <strong><?= _('Notice') ?>:</strong> <?= _("You are currently connected through the wifi hotspot. Please, confirm the reloading, wait for the wifi disconnect/reconnect and go back here to check that everything is okay.") ?>
             <div id="confirm">
-              <button type="submit" class="btn btn-default" data-toggle="tooltip" id="save" data-title="<?= T_('Reloading may take a few minutes. Be patient.') ?>"><?= T_('Confirm') ?></button> <img src="public/img/loading.gif" id="save-loading" alt="Loading..." />
+              <button type="submit" class="btn btn-default" data-toggle="tooltip" id="save" data-title="<?= _('Reloading may take a few minutes. Be patient.') ?>"><?= _('Confirm') ?></button> <img src="public/img/loading.gif" id="save-loading" alt="Loading..." />
             </div>
           </div>
 
-          <button type="button" class="btn btn-default" id="saveconfirm"><?= T_('Save and reload') ?></button>
+          <button type="button" class="btn btn-default" id="saveconfirm"><?= _('Save and reload') ?></button>
 <?php else: ?>
-          <button type="submit" class="btn btn-default" data-toggle="tooltip" id="save" data-title="<?= T_('Reloading may take a few minutes. Be patient.') ?>"><?= T_('Save and reload') ?></button> <img src="public/img/loading.gif" id="save-loading" alt="Loading..." />
+          <button type="submit" class="btn btn-default" data-toggle="tooltip" id="save" data-title="<?= _('Reloading may take a few minutes. Be patient.') ?>"><?= _('Save and reload') ?></button> <img src="public/img/loading.gif" id="save-loading" alt="Loading..." />
 <?php endif; ?>
         </div>
       </div>

@@ -185,44 +185,44 @@ dispatch_put('/settings', function() {
         }
 
         if(in_array($ssid['wifi_ssid'], $wifi_ssid_uniqueness)) {
-          throw new Exception(T_('All Wifi names must be unique'));
+          throw new Exception(_('All Wifi names must be unique'));
         } else {
           array_push($wifi_ssid_uniqueness, $ssid['wifi_ssid']);
         }
     
         if(in_array($ssid['ip4_nat_prefix'], $ip4_nat_prefix_uniqueness)) {
-          throw new Exception(T_('All IPv4 NAT prefixes must be unique'));
+          throw new Exception(_('All IPv4 NAT prefixes must be unique'));
         } else {
           array_push($ip4_nat_prefix_uniqueness, $ssid['ip4_nat_prefix']);
         }
 
         if($ssid['ip6_net'] != 'none' && in_array($ssid['ip6_net'], $ip6_net_uniqueness)) {
-          throw new Exception(T_('All IPv6 delegated prefixes must be unique'));
+          throw new Exception(_('All IPv6 delegated prefixes must be unique'));
         } else {
           array_push($ip6_net_uniqueness, $ssid['ip6_net']);
         }
 
         if(empty($ssid['wifi_ssid']) || empty($ssid['wifi_passphrase'])) {
-          throw new Exception(T_('Your Wifi Hotspot needs a name and a password'));
+          throw new Exception(_('Your Wifi Hotspot needs a name and a password'));
         }
      
         if($ssid['wifi_secure'] && (strlen($ssid['wifi_passphrase']) < 8 || strlen($ssid['wifi_passphrase']) > 63)) {
-          throw new Exception(T_('Your password must from 8 to 63 characters (WPA2 passphrase)'));
+          throw new Exception(_('Your password must from 8 to 63 characters (WPA2 passphrase)'));
         }
      
         if($ssid['wifi_secure'] && preg_match('/[^[:print:]]/', $ssid['wifi_passphrase'])) {
-          throw new Exception(T_('Only printable ASCII characters are permitted in your password'));
+          throw new Exception(_('Only printable ASCII characters are permitted in your password'));
         }
      
         if(!$wifi_device_exists) {
-          throw new Exception(T_('The wifi antenna interface seems not exist on the system'));
+          throw new Exception(_('The wifi antenna interface seems not exist on the system'));
         }
      
         if($ssid['ip6_net'] != 'none') {
           $ssid['ip6_net'] = ipv6_expanded($ssid['ip6_net']);
       
           if(empty($ssid['ip6_net'])) {
-            throw new Exception(T_('The IPv6 Delegated Prefix format looks bad'));
+            throw new Exception(_('The IPv6 Delegated Prefix format looks bad'));
           }
       
           $ip6_blocs = explode(':', $ssid['ip6_net']);
@@ -236,7 +236,7 @@ dispatch_put('/settings', function() {
           $ssid['ip6_dns0'] = ipv6_expanded($ssid['ip6_dns0']);
      
           if(empty($ssid['ip6_dns0'])) {
-            throw new Exception(T_('The format of the first IPv6 DNS Resolver looks bad'));
+            throw new Exception(_('The format of the first IPv6 DNS Resolver looks bad'));
           }
      
           $ssid['ip6_dns0'] = ipv6_compressed($ssid['ip6_dns0']);
@@ -245,7 +245,7 @@ dispatch_put('/settings', function() {
             $ssid['ip6_dns1'] = ipv6_expanded($ssid['ip6_dns1']);
       
             if(empty($ssid['ip6_dns1'])) {
-               throw new Exception(T_('The format of the second IPv6 DNS Resolver looks bad'));
+               throw new Exception(_('The format of the second IPv6 DNS Resolver looks bad'));
             }
      
             $ssid['ip6_dns1'] = ipv6_compressed($ssid['ip6_dns1']);
@@ -253,25 +253,25 @@ dispatch_put('/settings', function() {
         }
      
         if(inet_pton($ssid['ip4_dns0']) === false) {
-          throw new Exception(T_('The format of the first IPv4 DNS Resolver looks bad'));
+          throw new Exception(_('The format of the first IPv4 DNS Resolver looks bad'));
         }
      
         if(inet_pton($ssid['ip4_dns1']) === false) {
-          throw new Exception(T_('The format of the second IPv4 DNS Resolver looks bad'));
+          throw new Exception(_('The format of the second IPv4 DNS Resolver looks bad'));
         }
      
         if(inet_pton("${ssid['ip4_nat_prefix']}.0") === false) {
-          throw new Exception(T_('The format of the IPv4 NAT Prefix (/24) looks bad : x.x.x expected)'));
+          throw new Exception(_('The format of the IPv4 NAT Prefix (/24) looks bad : x.x.x expected)'));
         }
      
         if(filter_var("${ssid['ip4_nat_prefix']}.0", FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE) !== false) {
-          throw new Exception(T_('The IPv4 NAT Prefix must be from a private range'));
+          throw new Exception(_('The IPv4 NAT Prefix must be from a private range'));
         }
 
         array_push($ssids, $ssid);
       }
     } catch(Exception $e) {
-      flash('error', T_('Hotspot')." $id: ".$e->getMessage().' ('.T_('configuration not updated').').');
+      flash('error', _('Hotspot')." $id: ".$e->getMessage().' ('._('configuration not updated').').');
       goto redirect;
     }
   }
@@ -299,13 +299,13 @@ dispatch_put('/settings', function() {
     $retcode = start_service();
 
     if($retcode == 0) {
-      flash('success', T_('Configuration updated and service successfully reloaded'));
+      flash('success', _('Configuration updated and service successfully reloaded'));
     } else {
-      flash('error', T_('Configuration updated but service reload failed'));
+      flash('error', _('Configuration updated but service reload failed'));
     }
 
   } else {
-      flash('success', T_('Service successfully disabled'));
+      flash('success', _('Service successfully disabled'));
   }
 
   redirect:

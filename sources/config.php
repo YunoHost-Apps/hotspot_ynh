@@ -28,7 +28,7 @@ function configure() {
 }
 
 // Gettext function
-function T_($string) {
+function _($string) {
   return gettext($string);
 }
 
@@ -39,7 +39,7 @@ function before($route) {
   );
 
   if(!isset($_SESSION['locale'])) {
-    $locale = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']);
+    $locale = explode(',', $_SERVER['HTTP_ACCEP_LANGUAGE']);
     $_SESSION['locale'] = strtolower(substr(chop($locale[0]), 0, 2));
   }
 

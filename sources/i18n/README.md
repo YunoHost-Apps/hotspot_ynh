@@ -25,7 +25,7 @@ mkdir -p sources/i18n/fr_FR/LC_MESSAGES/
 
 Generate the po file:
 ```
-msginit --locale=fr_FR.UTF-8 -i sources/i18n/localization.pot -o sources/i18n/fr_FR/LC_MESSAGES/localization.po
+msginit --locale=fr_FR.UTF-8 --no-translator -i sources/i18n/localization.pot -o sources/i18n/fr_FR/LC_MESSAGES/localization.po
 ```
 
 You can use poedit for translating the po:
