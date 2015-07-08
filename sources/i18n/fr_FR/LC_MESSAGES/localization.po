@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-06-11 23:05+0200\n"
-"PO-Revision-Date: 2015-06-14 22:37+0200\n"
+"PO-Revision-Date: 2015-07-08 18:33+0100\n"
 "Last-Translator: root <root@ustelo>\n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -16,6 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Poedit 1.6.10\n"
 
 #: views/layout.html.php:27
 msgid "Wifi Hotspot"
@@ -41,7 +42,9 @@ msgstr "Configuration du point d'accès"
 #: views/settings.html.php:39 views/settings.html.php:41
 msgid ""
 "This is a fast status. Click on More details to show the complete status."
-msgstr "Ceci est un résumé du statut. Cliquez sur Plus de détails pour consulter l'intégralité du statut."
+msgstr ""
+"Ceci est un résumé du statut. Cliquez sur Plus de détails pour consulter "
+"l'intégralité du statut."
 
 #: views/settings.html.php:39
 msgid "Running"
@@ -69,7 +72,7 @@ msgstr "Point d'accès activé"
 
 #: views/settings.html.php:73
 msgid "Device"
-msgstr "Appareil"
+msgstr "Interface"
 
 #: views/settings.html.php:85
 msgid "Channel"
@@ -84,7 +87,10 @@ msgid ""
 "You are currently connected through the wifi hotspot. Please, confirm the "
 "reloading, wait for the wifi disconnect/reconnect and go back here to check "
 "that everything is okay."
-msgstr "Vous êtes actuellement connecté(e) au point d'accès WiFi. Veillez confirmer le rechargement, attendre que le WiFi se déconnecte/reconnecte et revenir ici pour vérifier que tout est correct."
+msgstr ""
+"Vous êtes actuellement connecté(e) au point d'accès WiFi. Veillez confirmer "
+"le rechargement, attendre que le WiFi se déconnecte/reconnecte et revenir "
+"ici pour vérifier que tout est correct."
 
 #: views/settings.html.php:124 views/settings.html.php:130
 msgid "Reloading may take a few minutes. Be patient."
@@ -126,7 +132,9 @@ msgstr "Sécurisé"
 msgid ""
 "Disabling the Secure Wifi allows everyone to join the hotspot and spy the "
 "traffic (but it's perfect for a PirateBox)"
-msgstr "Désactiver le WiFi sécurisé permet à tout individu de se connecter au point d'accès et d'espionner le trafic (Cependant c'est parfait pour une PirateBox)"
+msgstr ""
+"Désactiver le WiFi sécurisé permet à tout individu de se connecter au point "
+"d'accès et d'espionner le trafic (Cependant c'est parfait pour une PirateBox)"
 
 #: views/_ssid.html.php:31
 msgid "Password (WPA2)"
@@ -144,7 +152,10 @@ msgstr "Montrez à vos amis comment accèder à votre point d'accès"
 msgid ""
 "Currently, your wifi clients don't have IPv6 and it's a very bad thing. Ask "
 "your Internet Service Provider an IPv6 delegated prefix, or"
-msgstr "Actuellement vos clients WiFi n'utilisent pas IPv6, ce qui n'est pas une très bonne chose. Demandez à votre Fournisseur d'accès Internet un préfixe IPv6."
+msgstr ""
+"Actuellement vos clients WiFi n'utilisent pas IPv6, ce qui n'est pas une "
+"très bonne chose. Demandez à votre Fournisseur d'accès Internet un préfixe "
+"IPv6."
 
 #: views/_ssid.html.php:45
 msgid "change providers"
