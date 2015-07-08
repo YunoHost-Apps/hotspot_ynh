@@ -27,11 +27,6 @@ function configure() {
   define('PUBLIC_DIR', '<TPL:NGINX_LOCATION>/public');
 }
 
-// Gettext function
-function _($string) {
-  return gettext($string);
-}
-
 // Before routing
 function before($route) {
   $lang_mapping = array(
@@ -39,7 +34,7 @@ function before($route) {
   );
 
   if(!isset($_SESSION['locale'])) {
-    $locale = explode(',', $_SERVER['HTTP_ACCEP_LANGUAGE']);
+    $locale = explode(',', $_SERVER['HTTP_ACCEPT_LANGUAGE']);
     $_SESSION['locale'] = strtolower(substr(chop($locale[0]), 0, 2));
   }
 
