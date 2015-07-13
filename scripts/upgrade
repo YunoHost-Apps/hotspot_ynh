@@ -41,6 +41,6 @@ sudo yunohost app install "https://github.com/${OWNER}/${REPO}" --args "${args_u
 sudo cp -a "${tmpdir}/settings.yml" "/etc/yunohost/apps/${APP}/"
 sudo systemctl restart "${SERVICE}"
 
-rm -r "${tmpdir}/"
+sudo rm -r "${tmpdir}/"
 
 exit 0
