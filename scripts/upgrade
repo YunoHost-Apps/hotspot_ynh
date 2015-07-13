@@ -34,7 +34,6 @@ tmpdir=$(mktemp -dp /tmp/ "${APP}-upgrade-XXXXX")
 
 sudo systemctl stop "${SERVICE}"
 
-install_time=$(sudo yunohost app setting "${APP}" install_time)
 sudo cp -a "/etc/yunohost/apps/${APP}/settings.yml" "${tmpdir}/"
 
 sudo yunohost app remove "${APP}"
@@ -42,6 +41,7 @@ sudo yunohost app install "https://github.com/${OWNER}/${REPO}" --args "${args_u
 
 sudo systemctl stop "${SERVICE}"
 
+install_time=$(sudo yunohost app setting "${APP}" install_time)
 sudo cp -a "${tmpdir}/settings.yml" "/etc/yunohost/apps/${APP}/"
 sudo yunohost app setting "${APP}" install_time -v "${install_time}"
 
