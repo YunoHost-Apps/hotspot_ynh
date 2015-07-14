@@ -1,8 +1,6 @@
 # Wifi Hotspot
 ## Overview
 
-**Warning: work in progress**
-
 Hotspot wifi app for [YunoHost](http://yunohost.org/).
 
 * Broadcast your own Wifi internet access in addition to your self-hosted web services.
