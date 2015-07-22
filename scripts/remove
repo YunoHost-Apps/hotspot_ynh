@@ -36,9 +36,11 @@ sudo rm -f /etc/hostapd/hostapd.conf{.tpl?,}
 sudo rm -f /etc/nginx/conf.d/${domain}.d/wifiadmin.conf
 sudo rm -f /etc/php5/fpm/pool.d/wifiadmin.conf
 
-# Remove firmwares
-sudo rm -f /lib/firmware/htc-7010.fw
-sudo rm -f /lib/firmware/htc-9271.fw
+# Remove free firmwares
+if ! dpkg -l firmware-atheros &> /dev/null; then
+  sudo rm -f /lib/firmware/htc_7010.fw
+  sudo rm -f /lib/firmware/htc_9271.fw
+fi
 
 # Restart services
 sudo systemctl restart php5-fpm

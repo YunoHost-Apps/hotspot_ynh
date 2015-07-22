@@ -80,6 +80,12 @@ if [ "${firmware_nonfree}" == yes ]; then
   packages="$packages firmware-atheros atmel-firmware firmware-linux-free firmware-linux-nonfree firmware-realtek firmware-ralink firmware-libertas zd1211-firmware"
 else
   packages="$packages firmware-linux-free"
+
+  # Extract from http://packages.trisquel.info/toutatis-updates/open-ath9k-htc-firmware
+  # https://www.fsf.org/news/ryf-certification-thinkpenguin-usb-with-atheros-chip
+  # https://wiki.debian.org/ath9k_htc/open_firmware
+  sudo install -b -o root -g root -m 0644 ../conf/firmware_htc-7010.fw /lib/firmware/htc_7010.fw
+  sudo install -b -o root -g root -m 0644 ../conf/firmware_htc-9271.fw /lib/firmware/htc_9271.fw
 fi
 
 sudo apt-get --assume-yes --force-yes install ${packages}
@@ -88,12 +94,6 @@ if [ $? -ne 0 ]; then
   sudo apt-get update
   sudo apt-get --assume-yes --force-yes install ${packages}
 fi
-
-# Copy (free) firmwares
-# Extract from http://packages.trisquel.info/toutatis-updates/open-ath9k-htc-firmware
-# https://www.fsf.org/news/ryf-certification-thinkpenguin-usb-with-atheros-chip
-sudo install -b -o root -g root -m 0644 ../conf/firmware_htc-7010.fw /lib/firmware/htc-7010.fw
-sudo install -b -o root -g root -m 0644 ../conf/firmware_htc-9271.fw /lib/firmware/htc-9271.fw
 
 # Compute extra arguments
 if [ -z "${ip6_net}" ]; then
