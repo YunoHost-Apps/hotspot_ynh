@@ -33,7 +33,7 @@ For example, you can create 3 hotspots:
 
 You can then install and configure 3 other dependent apps on your YunoHost:
 
-1. [PirateBox](https://github.com/jvaubourg/piratebox_ynh) configured to use *PirateBox*,
+1. [PirateBox](https://github.com/labriqueinternet/piratebox_ynh) configured to use *PirateBox*,
 2. [Tor Client](https://github.com/labriqueinternet/torclient_ynh/) configured to use *torNetwork*,
 3. [VPN Client](https://github.com/labriqueinternet/vpnclient_ynh/) configured by default to use *neutralNetwork* because this hotspot is not used by another app in this case.
 
