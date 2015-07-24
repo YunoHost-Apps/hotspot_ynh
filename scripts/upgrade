@@ -1,7 +1,7 @@
 #!/bin/bash
 
 yunohost_setting() {
-  grep "^${1}:" "/etc/yunohost/apps/hotspot/settings.yml" | sed s/^[^:]\\+:\\s*[\"\']\\?// | sed s/\\s*[\"\']\$//
+  sudo grep "^${1}:" "/etc/yunohost/apps/hotspot/settings.yml" | sed s/^[^:]\\+:\\s*[\"\']\\?// | sed s/\\s*[\"\']\$//
 }
 
 domain=$(yunohost_setting domain)
@@ -16,8 +16,8 @@ else
 fi
 
 export HOTSPOT_UPGRADE=1
-/etc/yunohost/apps/hotspot/scripts/remove
-./install "${domain}" "${path}" "${wifi_ssid}" "${wifi_passphrase}" "${firmware_nonfree}"
+bash /etc/yunohost/apps/hotspot/scripts/remove
+bash ./install "${domain}" "${path}" "${wifi_ssid}" "${wifi_passphrase}" "${firmware_nonfree}"
 
 sudo systemctl start ynh-hotspot
 
