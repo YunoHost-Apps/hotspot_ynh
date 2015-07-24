@@ -33,14 +33,14 @@ if ! $upgrade; then
   ynh_version=$(sudo dpkg -l yunohost | grep ii | awk '{ print $3 }' | sed 's/\.//g')
   
   if [ "${ynh_version}" -lt 220 ]; then
-    echo "ERROR: You need a YunoHost version equals or greater than 2.2.0"
+    echo "ERROR: You need a YunoHost version equals or greater than 2.2.0" >&2
     exit 1
   fi
   
   sudo systemctl is-active dnsmasq &> /dev/null
   
   if [ $? -ne 0 ]; then
-    echo "ERROR: You need to enable dnsmasq instead of bind9 (apt-get remove bind9 && systemctl start dnsmasq)"
+    echo "ERROR: You need to enable dnsmasq instead of bind9 (apt-get remove bind9 && systemctl start dnsmasq)" >&2
     exit 1
   fi
   
@@ -209,12 +209,12 @@ if [ "${ip6_addr}" != none ]; then
 fi
 
 sudo systemctl enable ynh-hotspot
+sudo yunohost service add ynh-hotspot
 
 if ! $upgrade; then
   sudo systemctl start ynh-hotspot
-
-  sudo yunohost service add ynh-hotspot
-  sudo yunohost app ssowatconf
 fi
+
+sudo yunohost app ssowatconf
 
 exit 0

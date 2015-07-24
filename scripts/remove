@@ -23,6 +23,7 @@ domain=$(sudo yunohost app setting hotspot domain)
 # The End
 sudo systemctl stop ynh-hotspot
 sudo systemctl disable ynh-hotspot
+sudo yunohost service remove ynh-hotspot
 sudo rm -f /etc/systemd/system/ynh-hotspot.service /usr/local/bin/ynh-hotspot
 sudo rm -f /tmp/.ynh-hotspot-*
 
