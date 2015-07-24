@@ -16,7 +16,7 @@ else
 fi
 
 export HOTSPOT_UPGRADE=1
-bash /etc/yunohost/apps/hotspot/scripts/remove
+sudo bash /etc/yunohost/apps/hotspot/scripts/remove
 bash ./install "${domain}" "${path}" "${wifi_ssid}" "${wifi_passphrase}" "${firmware_nonfree}"
 
 sudo systemctl start ynh-hotspot
