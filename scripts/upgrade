@@ -1,13 +1,16 @@
 #!/bin/bash
 
-yunohost_setting() {
-  sudo grep "^${1}:" "/etc/yunohost/apps/hotspot/settings.yml" | sed s/^[^:]\\+:\\s*[\"\']\\?// | sed s/\\s*[\"\']\$//
+ynh_setting() {
+  app=${1}
+  setting=${2}
+
+  sudo grep "^${setting}:" "/etc/yunohost/apps/${app}/settings.yml" | sed s/^[^:]\\+:\\s*[\"\']\\?// | sed s/\\s*[\"\']\$//
 }
 
-domain=$(yunohost_setting domain)
-path=$(yunohost_setting path)
-wifi_ssid=$(yunohost_setting wifi_ssid)
-wifi_passphrase=$(yunohost_setting wifi_passphrase)
+domain=$(ynh_setting hotspot domain)
+path=$(ynh_setting hotspot path)
+wifi_ssid=$(ynh_setting hotspot wifi_ssid)
+wifi_passphrase=$(ynh_setting hotspot wifi_passphrase)
 
 if dpkg -l firmware-linux-nonfree &> /dev/null; then
   firmware_nonfree=yes
