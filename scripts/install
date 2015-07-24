@@ -17,6 +17,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# This is an upgrade?
+upgrade=$([ "$HOTSPOT_UPGRADE" == 1 ] && echo true || echo false)
+
 # Retrieve arguments
 domain=${1}
 url_path=${2}
@@ -24,50 +27,47 @@ wifi_ssid=${3}
 wifi_passphrase=${4}
 firmware_nonfree=${5}
 
-##
-## These arguments are optional but YunoHost is not yet able to handle them with the web installer
-## See manifest.json.options
-##
-#
-#ip6_net=${6}
+if ! $upgrade; then
 
-# Check YunoHost version
-ynh_version=$(sudo dpkg -l yunohost | grep ii | awk '{ print $3 }' | sed 's/\.//g')
+  # Check YunoHost version
+  ynh_version=$(sudo dpkg -l yunohost | grep ii | awk '{ print $3 }' | sed 's/\.//g')
+  
+  if [ "${ynh_version}" -lt 220 ]; then
+    echo "ERROR: You need a YunoHost version equals or greater than 2.2.0"
+    exit 1
+  fi
+  
+  sudo systemctl is-active dnsmasq &> /dev/null
+  
+  if [ $? -ne 0 ]; then
+    echo "ERROR: You need to enable dnsmasq instead of bind9 (apt-get remove bind9 && systemctl start dnsmasq)"
+    exit 1
+  fi
+  
+  # Check arguments
+  if [ -z "${wifi_ssid}" -o -z "${wifi_passphrase}" ]; then
+    echo "ERROR: Your Wifi Hotspot needs a name and a password" >&2
+    exit 1
+  fi
+  
+  wifi_passphrase_length="$(echo -n "${wifi_passphrase}" | wc -c)"
+  if [ "${wifi_passphrase_length}" -lt 8 -o "${wifi_passphrase_length}" -gt 63 ]; then
+    echo "ERROR: Your password must from 8 to 63 characters (WPA2 passphrase)" >&2
+    exit 1
+  fi
+  
+  echo "${wifi_passphrase}" | grep -qP '[^[:print:]]'
+  if [ $? -eq 0 ]; then
+    echo "ERROR: Only printable ASCII characters are permitted in your password (WPA2 passphrase)" >&2
+    exit 1
+  fi
+  
+  # Check domain/path availability
+  sudo yunohost app checkurl ${domain}${url_path} -a hotspot 
+  if [ ! $? -eq 0 ]; then
+    exit 1
+  fi
 
-if [ "${ynh_version}" -lt 220 ]; then
-  echo "ERROR: You need a YunoHost version equals or greater than 2.2.0"
-  exit 1
-fi
-
-sudo systemctl is-active dnsmasq &> /dev/null
-
-if [ $? -ne 0 ]; then
-  echo "ERROR: You need to enable dnsmasq instead of bind9 (apt-get remove bind9 && systemctl start dnsmasq)"
-  exit 1
-fi
-
-# Check arguments
-if [ -z "${wifi_ssid}" -o -z "${wifi_passphrase}" ]; then
-  echo "ERROR: Your Wifi Hotspot needs a name and a password" >&2
-  exit 1
-fi
-
-wifi_passphrase_length="$(echo -n "${wifi_passphrase}" | wc -c)"
-if [ "${wifi_passphrase_length}" -lt 8 -o "${wifi_passphrase_length}" -gt 63 ]; then
-  echo "ERROR: Your password must from 8 to 63 characters (WPA2 passphrase)" >&2
-  exit 1
-fi
-
-echo "${wifi_passphrase}" | grep -qP '[^[:print:]]'
-if [ $? -eq 0 ]; then
-  echo "ERROR: Only printable ASCII characters are permitted in your password (WPA2 passphrase)" >&2
-  exit 1
-fi
-
-# Check domain/path availability
-sudo yunohost app checkurl ${domain}${url_path} -a hotspot 
-if [ ! $? -eq 0 ]; then
-  exit 1
 fi
 
 # Install packages
@@ -95,56 +95,49 @@ if [ $? -ne 0 ]; then
   sudo apt-get --assume-yes --force-yes install ${packages}
 fi
 
-# Compute extra arguments
-if [ -z "${ip6_net}" ]; then
-  ip6_net=none
-  ip6_addr=none
+if ! $upgrade; then
 
-  if [ -e /tmp/.ynh-vpnclient-started ]; then
-    vpnclient_ip6_net=$(sudo yunohost app setting vpnclient ip6_net 2>&1)
-    vpnclient_ip6_addr=$(sudo yunohost app setting vpnclient ip6_addr 2>&1)
-
-    if [[ "${vpnclient_ip6_net}" =~ :: && "${vpnclient_ip6_addr}" =~ :: ]]; then
-      ip6_net=${vpnclient_ip6_net}
-      ip6_addr=${vpnclient_ip6_addr}
+  # Compute extra arguments
+  if [ -z "${ip6_net}" ]; then
+    ip6_net=none
+    ip6_addr=none
+  
+    if [ -e /tmp/.ynh-vpnclient-started ]; then
+      vpnclient_ip6_net=$(sudo yunohost app setting vpnclient ip6_net 2>&1)
+      vpnclient_ip6_addr=$(sudo yunohost app setting vpnclient ip6_addr 2>&1)
+  
+      if [[ "${vpnclient_ip6_net}" =~ :: && "${vpnclient_ip6_addr}" =~ :: ]]; then
+        ip6_net=${vpnclient_ip6_net}
+        ip6_addr=${vpnclient_ip6_addr}
+      fi
     fi
   fi
-#else
-#  ip6_net=$(bash ../conf/ipv6_expanded "${ip6_net}")
-#
-#  if [ -z "${ip6_net}" ]; then
-#    echo "ERROR: The IPv6 Delegated Prefix format looks bad" >&2
-#    exit 1
-#  fi
-#
-#  ip6_addr="$(echo "${ip6_net}" | cut -d: -f1-7):42"
-#  ip6_net=$(bash ../conf/ipv6_compressed "${ip6_net}")
-#  ip6_addr=$(bash ../conf/ipv6_compressed "${ip6_addr}")
+  
+  wifi_device=$(sudo bash ../conf/iw_devices | awk -F\| '{ print $1 }')
+  
+  if [ -z "${wifi_device}" ]; then
+    echo "ERROR: No wifi interface found" >&2
+    exit 1
+  fi
+  
+  # Save arguments
+  sudo yunohost app setting hotspot service_enabled -v 1
+  sudo yunohost app setting hotspot multissid -v 1
+  sudo yunohost app setting hotspot wifi_ssid -v "${wifi_ssid}"
+  sudo yunohost app setting hotspot wifi_secure -v 1
+  sudo yunohost app setting hotspot wifi_passphrase -v "${wifi_passphrase}"
+  sudo yunohost app setting hotspot wifi_device -v "${wifi_device}"
+  sudo yunohost app setting hotspot wifi_channel -v 6
+  sudo yunohost app setting hotspot ip6_addr -v "${ip6_addr}"
+  sudo yunohost app setting hotspot ip6_net -v "${ip6_net}"
+  sudo yunohost app setting hotspot ip6_dns0 -v 2001:913::8
+  sudo yunohost app setting hotspot ip6_dns1 -v 2001:910:800::12
+  sudo yunohost app setting hotspot ip4_dns0 -v 80.67.188.188
+  sudo yunohost app setting hotspot ip4_dns1 -v 80.67.169.12
+  sudo yunohost app setting hotspot ip4_nat_prefix -v 10.0.242
+  sudo yunohost app setting hotspot vpnclient -v no
+
 fi
-
-wifi_device=$(sudo bash ../conf/iw_devices | awk -F\| '{ print $1 }')
-
-if [ -z "${wifi_device}" ]; then
-  echo "ERROR: No wifi interface found" >&2
-  exit 1
-fi
-
-# Save arguments
-sudo yunohost app setting hotspot service_enabled -v 1
-sudo yunohost app setting hotspot multissid -v 1
-sudo yunohost app setting hotspot wifi_ssid -v "${wifi_ssid}"
-sudo yunohost app setting hotspot wifi_secure -v 1
-sudo yunohost app setting hotspot wifi_passphrase -v "${wifi_passphrase}"
-sudo yunohost app setting hotspot wifi_device -v "${wifi_device}"
-sudo yunohost app setting hotspot wifi_channel -v 6
-sudo yunohost app setting hotspot ip6_addr -v "${ip6_addr}"
-sudo yunohost app setting hotspot ip6_net -v "${ip6_net}"
-sudo yunohost app setting hotspot ip6_dns0 -v 2001:913::8
-sudo yunohost app setting hotspot ip6_dns1 -v 2001:910:800::12
-sudo yunohost app setting hotspot ip4_dns0 -v 80.67.188.188
-sudo yunohost app setting hotspot ip4_dns1 -v 80.67.169.12
-sudo yunohost app setting hotspot ip4_nat_prefix -v 10.0.242
-sudo yunohost app setting hotspot vpnclient -v no
 
 # Install custom scripts
 sudo install -o root -g root -m 0755 ../conf/iw_multissid /usr/local/bin/
@@ -203,10 +196,8 @@ sudo yunohost firewall allow --no-upnp UDP 67
 # and the ynh-hotspot service handles them.
 sudo systemctl disable hostapd
 sudo systemctl stop hostapd
-
 sudo systemctl enable php5-fpm
 sudo systemctl restart php5-fpm
-
 sudo systemctl reload nginx
 
 # Remove IPv6 address set if there is a VPN installed
@@ -217,10 +208,12 @@ if [ "${ip6_addr}" != none ]; then
   fi
 fi
 
-sudo systemctl enable ynh-hotspot
-sudo systemctl start ynh-hotspot
+if ! $upgrade; then
+  sudo systemctl enable ynh-hotspot
+  sudo systemctl start ynh-hotspot
 
-# Update SSO for wifiadmin
-sudo yunohost app ssowatconf
+  sudo yunohost service add ynh-hotspot
+  sudo yunohost app ssowatconf
+fi
 
 exit 0
