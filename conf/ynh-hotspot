@@ -261,50 +261,19 @@ stop_hostapd() {
 
 ## Tools
 
-moulinette_get() {
-  var=${1}
-  gotcha=0
+ynh_setting_get() {
+  app=${1}
+  setting=${2}
 
-  while [ "${gotcha}" -eq 0 ]; do
-    value=$(yunohost app setting hotspot "${var}")
-
-    if [[ "${value}" =~ "An instance is already running" ]]; then
-      sleep $(($((RANDOM%5)) + 1))
-    else
-      gotcha=1
-    fi
-  done
-
-  echo "${value}"
+  grep "^${setting}:" "/etc/yunohost/apps/${app}/settings.yml" | sed s/^[^:]\\+:\\s*[\"\']\\?// | sed s/\\s*[\"\']\$//
 }
 
-moulinette_vpnclient_get() {
-  var=${1}
-  gotcha=0
+ynh_setting_set() {
+  app=${1}
+  setting=${2}
+  value=${3}
 
-  while [ "${gotcha}" -eq 0 ]; do
-    value=$(yunohost app setting vpnclient "${var}")
-
-    if [[ "${value}" =~ "An instance is already running" ]]; then
-      sleep $(($((RANDOM%5)) + 1))
-    else
-      gotcha=1
-    fi
-  done
-
-  echo "${value}"
-}
-
-moulinette_set() {
-  var=${1}
-  value=${2}
-
-  msg=$(yunohost app setting hotspot "${var}" -v "${value}")
-
-  if [ ! $? -eq 0 ]; then
-    echo "${msg}" >&2
-    exit 1
-  fi
+  yunohost app setting "${app}" "${setting}" -v "${value}"
 }
 
 if [ "$1" != restart ]; then
@@ -319,23 +288,23 @@ if [ "$1" != restart ]; then
 
   echo -n "Retrieving Yunohost settings... "
 
-  ynh_service_enabled=$(moulinette_get service_enabled)
-  ynh_wifi_device=$(moulinette_get wifi_device)
-  ynh_wifi_channel=$(moulinette_get wifi_channel)
-  ynh_multissid=$(moulinette_get multissid)
+  ynh_service_enabled=$(ynh_setting_get hotspot service_enabled)
+  ynh_wifi_device=$(ynh_setting_get hotspot wifi_device)
+  ynh_wifi_channel=$(ynh_setting_get hotspot wifi_channel)
+  ynh_multissid=$(ynh_setting_get hotspot multissid)
 
-  IFS='|' read -a ynh_wifi_ssid <<< "$(moulinette_get wifi_ssid)"
-  IFS='|' read -a ynh_wifi_secure <<< "$(moulinette_get wifi_secure)"
-  IFS='|' read -a ynh_wifi_passphrase <<< "$(moulinette_get wifi_passphrase)"
-  IFS='|' read -a ynh_ip6_addr <<< "$(moulinette_get ip6_addr)"
-  IFS='|' read -a ynh_ip6_net <<< "$(moulinette_get ip6_net)"
-  IFS='|' read -a ynh_ip6_dns0 <<< "$(moulinette_get ip6_dns0)"
-  IFS='|' read -a ynh_ip6_dns1 <<< "$(moulinette_get ip6_dns1)"
-  IFS='|' read -a ynh_ip4_dns0 <<< "$(moulinette_get ip4_dns0)"
-  IFS='|' read -a ynh_ip4_dns1 <<< "$(moulinette_get ip4_dns1)"
-  IFS='|' read -a ynh_ip4_nat_prefix <<< "$(moulinette_get ip4_nat_prefix)"
+  IFS='|' read -a ynh_wifi_ssid <<< "$(ynh_setting_get hotspot wifi_ssid)"
+  IFS='|' read -a ynh_wifi_secure <<< "$(ynh_setting_get hotspot wifi_secure)"
+  IFS='|' read -a ynh_wifi_passphrase <<< "$(ynh_setting_get hotspot wifi_passphrase)"
+  IFS='|' read -a ynh_ip6_addr <<< "$(ynh_setting_get hotspot ip6_addr)"
+  IFS='|' read -a ynh_ip6_net <<< "$(ynh_setting_get hotspot ip6_net)"
+  IFS='|' read -a ynh_ip6_dns0 <<< "$(ynh_setting_get hotspot ip6_dns0)"
+  IFS='|' read -a ynh_ip6_dns1 <<< "$(ynh_setting_get hotspot ip6_dns1)"
+  IFS='|' read -a ynh_ip4_dns0 <<< "$(ynh_setting_get hotspot ip4_dns0)"
+  IFS='|' read -a ynh_ip4_dns1 <<< "$(ynh_setting_get hotspot ip4_dns1)"
+  IFS='|' read -a ynh_ip4_nat_prefix <<< "$(ynh_setting_get hotspot ip4_nat_prefix)"
 
-  old_internet_device=$(moulinette_get internet_device)
+  old_internet_device=$(ynh_setting_get hotspot internet_device)
   new_internet_device=$(ip route | awk '/default via/ { print $NF; }')
 
   # Switch the NAT interface if there is a VPN
@@ -345,24 +314,6 @@ if [ "$1" != restart ]; then
   fi
 
   echo "OK"
-
-  # Check IPv6 delegated prefix from vpnclient
-#  vpnclient_ip6_net=$(moulinette_vpnclient_get ip6_net)
-#
-#  if [ ! -z "${vpnclient_ip6_addr}" ]; then
-#    if [ "${ynh_ip6_net}" == none ]; then
-#      ynh_ip6_net=$vpnclient_ip6_net
-#      ynh_ip6_addr=$(moulinette_vpnclient_get ip6_addr)
-#
-#      moulinette_set ip6_net "${ynh_ip6_net}"
-#      moulinette_set ip6_addr "${ynh_ip6_addr}"
-#    else
-#      if [ "${ynh_ip6_net}" != "${vpnclient_ip6_net}" ]; then
-#        echo "[WARN] The IPv6 delegated prefix is different from the vpnclient one"
-#      fi
-#    fi
-#  fi
-
 fi
 
 # Script
@@ -378,9 +329,9 @@ case "$1" in
       touch /tmp/.ynh-hotspot-started
 
       if [ "${new_internet_device}" == tun0 ]; then
-        moulinette_set vpnclient yes
+        ynh_setting_set hotspot vpnclient yes
       else
-        moulinette_set vpnclient no
+        ynh_setting_set hotspot vpnclient no
       fi
 
       # Check old state of the ipv4 NAT settings
@@ -453,7 +404,7 @@ case "$1" in
       done
 
       # Update dynamic settings
-      moulinette_set internet_device "${new_internet_device}"
+      ynh_setting_set hotspot internet_device "${new_internet_device}"
     fi
   ;;
   stop)

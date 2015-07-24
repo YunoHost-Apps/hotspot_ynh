@@ -18,12 +18,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-function moulinette_get($var) {
-  return htmlspecialchars(exec('sudo yunohost app setting hotspot '.escapeshellarg($var)));
+function ynh_setting_get($setting) {
+  $value = exec("sudo grep \"^$setting:\" /etc/yunohost/apps/hotspot/settings.yml");
+  $value = preg_replace('/^[^:]+:\s*["\']?/', '', $value);
+  $value = preg_replace('/\s*["\']$/', '', $value);
+
+  return htmlspecialchars($value);
 }
 
-function moulinette_set($var, $value) {
-  return exec('sudo yunohost app setting hotspot '.escapeshellarg($var).' -v '.escapeshellarg($value));
+function ynh_setting_set($setting, $value) {
+  return exec('sudo yunohost app setting hotspot '.escapeshellarg($setting).' -v '.escapeshellarg($value));
 }
 
 function stop_service() {
@@ -107,9 +111,9 @@ dispatch('/', function() {
   $devs = iw_devices();
   $devs_list = '';
 
-  $wifi_device = moulinette_get('wifi_device');
-  $multissid = moulinette_get('multissid');
-  $wifi_channel = moulinette_get('wifi_channel');
+  $wifi_device = ynh_setting_get('wifi_device');
+  $multissid = ynh_setting_get('multissid');
+  $wifi_channel = ynh_setting_get('wifi_channel');
 
   foreach($devs AS $dev) {
     $dev_multissid = iw_multissid($dev);
@@ -118,15 +122,15 @@ dispatch('/', function() {
     $devs_list .= "<li $active data-multissid='$dev_multissid'><a href='#'>$dev</a></li>\n";
   }
 
-  $wifi_ssid = getArray(moulinette_get('wifi_ssid'));
-  $wifi_secure = getArray(moulinette_get('wifi_secure'));
-  $wifi_passphrase = getArray(moulinette_get('wifi_passphrase'));
-  $ip6_net = getArray(moulinette_get('ip6_net'));
-  $ip6_dns0 = getArray(moulinette_get('ip6_dns0'));
-  $ip6_dns1 = getArray(moulinette_get('ip6_dns1'));
-  $ip4_nat_prefix = getArray(moulinette_get('ip4_nat_prefix'));
-  $ip4_dns0 = getArray(moulinette_get('ip4_dns0'));
-  $ip4_dns1 = getArray(moulinette_get('ip4_dns1'));
+  $wifi_ssid = getArray(ynh_setting_get('wifi_ssid'));
+  $wifi_secure = getArray(ynh_setting_get('wifi_secure'));
+  $wifi_passphrase = getArray(ynh_setting_get('wifi_passphrase'));
+  $ip6_net = getArray(ynh_setting_get('ip6_net'));
+  $ip6_dns0 = getArray(ynh_setting_get('ip6_dns0'));
+  $ip6_dns1 = getArray(ynh_setting_get('ip6_dns1'));
+  $ip4_nat_prefix = getArray(ynh_setting_get('ip4_nat_prefix'));
+  $ip4_dns0 = getArray(ynh_setting_get('ip4_dns0'));
+  $ip4_dns1 = getArray(ynh_setting_get('ip4_dns1'));
 
   for($i = 0; $i < $multissid; $i++) {
     $ssid = [
@@ -145,11 +149,11 @@ dispatch('/', function() {
     array_push($ssids, $ssid);
   }
 
-  $ip6_net = moulinette_get('ip6_net');
+  $ip6_net = ynh_setting_get('ip6_net');
   $ip6_net = ($ip6_net == 'none') ? '' : getArray($ip6_net);
-  $ip4_nat_prefix = getArray(moulinette_get('ip4_nat_prefix'));
+  $ip4_nat_prefix = getArray(ynh_setting_get('ip4_nat_prefix'));
 
-  set('service_enabled', moulinette_get('service_enabled'));
+  set('service_enabled', ynh_setting_get('service_enabled'));
   set('ssids', $ssids);
   set('wifi_device', $wifi_device);
   set('wifi_channel', $wifi_channel);
@@ -278,7 +282,7 @@ dispatch_put('/settings', function() {
 
   stop_service();
 
-  moulinette_set('service_enabled', $service_enabled);
+  ynh_setting_set('service_enabled', $service_enabled);
   $settings = array();
 
   if($service_enabled == 1) {
@@ -288,12 +292,12 @@ dispatch_put('/settings', function() {
       }
     }
 
-    moulinette_set('multissid', count($ssids));
-    moulinette_set('wifi_device', $_POST['wifi_device']);
-    moulinette_set('wifi_channel', $_POST['wifi_channel']);
+    ynh_setting_set('multissid', count($ssids));
+    ynh_setting_set('wifi_device', $_POST['wifi_device']);
+    ynh_setting_set('wifi_channel', $_POST['wifi_channel']);
 
     foreach($settings as $setting => $value) {
-      moulinette_set($setting, preg_replace('/\|$/', '', $value));
+      ynh_setting_set($setting, preg_replace('/\|$/', '', $value));
     }
 
     $retcode = start_service();
