@@ -129,6 +129,7 @@ if ! $upgrade; then
   sudo yunohost app setting hotspot wifi_device -v "${wifi_device}"
   sudo yunohost app setting hotspot wifi_channel -v 6
   sudo yunohost app setting hotspot ip6_addr -v "${ip6_addr}"
+  sudo yunohost app setting hotspot ip6_firewall -v 1
   sudo yunohost app setting hotspot ip6_net -v "${ip6_net}"
   sudo yunohost app setting hotspot ip6_dns0 -v 2001:913::8
   sudo yunohost app setting hotspot ip6_dns1 -v 2001:910:800::12

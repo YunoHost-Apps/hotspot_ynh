@@ -54,6 +54,15 @@
     </div>
 
     <div class="form-group">
+      <label for="ip6_firewall" class="col-sm-3 control-label"><?= _('Firewall') ?></label>
+      <div class="col-sm-9 input-group-btn" data-toggle="tooltip" data-title="<?= _('Disabling the Firewall allows everyone to make connections to client hosts, depending on their own security policy') ?>">
+        <div class="input-group">
+          <input type="checkbox" class="form-control switch ip6_firewall" name="ssid[<?= $ssid['id'] ?>][ip6_firewall]" value="1" <?= $ssid['ip6_firewall'] == 1 ? 'checked="checked"' : '' ?> />
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
       <label class="col-sm-3 control-label"><?= _('First DNS resolver') ?></label>
       <div class="col-sm-9">
         <input type="text" class="form-control" name="ssid[<?= $ssid['id'] ?>][ip6_dns0]" placeholder="2001:913::8" value="<?= $ssid['ip6_dns0'] ?>" />

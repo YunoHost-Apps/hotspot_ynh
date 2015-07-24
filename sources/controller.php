@@ -126,6 +126,7 @@ dispatch('/', function() {
   $wifi_secure = getArray(ynh_setting_get('wifi_secure'));
   $wifi_passphrase = getArray(ynh_setting_get('wifi_passphrase'));
   $ip6_net = getArray(ynh_setting_get('ip6_net'));
+  $ip6_firewall = getArray(ynh_setting_get('ip6_firewall'));
   $ip6_dns0 = getArray(ynh_setting_get('ip6_dns0'));
   $ip6_dns1 = getArray(ynh_setting_get('ip6_dns1'));
   $ip4_nat_prefix = getArray(ynh_setting_get('ip4_nat_prefix'));
@@ -139,6 +140,7 @@ dispatch('/', function() {
       'wifi_secure' => noneValue($wifi_secure[$i]),
       'wifi_passphrase' => noneValue($wifi_passphrase[$i]),
       'ip6_net' => noneValue($ip6_net[$i]),
+      'ip6_firewall' => noneValue($ip6_firewall[$i]),
       'ip6_dns0' => noneValue($ip6_dns0[$i]),
       'ip6_dns1' => noneValue($ip6_dns1[$i]),
       'ip4_nat_prefix' => noneValue($ip4_nat_prefix[$i]),
@@ -182,6 +184,7 @@ dispatch_put('/settings', function() {
 
         $ssid['ip6_net'] = empty($ssid['ip6_net']) ? 'none' : $ssid['ip6_net'];
         $ssid['ip6_addr'] = 'none';
+        $ssid['ip6_firewall'] = isset($ssid['ip6_firewall']) ? 1 : 0;
         $ssid['wifi_secure'] = isset($ssid['wifi_secure']) ? 1 : 0;
 
         if(!$ssid['wifi_secure']) {

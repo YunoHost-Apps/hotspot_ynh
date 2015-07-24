@@ -38,26 +38,23 @@ is_nat_set() {
 
 is_ip4nataddr_set() {
   i=${1}
-
-  if [ "${i}" -eq 0 ]; then
-    dev=${ynh_wifi_device}
-  else
-    dev="hotspot${i}"
-  fi
+  dev=$(devfromid "${i}")
 
   ip address show dev "${dev}" 2> /dev/null | grep -q "${ynh_ip4_nat_prefix[${i}]}.1/24"
 }
 
 is_ip6addr_set() {
   i=${1}
-
-  if [ "${i}" -eq 0 ]; then
-    dev=${ynh_wifi_device}
-  else
-    dev="hotspot${i}"
-  fi
+  dev=$(devfromid "${i}")
 
   ip address show dev "${dev}" 2> /dev/null | grep -q "${ynh_ip6_addr[${i}]}/64"
+}
+
+is_ip6firewall_set() {
+  i=${1}
+  dev=$(devfromid "${i}")
+
+  ip6tables -nvL FORWARD | grep DROP | grep -q "${dev}"
 }
 
 is_forwarding_set() {
@@ -85,7 +82,9 @@ is_hostapd_running() {
 
 is_running() {
   for i in $(seq 0 $((${ynh_multissid} - 1))); do
-    ( has_ip6delegatedprefix ${i} && is_ip6addr_set ${i} && is_dhcpd6_running ${i} || ! has_ip6delegatedprefix ${i} )\
+    ( has_ip6delegatedprefix ${i} && is_ip6addr_set ${i}\
+      && ( [ "${ynh_ip6_firewall[${i}]}" -eq 1 ] && is_ip6firewall_set ${i} || [ "${ynh_ip6_firewall[${i}]}" -eq 0 ] )\
+      && is_dhcpd6_running ${i} || ! has_ip6delegatedprefix ${i} )\
     && is_ip4nataddr_set ${i} && is_dhcpd4_running ${i}
 
     if [ ! $? -eq 0 ]; then
@@ -106,27 +105,26 @@ set_nat() {
 
 set_ip4nataddr() {
   i=${1}
-
-  if [ "${i}" -eq 0 ]; then
-    dev=${ynh_wifi_device}
-  else
-    dev="hotspot${i}"
-  fi
+  dev=$(devfromid "${i}")
 
   ip address add "${ynh_ip4_nat_prefix[${i}]}.1/24" dev "${dev}"
 }
 
 set_ip6addr() {
   i=${1}
-
-  if [ "${i}" -eq 0 ]; then
-    dev=${ynh_wifi_device}
-  else
-    dev="hotspot${i}"
-  fi
+  dev=$(devfromid "${i}")
 
   ip address delete "${ynh_ip6_addr[${i}]}/64" dev tun0 &> /dev/null
   ip address add "${ynh_ip6_addr[${i}]}/64" dev "${dev}"
+}
+
+set_ip6firewall() {
+  i=${1}
+  dev=$(devfromid "${i}")
+
+  ip6tables -A FORWARD -i "${dev}" -j ACCEPT
+  ip6tables -A FORWARD -o "${dev}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+  ip6tables -A FORWARD -o "${dev}" -j DROP
 }
 
 set_forwarding() {
@@ -136,12 +134,7 @@ set_forwarding() {
 
 start_dhcpd6() {
   i=${1}
-
-  if [ "${i}" -eq 0 ]; then
-    dev=${ynh_wifi_device}
-  else
-    dev="hotspot${i}"
-  fi
+  dev=$(devfromid "${i}")
 
   cp /etc/dnsmasq.dhcpd/dhcpdv6{.conf.tpl,-ssid${i}.conf}
 
@@ -155,12 +148,7 @@ start_dhcpd6() {
 
 start_dhcpd4() {
   i=${1}
-
-  if [ "${i}" -eq 0 ]; then
-    dev=${ynh_wifi_device}
-  else
-    dev="hotspot${i}"
-  fi
+  dev=$(devfromid "${i}")
 
   cp /etc/dnsmasq.dhcpd/dhcpdv4{.conf.tpl,-ssid${i}.conf}
 
@@ -218,26 +206,25 @@ unset_nat() {
 
 unset_ip4nataddr() {
   i=${1}
-
-  if [ "${i}" -eq 0 ]; then
-    dev=${ynh_wifi_device}
-  else
-    dev="hotspot${i}"
-  fi
+  dev=$(devfromid "${i}")
 
   ip address delete "${ynh_ip4_nat_prefix[${i}]}.1/24" dev "${dev}"
 }
 
 unset_ip6addr() {
   i=${1}
-
-  if [ "${i}" -eq 0 ]; then
-    dev=${ynh_wifi_device}
-  else
-    dev="hotspot${i}"
-  fi
+  dev=$(devfromid "${i}")
 
   ip address delete "${ynh_ip6_addr[${i}]}/64" dev "${dev}"
+}
+
+unset_ip6firewall() {
+  i=${1}
+  dev=$(devfromid "${i}")
+
+  ip6tables -D FORWARD -i "${dev}" -j ACCEPT
+  ip6tables -D FORWARD -o "${dev}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+  ip6tables -D FORWARD -o "${dev}" -j DROP
 }
 
 unset_forwarding() {
@@ -276,6 +263,16 @@ ynh_setting_set() {
   yunohost app setting "${app}" "${setting}" -v "${value}"
 }
 
+devfromid() {
+  i=${1}
+
+  if [ "${i}" -eq 0 ]; then
+    echo "${ynh_wifi_device}"
+  else
+    echo "hotspot${i}"
+  fi
+}
+
 if [ "$1" != restart ]; then
 
   # Restart php5-fpm at the first start (it needs to be restarted after the slapd start)
@@ -297,6 +294,7 @@ if [ "$1" != restart ]; then
   IFS='|' read -a ynh_wifi_secure <<< "$(ynh_setting_get hotspot wifi_secure)"
   IFS='|' read -a ynh_wifi_passphrase <<< "$(ynh_setting_get hotspot wifi_passphrase)"
   IFS='|' read -a ynh_ip6_addr <<< "$(ynh_setting_get hotspot ip6_addr)"
+  IFS='|' read -a ynh_ip6_firewall <<< "$(ynh_setting_get hotspot ip6_firewall)"
   IFS='|' read -a ynh_ip6_net <<< "$(ynh_setting_get hotspot ip6_net)"
   IFS='|' read -a ynh_ip6_dns0 <<< "$(ynh_setting_get hotspot ip6_dns0)"
   IFS='|' read -a ynh_ip6_dns1 <<< "$(ynh_setting_get hotspot ip6_dns1)"
@@ -389,6 +387,12 @@ case "$1" in
           set_ip6addr ${i}
         fi
 
+        # Set ipv6 firewalling
+        if has_ip6delegatedprefix ${i} && [ "${ynh_ip6_firewall[${i}]}" -eq 1 ] && ! is_ip6firewall_set ${i}; then
+          echo "hotspot${i}: Set IPv6 firewalling"
+          set_ip6firewall ${i}
+        fi
+
         # Run DHCPv6 server
         if has_ip6delegatedprefix ${i} && ! is_dhcpd6_running ${i}; then
           echo "hotspot${i}: Start the NDP and DHCPv6 server (dnsmasq)"
@@ -430,6 +434,11 @@ case "$1" in
       if has_ip6delegatedprefix ${i} && is_ip6addr_set ${i}; then
         echo "hotspot${i}: Unset IPv6 address"
         unset_ip6addr ${i}
+      fi
+
+      if has_ip6delegatedprefix ${i}  && [ "${ynh_ip6_firewall[${i}]}" -eq 1 ] && is_ip6firewall_set ${i}; then
+        echo "hotspot${i}: Unset IPv6 firewalling"
+        unset_ip6firewall ${i}
       fi
 
       if is_dhcpd6_running ${i}; then
@@ -500,10 +509,21 @@ case "$1" in
           exitcode=1
         fi
 
-        if is_dhcpd6_running ${i}; then
-          echo "[OK] hotspot${i}: NDP and DHCPv6 server (dnsmasq) is running"
+        if is_ip6firewall_set ${i}; then
+          echo "[OK] hotspot${i}: IPv6 firewalling set"
         else
-          echo "[ERR] hotspot${i}: NDP and DHCPv6 server (dnsmasq) is not running"
+          if [ "${ynh_ip6_firewall[${i}]}" -eq 1 ]; then
+            echo "[ERR] hotspot${i}: No IPv6 firewalling set"
+          else
+            echo "[INFO] hotspot${i}: No IPv6 firewalling set"
+          fi
+          exitcode=1
+        fi
+
+        if is_dhcpd6_running ${i}; then
+          echo "[OK] hotspot${i}: NDP and DHCPv6 server (dnsmasq) are running"
+        else
+          echo "[ERR] hotspot${i}: NDP and DHCPv6 server (dnsmasq) are not running"
           exitcode=1
         fi
       else
@@ -513,7 +533,7 @@ case "$1" in
       if is_dhcpd4_running ${i}; then
         echo "[OK] hotspot${i}: DHCPv4 server (dnsmasq) is running"
       else
-        echo "[ERR] hotspot${i}: NDP and DHCPv4 (dnsmasq) is not running"
+        echo "[ERR] hotspot${i}: DHCPv4 (dnsmasq) is not running"
         exitcode=1
       fi
 

@@ -22,6 +22,16 @@ export HOTSPOT_UPGRADE=1
 sudo bash /etc/yunohost/apps/hotspot/scripts/remove
 bash ./install "${domain}" "${path}" "${wifi_ssid}" "${wifi_passphrase}" "${firmware_nonfree}"
 
+# Changes
+
+if [ "$(ynh_setting hotspot ip6_firewall)" == '' ]; then
+  multissid=$(ynh_setting hotspot multissid)
+  ip6_firewall=$(printf '1|%.0s' $(seq "${multissid}"))
+  ip6_firewall=$(echo "${ip6_firewall%?}")
+
+  sudo yunohost app setting hotspot ip6_firewall -v "${ip6_firewall}"
+fi
+
 sudo systemctl start ynh-hotspot
 
 exit 0
