@@ -218,7 +218,11 @@ dispatch_put('/settings', function() {
         }
      
         if($ssid['wifi_secure'] && preg_match('/[^[:print:]]/', $ssid['wifi_passphrase'])) {
-          throw new Exception(_('Only printable ASCII characters are permitted in your password'));
+          $msg = _('Only <LINK:ASCII>printable ASCII characters</LINK:ASCII> are permitted in your password');
+          $msg = str_replace('<LINK:ASCII>', '<a href="https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/ASCII_full.svg/217px-ASCII_full.svg.png" class="alert-link">', $msg);
+          $msg = str_replace('</LINK:ASCII>', '</a>', $msg);
+
+          throw new Exception($msg);
         }
      
         if(!$wifi_device_exists) {

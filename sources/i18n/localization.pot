@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-07-24 23:35+0200\n"
+"POT-Creation-Date: 2015-07-25 00:23+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -98,7 +98,7 @@ msgstr ""
 msgid "Save and reload"
 msgstr ""
 
-#: sources/views/_ssid.html.php:3
+#: sources/views/_ssid.html.php:3 sources/controller.php:285
 msgid "Hotspot"
 msgstr ""
 
@@ -178,4 +178,78 @@ msgstr ""
 
 #: sources/views/_ssid.html.php:105
 msgid "Delete"
+msgstr ""
+
+#: sources/controller.php:195
+msgid "All Wifi names must be unique"
+msgstr ""
+
+#: sources/controller.php:201
+msgid "All IPv4 NAT prefixes must be unique"
+msgstr ""
+
+#: sources/controller.php:207
+msgid "All IPv6 delegated prefixes must be unique"
+msgstr ""
+
+#: sources/controller.php:213
+msgid "Your Wifi Hotspot needs a name and a password"
+msgstr ""
+
+#: sources/controller.php:217
+msgid "Your password must from 8 to 63 characters (WPA2 passphrase)"
+msgstr ""
+
+#: sources/controller.php:221
+msgid ""
+"Only <LINK:ASCII>printable ASCII characters</LINK:ASCII> are permitted in "
+"your password"
+msgstr ""
+
+#: sources/controller.php:229
+msgid "The wifi antenna interface seems not exist on the system"
+msgstr ""
+
+#: sources/controller.php:236
+msgid "The IPv6 Delegated Prefix format looks bad"
+msgstr ""
+
+#: sources/controller.php:250
+msgid "The format of the first IPv6 DNS Resolver looks bad"
+msgstr ""
+
+#: sources/controller.php:259
+msgid "The format of the second IPv6 DNS Resolver looks bad"
+msgstr ""
+
+#: sources/controller.php:267
+msgid "The format of the first IPv4 DNS Resolver looks bad"
+msgstr ""
+
+#: sources/controller.php:271
+msgid "The format of the second IPv4 DNS Resolver looks bad"
+msgstr ""
+
+#: sources/controller.php:275
+msgid "The format of the IPv4 NAT Prefix (/24) looks bad : x.x.x expected)"
+msgstr ""
+
+#: sources/controller.php:279
+msgid "The IPv4 NAT Prefix must be from a private range"
+msgstr ""
+
+#: sources/controller.php:285
+msgid "configuration not updated"
+msgstr ""
+
+#: sources/controller.php:313
+msgid "Configuration updated and service successfully reloaded"
+msgstr ""
+
+#: sources/controller.php:315
+msgid "Configuration updated but service reload failed"
+msgstr ""
+
+#: sources/controller.php:319
+msgid "Service successfully disabled"
 msgstr ""
