@@ -92,7 +92,7 @@ is_running() {
     fi
   done
 
-  is_hostapd_running && is_forwarding_set && is_nat_set "${new_internet_device}"
+  is_hostapd_running && is_forwarding_set && ( [ -z "${new_internet_device}" ] || is_nat_set "${new_internet_device}" )
 }
 
 ## Setters
@@ -340,7 +340,7 @@ case "$1" in
       fi
 
       # Set ipv4 NAT
-      if ! is_nat_set "${new_internet_device}"; then
+      if [ ! -z "${new_internet_device}" ] && ! is_nat_set "${new_internet_device}"; then
         echo "Set NAT"
         set_nat "${new_internet_device}"
       fi
@@ -415,7 +415,7 @@ case "$1" in
     echo "[hotspot] Stopping..."
     rm -f /tmp/.ynh-hotspot-started
 
-    if is_nat_set "${old_internet_device}"; then
+    if [ ! -z "${old_internet_device}" ] && is_nat_set "${old_internet_device}"; then
       echo "Unset NAT"
       unset_nat "${old_internet_device}"
     fi
@@ -479,7 +479,11 @@ case "$1" in
     if is_nat_set "${new_internet_device}"; then
       echo "[OK] IPv4 NAT set"
     else
-      echo "[ERR] No IPv4 NAT set"
+      if [ -z "${new_internet_device}" ]; then
+        echo "[INFO] No IPv4 NAT set (no internet interface)"
+      else
+        echo "[ERR] No IPv4 NAT set"
+      fi
       exitcode=1
     fi
 
