@@ -208,8 +208,9 @@ if [ "${ip6_addr}" != none ]; then
   fi
 fi
 
+sudo systemctl enable ynh-hotspot
+
 if ! $upgrade; then
-  sudo systemctl enable ynh-hotspot
   sudo systemctl start ynh-hotspot
 
   sudo yunohost service add ynh-hotspot
