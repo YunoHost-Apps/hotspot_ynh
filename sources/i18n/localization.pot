@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-07-25 00:23+0200\n"
+"POT-Creation-Date: 2015-07-25 10:52+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -231,7 +231,7 @@ msgid "The format of the second IPv4 DNS Resolver looks bad"
 msgstr ""
 
 #: sources/controller.php:275
-msgid "The format of the IPv4 NAT Prefix (/24) looks bad : x.x.x expected)"
+msgid "The format of the IPv4 NAT Prefix (/24) looks bad: x.x.x expected"
 msgstr ""
 
 #: sources/controller.php:279

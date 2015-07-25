@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-07-25 00:23+0200\n"
-"PO-Revision-Date: 2015-07-25 00:33+0100\n"
+"POT-Creation-Date: 2015-07-25 10:52+0200\n"
+"PO-Revision-Date: 2015-07-25 10:53+0100\n"
 "Last-Translator: root <root@ustelo>\n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -43,7 +43,7 @@ msgstr "Configuration du point d'accès"
 msgid ""
 "This is a fast status. Click on More details to show the complete status."
 msgstr ""
-"Ceci est un résumé du statut. Cliquez sur Plus de détails pour consulter "
+"Ceci est un résumé du statut. Cliquez sur « Plus de détails » pour consulter "
 "l'intégralité du statut."
 
 #: sources/views/settings.html.php:39
@@ -52,7 +52,7 @@ msgstr "En cours d'exécution"
 
 #: sources/views/settings.html.php:41
 msgid "Not Running"
-msgstr "Eteint"
+msgstr "Éteint"
 
 #: sources/views/settings.html.php:44
 msgid "Loading complete status may take a few minutes. Be patient."
@@ -88,7 +88,7 @@ msgid ""
 "reloading, wait for the wifi disconnect/reconnect and go back here to check "
 "that everything is okay."
 msgstr ""
-"Vous êtes actuellement connecté(e) au point d'accès WiFi. Veillez confirmer "
+"Vous êtes actuellement connecté(e) au point d'accès WiFi. Veuillez confirmer "
 "le rechargement, attendre que le WiFi se déconnecte/reconnecte et revenir "
 "ici pour vérifier que tout est correct."
 
@@ -133,8 +133,9 @@ msgid ""
 "Disabling the Secure Wifi allows everyone to join the hotspot and spy the "
 "traffic (but it's perfect for a PirateBox)"
 msgstr ""
-"Désactiver le WiFi sécurisé permet à tout individu de se connecter au point "
-"d'accès et d'espionner le trafic (Cependant c'est parfait pour une PirateBox)"
+"Désactiver le WiFi sécurisé permet à n'importe qui de se connecter au point "
+"d'accès et d'espionner le trafic (c'est cependant parfait dans le cas d'une "
+"PirateBox)"
 
 #: sources/views/_ssid.html.php:31
 msgid "Password (WPA2)"
@@ -146,20 +147,20 @@ msgstr "Au moins 8 caractères"
 
 #: sources/views/_ssid.html.php:34
 msgid "Show to your friends how to access to your hotspot"
-msgstr "Montrez à vos amis comment accèder à votre point d'accès"
+msgstr "Montrez à vos amis comment accéder à votre point d'accès"
 
 #: sources/views/_ssid.html.php:44
 msgid ""
 "Currently, your wifi clients don't have IPv6 and it's a very bad thing. Ask "
 "your Internet Service Provider an IPv6 delegated prefix, or"
 msgstr ""
-"Actuellement vos clients WiFi n'utilisent pas IPv6, ce qui n'est pas une "
-"très bonne chose. Demandez à votre Fournisseur d'accès Internet un préfixe "
-"IPv6."
+"Actuellement, vos clients WiFi n'utilisent pas IPv6, ce qui n'est pas une "
+"bonne chose. Demandez un préfixe IPv6 à votre Fournisseur d'Accès à "
+"Internet, ou"
 
 #: sources/views/_ssid.html.php:45
 msgid "change providers"
-msgstr "Changer de fournisseur"
+msgstr "changez de fournisseur"
 
 #: sources/views/_ssid.html.php:50
 msgid "Delegated prefix"
@@ -187,7 +188,7 @@ msgstr "Second résolveur DNS"
 
 #: sources/views/_ssid.html.php:83
 msgid "NAT prefix (/24)"
-msgstr "Préfixe NAT (/24')"
+msgstr "Préfixe NAT (/24)"
 
 #: sources/views/_ssid.html.php:105
 msgid "Delete"
@@ -228,28 +229,27 @@ msgstr "L'interface de l'antenne WiFi ne semble pas exister sur le système"
 
 #: sources/controller.php:236
 msgid "The IPv6 Delegated Prefix format looks bad"
-msgstr "Le format du préfixe IPv6 délégué ne semble pas correct"
+msgstr "Le format du préfixe IPv6 délégué semble incorrect"
 
 #: sources/controller.php:250
 msgid "The format of the first IPv6 DNS Resolver looks bad"
-msgstr "Le format du premier résolveur DNS IPv6 ne semble pas correct"
+msgstr "Le format du premier résolveur DNS IPv6 semble incorrect"
 
 #: sources/controller.php:259
 msgid "The format of the second IPv6 DNS Resolver looks bad"
-msgstr "Le format du second résolveur DNS IPv6 ne semble pas correct"
+msgstr "Le format du second résolveur DNS IPv6 semble incorrect"
 
 #: sources/controller.php:267
 msgid "The format of the first IPv4 DNS Resolver looks bad"
-msgstr "Le format du premier résolveur DNS IPv4 ne semble pas correct"
+msgstr "Le format du premier résolveur DNS IPv4 semble incorrect"
 
 #: sources/controller.php:271
 msgid "The format of the second IPv4 DNS Resolver looks bad"
-msgstr "Le format du second résolveur DNS IPv4 ne semble pas correct"
+msgstr "Le format du second résolveur DNS IPv4 semble incorrect"
 
 #: sources/controller.php:275
-msgid "The format of the IPv4 NAT Prefix (/24) looks bad : x.x.x expected)"
-msgstr ""
-"Le format du préfixe NAT IPv4 (/24) ne semble pas correct : x.x.x.x attendu)"
+msgid "The format of the IPv4 NAT Prefix (/24) looks bad: x.x.x expected"
+msgstr "Le format du préfixe NAT IPv4 (/24) semble incorrect : x.x.x attendu"
 
 #: sources/controller.php:279
 msgid "The IPv4 NAT Prefix must be from a private range"

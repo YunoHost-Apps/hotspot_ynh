@@ -272,7 +272,7 @@ dispatch_put('/settings', function() {
         }
      
         if(inet_pton("${ssid['ip4_nat_prefix']}.0") === false) {
-          throw new Exception(_('The format of the IPv4 NAT Prefix (/24) looks bad : x.x.x expected)'));
+          throw new Exception(_('The format of the IPv4 NAT Prefix (/24) looks bad: x.x.x expected'));
         }
      
         if(filter_var("${ssid['ip4_nat_prefix']}.0", FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE) !== false) {
