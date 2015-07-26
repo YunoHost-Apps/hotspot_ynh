@@ -7,7 +7,7 @@ git clone https://github.com/labriqueinternet/hotspot_ynh.git "${tmpdir}/"
 git --work-tree "${tmpdir}/" --git-dir "${tmpdir}/.git/" reset --hard "${gitcommit}"
 
 cd "${tmpdir}/scripts/"
-./upgrade 
+bash ./upgrade 
 
 sudo rm -r "${tmpdir}/"
 
