@@ -77,6 +77,11 @@ export DEBIAN_FRONTEND=noninteractive
 # Packaged USB Wireless Device firmwares
 # Based on https://wiki.debian.org/WiFi#USB_Devices
 if [ "${firmware_nonfree}" == yes ]; then
+  # check if non-free is set on sources.list
+  if ! grep non-free /etc/apt/sources.list ; then
+    sed -i -e '0,/main/{s/main/main non-free/}' /etc/apt/sources.list
+    apt-get update
+  fi
   packages="$packages firmware-atheros atmel-firmware firmware-linux-free firmware-linux-nonfree firmware-realtek firmware-ralink firmware-libertas zd1211-firmware"
 else
   packages="$packages firmware-linux-free"
