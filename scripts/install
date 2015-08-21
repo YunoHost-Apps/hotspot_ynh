@@ -78,7 +78,7 @@ export DEBIAN_FRONTEND=noninteractive
 # Based on https://wiki.debian.org/WiFi#USB_Devices
 if [ "${firmware_nonfree}" == yes ]; then
   # check if non-free is set on sources.list
-  if ! grep non-free /etc/apt/sources.list ; then
+  if ! grep -q non-free /etc/apt/sources.list ; then
     sed -i -e '0,/main/{s/main/main non-free/}' /etc/apt/sources.list
     apt-get update
   fi
