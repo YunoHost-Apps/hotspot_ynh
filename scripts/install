@@ -82,7 +82,7 @@ if [ "${firmware_nonfree}" == yes ]; then
     sudo sed '/debian/{s/main/& non-free/}' -i /etc/apt/sources.list
   fi
 
-  packages="$packages firmware-atheros atmel-firmware firmware-linux-free firmware-linux-nonfree firmware-realtek firmware-ralink firmware-libertas zd1211-firmware"
+  packages="$packages firmware-linux-free firmware-linux-nonfree firmware-atheros firmware-realtek firmware-ralink firmware-libertas atmel-firmware zd1211-firmware"
 else
   packages="$packages firmware-linux-free"
 
@@ -120,13 +120,15 @@ if ! $upgrade; then
   
   wifi_device=$(sudo bash ../conf/iw_devices | awk -F\| '{ print $1 }')
   
+  # Save arguments
+
   if [ -z "${wifi_device}" ]; then
-    echo "ERROR: No wifi interface found" >&2
-    exit 1
+    sudo yunohost app setting hotspot service_enabled -v 0
+    wifi_device=none
+  else
+    sudo yunohost app setting hotspot service_enabled -v 1
   fi
 
-  # Save arguments
-  sudo yunohost app setting hotspot service_enabled -v 1
   sudo yunohost app setting hotspot multissid -v 1
   sudo yunohost app setting hotspot wifi_ssid -v "${wifi_ssid}"
   sudo yunohost app setting hotspot wifi_secure -v 1
@@ -220,6 +222,10 @@ fi
 
 sudo systemctl enable ynh-hotspot
 sudo yunohost service add ynh-hotspot
+
+if [ "${wifi_device}" == none ]; then
+  echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
+fi
 
 if ! $upgrade; then
   sudo systemctl start ynh-hotspot

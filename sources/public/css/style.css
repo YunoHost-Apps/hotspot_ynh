@@ -163,3 +163,7 @@ div.deletessid button {
   display: block;
   width: 100%;
 }
+
+button#newssid {
+  margin-bottom: 20px;
+}

@@ -73,7 +73,7 @@ function iw_multissid($nic) {
 function iw_devices() {
   exec('sudo iw_devices', $output);
 
-  return getArray($output[0]);
+  return !empty($output) ? getArray($output[0]) : '';
 }
 
 function getArray($str) {
@@ -111,7 +111,7 @@ dispatch('/', function() {
   $devs = iw_devices();
   $devs_list = '';
 
-  $wifi_device = ynh_setting_get('wifi_device');
+  $wifi_device = noneValue(ynh_setting_get('wifi_device'));
   $multissid = ynh_setting_get('multissid');
   $wifi_channel = ynh_setting_get('wifi_channel');
 
@@ -167,7 +167,11 @@ dispatch('/', function() {
 });
 
 dispatch_put('/settings', function() {
-  exec('ip link show '.escapeshellarg($_POST['wifi_device']), $output, $retcode);
+  $retcode = 1;
+
+  if(!empty($_POST['wifi_device'])) {
+    exec('ip link show '.escapeshellarg($_POST['wifi_device']), $output, $retcode);
+  }
 
   $wifi_device_exists = ($retcode == 0);
   $service_enabled = isset($_POST['service_enabled']) ? 1 : 0;
@@ -179,6 +183,14 @@ dispatch_put('/settings', function() {
 
   if($service_enabled == 1) {
     try {
+      if(!$wifi_device_exists) {
+        if(empty($_POST['wifi_device'])) {
+          throw new Exception(_('You have to choose a wifi antenna interface'));
+        }
+
+        throw new Exception(_('The wifi antenna interface seems not exist on the system'));
+      }
+
       foreach($_POST['ssid'] as $key => $ssid) {
         $id = $key + 1;
 
@@ -223,10 +235,6 @@ dispatch_put('/settings', function() {
           $msg = str_replace('</LINK:ASCII>', '</a>', $msg);
 
           throw new Exception($msg);
-        }
-     
-        if(!$wifi_device_exists) {
-          throw new Exception(_('The wifi antenna interface seems not exist on the system'));
         }
      
         if($ssid['ip6_net'] != 'none') {
@@ -282,7 +290,7 @@ dispatch_put('/settings', function() {
         array_push($ssids, $ssid);
       }
     } catch(Exception $e) {
-      flash('error', _('Hotspot')." $id: ".$e->getMessage().' ('._('configuration not updated').').');
+      flash('error', ($id != 0 ? _('Hotspot')." $id: " : '').$e->getMessage().' ('._('configuration not updated').').');
       goto redirect;
     }
   }

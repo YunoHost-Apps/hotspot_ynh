@@ -41,8 +41,7 @@
     <?php if(empty($ssid['ip6_net'])): ?>
       <div class="alert alert-dismissible alert-warning fade in" style="margin: 2px 2px 17px" role="alert">
         <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-        <strong><?= _('Notice') ?>:</strong> <?= _("Currently, your wifi clients don't have IPv6 and it's a very bad thing. Ask your Internet Service Provider an IPv6 delegated prefix, or") ?>
-        <a href="http://db.ffdn.org" class="alert-link"><?= _('change providers') ?></a>!
+        <strong><?= _('Notice') ?>:</strong> <?= str_replace('<LINK:FFDN>', '<a href="http://db.ffdn.org" class="alert-link">', str_replace('</LINK:FFDN>', '</a>', _("Currently, your wifi clients don't have IPv6 and it's a very bad thing. Ask your Internet Service Provider an IPv6 delegated prefix, or <LINK:FFDN>change providers</LINK:FFDN>!"))) ?>
       </div>
     <?php endif; ?>
 

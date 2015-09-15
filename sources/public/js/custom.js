@@ -58,6 +58,7 @@ function updateNbSsidRemaining() {
   multissid = $('#devlist .active').data('multissid');
   current = $('.ssid').length;
   remaining = multissid - current;
+  remaining = isNaN(remaining) ? 0 : remaining;
 
   $('.ssid').each(function(i) {
     if(i >= multissid) {

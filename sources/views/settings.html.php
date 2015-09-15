@@ -70,11 +70,18 @@
             </div>
           </div>
           <div class="form-group">
+            <?php if(empty($wifi_device)): ?>
+              <div class="alert alert-dismissible alert-warning fade in" style="margin: 2px 16px 17px" role="alert">
+                <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <strong><?= _('Notice') ?>:</strong> <?= str_replace('<LINK:RELOAD>', '<a href="javascript:location.reload()" class="alert-link">', str_replace('</LINK:RELOAD>', '</a>', _("You need to select a wifi antenna interface. If you use a wifi USB dongle and that this one is not listed here, try to unplug and replug it, then <LINK:RELOAD>reload</LINK:RELOAD> this page."))) ?>
+              </div>
+            <?php endif; ?>
+
             <label for="wifi_device" class="col-sm-3 control-label"><?= _('Device') ?></label>
             <div class="col-sm-9 input-group-btn">
               <div class="input-group">
                   <input type="text" name="wifi_device" id="wifi_device" value="<?= $wifi_device ?>" style="display: none" />
-                  <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><?= $wifi_device ?> <span class="caret"></span></button>
+                  <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"><?= empty($wifi_device) ? '<em>'._("None").'</em>' : $wifi_device ?> <span class="caret"></span></button>
                   <ul class="dropdown-menu dropdown-menu-left" id="devlist" role="menu">
                     <?= $wifi_device_list ?>
                   </ul>
@@ -113,7 +120,7 @@
       <?php endforeach; ?>
       </div>
 
-      <button id="newssid" type="button" class="btn btn-success"><?= _("Add a hotspot") ?> <span class="badge">0</span></button>
+      <button id="newssid" type="button" class="btn btn-success enabled" <?= $service_enabled == 0 ? 'style="display: none"' : '' ?>><?= _("Add a hotspot") ?> <span class="badge">0</span></button>
 
       <div class="form-group">
         <div style="text-align: center">
