@@ -12,6 +12,8 @@ path=$(ynh_setting hotspot path)
 wifi_ssid=$(ynh_setting hotspot wifi_ssid)
 wifi_passphrase=$(ynh_setting hotspot wifi_passphrase)
 
+source ./prerequisites
+
 if dpkg -l firmware-linux-nonfree &> /dev/null; then
   firmware_nonfree=yes
 else

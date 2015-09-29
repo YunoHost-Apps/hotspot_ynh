@@ -150,7 +150,7 @@ div.tabs {
   padding: 14px 14px 0 10px;
 }
 
-div.tabs a {
+ul.nav a {
   outline: none;
 }
 

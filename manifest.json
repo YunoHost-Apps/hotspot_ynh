@@ -51,8 +51,8 @@
       {
         "name": "firmware_nonfree",
         "ask": {
-            "en": "Install non-free firmwares for the wifi dongle (yes/no)",
-            "fr": "Installer des firmwares non-libres pour la clé USB wifi (yes/no)"
+            "en": "Install non-free firmwares - in addition to the free ones - for the wifi dongle (yes/no)",
+            "fr": "Installer des firmwares non-libres (en plus des libres) pour la clé USB wifi (yes/no)"
         },
         "example": "yes",
         "default": "yes"
