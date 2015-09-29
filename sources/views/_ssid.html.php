@@ -14,7 +14,7 @@
     <div class="form-group">
       <label class="col-sm-3 control-label"><?= _('Name (SSID)') ?></label>
       <div class="col-sm-9">
-        <input type="text" class="form-control" name="ssid[<?= $ssid['id'] ?>][wifi_ssid]" placeholder="myNeutralNetwork" value="<?= $ssid['wifi_ssid'] ?>" />
+        <input type="text" class="form-control ssidin" name="ssid[<?= $ssid['id'] ?>][wifi_ssid]" placeholder="myNeutralNetwork" value="<?= $ssid['wifi_ssid'] ?>" />
       </div>
     </div>
 

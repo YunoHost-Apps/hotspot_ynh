@@ -136,6 +136,7 @@
 <?php else: ?>
           <button type="submit" class="btn btn-default" data-toggle="tooltip" id="save" data-title="<?= _('Reloading may take a few minutes. Be patient.') ?>"><?= _('Save and reload') ?></button> <img src="public/img/loading.gif" id="save-loading" alt="Loading..." />
 <?php endif; ?>
+          <audio id="nice" preload><source src="<?= PUBLIC_DIR ?>/img/nice.ogg" type="audio/ogg"></audio>
         </div>
       </div>
     </form>

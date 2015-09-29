@@ -89,6 +89,12 @@ function updateNbSsidRemaining() {
   $('#newssid span').text(remaining);
 }
 
+function nice() {
+  if($(this).val() == 'YoloCowboy') {
+    $('#nice')[0].play();
+  }
+}
+
 function deleteClick() {
   $(this).closest('.ssid').remove();
   updateNbSsidRemaining();
@@ -175,6 +181,7 @@ $(document).ready(function() {
   });
 
   $('.nav-tabs a').click(tabsClick);
+  $('.ssidin').blur(nice);
 
   $('#newssid').click(function() {
     var clone = $('#ssids').children().first().clone();
@@ -186,6 +193,7 @@ $(document).ready(function() {
 
     clone.find('[data-toggle="tooltip"]').tooltip();
     clone.find('.deletessid').click(deleteClick);
+    clone.find('.ssidin').blur(nice);
     clone.find('.wifiparty_passphrase').remove();
     clone.find('.wifiparty').attr('disabled', true);
 
