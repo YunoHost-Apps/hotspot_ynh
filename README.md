@@ -43,3 +43,5 @@ In this manner, with this example, you can provide 3 access points at the same t
 
 * Debian Jessie
 * YunoHost >= 2.2.0
+
+**[BUG REPORTS SHOULD BE OPEN HERE](https://dev.yunohost.org)**
