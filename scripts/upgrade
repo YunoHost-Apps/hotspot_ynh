@@ -36,7 +36,7 @@ sudo yunohost app setting hotspot gitcommit -v "${gitcommit}"
 
 # Changes
 
-if [ "$(ynh_setting hotspot ip6_firewall)" == '' ]; then
+if [ -z "$(ynh_setting hotspot ip6_firewall)" ]; then
   multissid=$(ynh_setting hotspot multissid)
   ip6_firewall=$(printf '1|%.0s' $(seq "${multissid}"))
   ip6_firewall=$(echo "${ip6_firewall%?}")

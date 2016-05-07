@@ -33,7 +33,7 @@ has_ip6delegatedprefix() {
 is_nat_set() {
   internet_device=${1}
 
-  iptables -nvt nat -L POSTROUTING | grep MASQUERADE | grep -q "${internet_device}"
+  iptables -w -nvt nat -L POSTROUTING | grep MASQUERADE | grep -q "${internet_device}"
 }
 
 is_ip4nataddr_set() {
@@ -54,7 +54,7 @@ is_ip6firewall_set() {
   i=${1}
   dev=$(devfromid "${i}")
 
-  ip6tables -nvL FORWARD | grep DROP | grep -q "${dev}"
+  ip6tables -w -nvL FORWARD | grep DROP | grep -q "${dev}"
 }
 
 is_forwarding_set() {
@@ -100,7 +100,7 @@ is_running() {
 set_nat() {
   internet_device=${1}
 
-  iptables -t nat -A POSTROUTING -o "${internet_device}" -j MASQUERADE
+  iptables -w -t nat -A POSTROUTING -o "${internet_device}" -j MASQUERADE
 }
 
 set_ip4nataddr() {
@@ -122,9 +122,9 @@ set_ip6firewall() {
   i=${1}
   dev=$(devfromid "${i}")
 
-  ip6tables -A FORWARD -i "${dev}" -j ACCEPT
-  ip6tables -A FORWARD -o "${dev}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-  ip6tables -A FORWARD -o "${dev}" -j DROP
+  ip6tables -w -A FORWARD -i "${dev}" -j ACCEPT
+  ip6tables -w -A FORWARD -o "${dev}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+  ip6tables -w -A FORWARD -o "${dev}" -j DROP
 }
 
 set_forwarding() {
@@ -201,7 +201,7 @@ start_hostapd() {
 unset_nat() {
   internet_device=${1}
 
-  iptables -t nat -D POSTROUTING -o "${internet_device}" -j MASQUERADE
+  iptables -w -t nat -D POSTROUTING -o "${internet_device}" -j MASQUERADE
 }
 
 unset_ip4nataddr() {
@@ -222,9 +222,9 @@ unset_ip6firewall() {
   i=${1}
   dev=$(devfromid "${i}")
 
-  ip6tables -D FORWARD -i "${dev}" -j ACCEPT
-  ip6tables -D FORWARD -o "${dev}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-  ip6tables -D FORWARD -o "${dev}" -j DROP
+  ip6tables -w -D FORWARD -i "${dev}" -j ACCEPT
+  ip6tables -w -D FORWARD -o "${dev}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+  ip6tables -w -D FORWARD -o "${dev}" -j DROP
 }
 
 unset_forwarding() {
