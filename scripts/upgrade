@@ -27,12 +27,8 @@ export HOTSPOT_UPGRADE=1
 sudo bash /etc/yunohost/apps/hotspot/scripts/remove &> /dev/null
 bash ./install "${domain}" "${path}" "${wifi_ssid}" "${wifi_passphrase}" "${firmware_nonfree}"
 
-gitcommit=$(ynh_setting hotspot gitcommit)
-
 sudo cp -a "${tmpdir}/settings.yml" /etc/yunohost/apps/hotspot/
 sudo rm -r "${tmpdir}/"
-
-sudo yunohost app setting hotspot gitcommit -v "${gitcommit}"
 
 # Changes
 

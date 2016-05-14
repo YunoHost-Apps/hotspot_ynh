@@ -48,13 +48,13 @@ if ! $upgrade; then
     echo "ERROR: Only printable ASCII characters are permitted in your password (WPA2 passphrase)" >&2
     exit 1
   fi
-  
-  # Check domain/path availability
-  sudo yunohost app checkurl ${domain}${url_path} -a hotspot 
-  if [ ! $? -eq 0 ]; then
-    exit 1
-  fi
 
+fi
+  
+# Check domain/path availability
+sudo yunohost app checkurl ${domain}${url_path} -a hotspot 
+if [ ! $? -eq 0 ]; then
+  exit 1
 fi
 
 # Install packages
@@ -133,10 +133,6 @@ if ! $upgrade; then
   sudo yunohost app setting hotspot vpnclient -v no
 
 fi
-
-# Save git commit
-gitcommit=$(git rev-parse HEAD)
-sudo yunohost app setting hotspot gitcommit -v "${gitcommit}"
 
 # Install custom scripts
 sudo install -o root -g root -m 0755 ../conf/iw_multissid /usr/local/bin/

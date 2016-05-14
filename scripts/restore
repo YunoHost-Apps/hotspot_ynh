@@ -1,6 +1,6 @@
 #!/bin/bash
 
-gitcommit=$(sudo yunohost app setting hotspot gitcommit)
+gitcommit=$(sudo grep revision /etc/yunohost/apps/hotspot/status.json | sed 's/.*"revision": "\([^"]\+\)".*/\1/')
 tmpdir=$(mktemp -dp /tmp/ hotspot-restore-XXXXX)
 
 git clone https://github.com/labriqueinternet/hotspot_ynh.git "${tmpdir}/"
