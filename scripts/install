@@ -29,6 +29,7 @@ firmware_nonfree=${5}
 
 if ! $upgrade; then
 
+  source ./helpers
   source ./prerequisites
 
   # Check arguments
@@ -52,10 +53,7 @@ if ! $upgrade; then
 fi
   
 # Check domain/path availability
-sudo yunohost app checkurl ${domain}${url_path} -a hotspot 
-if [ ! $? -eq 0 ]; then
-  exit 1
-fi
+ynh_webpath_register hotspot $domain $url_path || exit 1
 
 # Install packages
 packages='php5-fpm sipcalc hostapd iptables iw dnsmasq'
@@ -211,7 +209,7 @@ if [ "${wifi_device}" == none ]; then
 fi
 
 if ! $upgrade; then
-  sudo systemctl start ynh-hotspot
+  ynh_systemctl start ynh-hotspot
 fi
 
 sudo yunohost app ssowatconf

@@ -17,11 +17,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+source ./helpers
+
 # Retrieve arguments
 domain=$(sudo yunohost app setting hotspot domain)
 
 # The End
-sudo systemctl stop ynh-hotspot
+ynh_systemctl stop ynh-hotspot
 sudo systemctl disable ynh-hotspot
 sudo yunohost service remove ynh-hotspot
 sudo rm -f /etc/systemd/system/ynh-hotspot.service /usr/local/bin/ynh-hotspot

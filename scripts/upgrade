@@ -12,6 +12,7 @@ path=$(ynh_setting hotspot path)
 wifi_ssid=$(ynh_setting hotspot wifi_ssid)
 wifi_passphrase=$(ynh_setting hotspot wifi_passphrase)
 
+source ./helpers
 source ./prerequisites
 
 if dpkg -l firmware-linux-nonfree &> /dev/null; then
@@ -40,6 +41,6 @@ if [ -z "$(ynh_setting hotspot ip6_firewall)" ]; then
   sudo yunohost app setting hotspot ip6_firewall -v "${ip6_firewall}"
 fi
 
-sudo systemctl start ynh-hotspot
+ynh_systemctl start ynh-hotspot
 
 exit 0
