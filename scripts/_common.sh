@@ -1,12 +1,18 @@
 #!/bin/bash
 
-source /usr/share/yunohost/helpers
+#
+# Common variables
+#
+
+pkg_dependencies="php5-fpm sipcalc hostapd iptables iw dnsmasq"
+nonfree_packages="firmware-linux-free firmware-linux-nonfree firmware-atheros firmware-realtek firmware-ralink firmware-libertas atmel-firmware zd1211-firmware"
+free_packages="firmware-linux-free"
 
 #
 # Helper to start/stop/.. a systemd service from a yunohost context,
 # *and* the systemd service itself needs to be able to run yunohost
 # commands.
-# 
+#
 # Hence the need to release the lock during the operation
 #
 # usage : ynh_systemctl yolo restart
@@ -24,7 +30,7 @@ function ynh_systemctl()
   # Save and release the lock...
   cp $LOCKFILE $LOCKFILE.bkp.$$
   rm $LOCKFILE
-  
+
   # Wait for the end of the action
   wait $SYSCTLACTION
 

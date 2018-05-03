@@ -1,21 +1,32 @@
 {
   "name": "Wifi Hotspot",
   "id": "hotspot",
+  "packaging_format": 1,
   "description": {
     "en": "Wifi Hotspot",
     "fr": "Hotspot Wifi"
   },
-  "license": "AGPL-3",
-  "developer": {
+  "url": "https://github.com/labriqueinternet/hotspot_ynh",
+  "version": "1.1.0",
+  "license": "AGPL-3.0",
+  "maintainer": {
     "name": "Julien Vaubourg",
     "email": "julien@vaubourg.com",
     "url": "http://julien.vaubourg.com"
   },
-  "multi_instance": "false",
+  "requirements": {
+    "yunohost": ">= 2.2.0",
+    "moulinette": ">= 2.4.0"
+  },
+  "multi_instance": false,
+  "services": [
+    "php5-fpm"
+  ],
   "arguments": {
     "install" : [
       {
         "name": "domain",
+        "type": "domain",
         "ask": {
             "en": "Choose a domain for the web administration",
             "fr": "Choisissez un domaine pour l'administration web"
@@ -24,6 +35,7 @@
       },
       {
         "name": "path",
+        "type": "path",
         "ask": {
             "en": "Choose a path for the web administration",
             "fr": "Choisissez un chemin pour l'administration web"
@@ -42,6 +54,7 @@
       },
       {
         "name": "wifi_passphrase",
+        "type": "password",
         "ask": {
             "en": "Choose a wifi password (at least 8 characters for WPA2)",
             "fr": "Choisissez un mot de passe wifi (au minimum 8 caractères pour le WPA2)"
@@ -50,6 +63,7 @@
       },
       {
         "name": "firmware_nonfree",
+        "choice": ["yes", "no"],
         "ask": {
             "en": "Install non-free firmwares - in addition to the free ones - for the wifi dongle (yes/no)",
             "fr": "Installer des firmwares non-libres (en plus des libres) pour la clé USB wifi (yes/no)"

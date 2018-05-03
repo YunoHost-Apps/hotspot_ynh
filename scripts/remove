@@ -1,31 +1,44 @@
 #!/bin/bash
 
-# Wifi Hotspot app for YunoHost 
+# Wifi Hotspot app for YunoHost
 # Copyright (C) 2015 Julien Vaubourg <julien@vaubourg.com>
 # Contribute at https://github.com/labriqueinternet/hotspot_ynh
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Affero General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-source ./helpers
+#=================================================
+# GENERIC STARTING
+#=================================================
+# IMPORT GENERIC HELPERS
+#=================================================
 
-# Retrieve arguments
-domain=$(sudo yunohost app setting hotspot domain)
+source _common.sh
+source /usr/share/yunohost/helpers
+
+#=================================================
+# LOAD SETTINGS
+#=================================================
+
+app=$YNH_APP_INSTANCE_NAME
+
+domain=$(ynh_app_setting_get $app domain)
+firmware_nonfree=$(ynh_app_setting_get $app firmware_nonfree)
 
 # The End
-ynh_systemctl stop ynh-hotspot
-sudo systemctl disable ynh-hotspot
-sudo yunohost service remove ynh-hotspot
+systemctl stop ynh-hotspot
+systemctl disable ynh-hotspot
+yunohost service remove ynh-hotspot
 sudo rm -f /etc/systemd/system/ynh-hotspot.service /usr/local/bin/ynh-hotspot
 sudo rm -f /tmp/.ynh-hotspot-*
 
@@ -39,17 +52,23 @@ sudo rm -f /etc/hostapd/hostapd.conf{.tpl?,}
 sudo rm -f /etc/nginx/conf.d/${domain}.d/wifiadmin.conf
 sudo rm -f /etc/php5/fpm/pool.d/wifiadmin.conf
 
-# Remove free firmwares
-if ! dpkg -l firmware-atheros &> /dev/null; then
-  sudo rm -f /lib/firmware/htc_7010.fw
-  sudo rm -f /lib/firmware/htc_9271.fw
+# Remove packages
+if [[ $firmware_nonfree == yes ]]; then
+  packages=$nonfree_packages
+else
+  packages=$free_packages
+
+  # Remove free firmwares
+  if ! dpkg -l firmware-atheros &> /dev/null; then
+    sudo rm -f /lib/firmware/htc_7010.fw
+    sudo rm -f /lib/firmware/htc_9271.fw
+  fi
 fi
+sudo apt-get --assume-yes --force-yes remove ${packages}
 
 # Restart services
-sudo systemctl restart php5-fpm
-sudo systemctl reload nginx
+systemctl restart php5-fpm
+systemctl reload nginx
 
 # Remove sources
 sudo rm -rf /var/www/wifiadmin/
-
-exit 0

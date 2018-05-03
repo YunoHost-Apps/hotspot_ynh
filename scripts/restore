@@ -1,5 +1,23 @@
 #!/bin/bash
 
+#=================================================
+# GENERIC START
+#=================================================
+# IMPORT GENERIC HELPERS
+#=================================================
+
+source _common.sh
+source /usr/share/yunohost/helpers
+
+#=================================================
+# MANAGE SCRIPT FAILURE
+#=================================================
+
+# Exit if an error occurs during the execution of the script
+ynh_abort_if_errors
+
+#=================================================
+
 gitcommit=$(sudo grep revision /etc/yunohost/apps/hotspot/status.json | sed 's/.*"revision": "\([^"]\+\)".*/\1/')
 tmpdir=$(mktemp -dp /tmp/ hotspot-restore-XXXXX)
 
@@ -7,8 +25,6 @@ git clone https://github.com/labriqueinternet/hotspot_ynh.git "${tmpdir}/"
 git --work-tree "${tmpdir}/" --git-dir "${tmpdir}/.git/" reset --hard "${gitcommit}"
 
 cd "${tmpdir}/scripts/"
-bash ./upgrade 
+bash ./upgrade
 
 sudo rm -r "${tmpdir}/"
-
-exit 0
