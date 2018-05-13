@@ -1,6 +1,6 @@
 # Wifi Hotspot [![Build Status](https://travis-ci.org/labriqueinternet/hotspot_ynh.svg?branch=master)](https://travis-ci.org/labriqueinternet/hotspot_ynh)
 
-[![Install Nextcloud with YunoHost](https://install-app.yunohost.org/install-with-yunohost.png)](https://install-app.yunohost.org/?app=hotspot)
+[![Install LaBriqueInterNet Hotspot with YunoHost](https://install-app.yunohost.org/install-with-yunohost.png)](https://install-app.yunohost.org/?app=hotspot)
 
 ## Overview
 
