@@ -1,46 +1,55 @@
 #!/bin/bash
 
-ynh_setting() {
-  app=${1}
-  setting=${2}
+#=================================================
+# GENERIC STARTING
+#=================================================
+# IMPORT GENERIC HELPERS
+#=================================================
 
-  sudo grep "^${setting}:" "/etc/yunohost/apps/${app}/settings.yml" | sed s/^[^:]\\+:\\s*[\"\']\\?// | sed s/\\s*[\"\']\$//
-}
+source _common.sh
+source /usr/share/yunohost/helpers
 
-domain=$(ynh_setting hotspot domain)
-path=$(ynh_setting hotspot path)
-wifi_ssid=$(ynh_setting hotspot wifi_ssid)
-wifi_passphrase=$(ynh_setting hotspot wifi_passphrase)
+#=================================================
+# MANAGE SCRIPT FAILURE
+#=================================================
 
-source ./helpers
+# Exit if an error occurs during the execution of the script
+ynh_abort_if_errors
+
+#=================================================
+# LOAD SETTINGS
+#=================================================
+
+app=$YNH_APP_INSTANCE_NAME
+
+domain=$(ynh_app_setting_get $app domain)
+path_url=$(ynh_app_setting_get $app path)
+wifi_ssid=$(ynh_app_setting_get $app wifi_ssid)
+wifi_passphrase=$(ynh_app_setting_get $app wifi_passphrase)
+firmware_nonfree=$(ynh_app_setting_get $app firmware_nonfree)
+final_path=$(ynh_app_setting_get $app final_path)
+multissid=$(ynh_app_setting_get $app multissid)
+
+#=================================================
+# CHECK THE PATH
+#=================================================
+
+# Normalize the URL path syntax
+path_url=$(ynh_normalize_url_path $path_url)
+
+#=================================================
+# SPECIFIC UPGRADE
+#=================================================
+
 source ./prerequisites
-
-if dpkg -l firmware-linux-nonfree &> /dev/null; then
-  firmware_nonfree=yes
-else
-  firmware_nonfree=no
-fi
-
-tmpdir=$(mktemp -dp /tmp/ hotspot-upgrade-XXXXX)
-sudo cp -a /etc/yunohost/apps/hotspot/settings.yml "${tmpdir}/"
-
-export HOTSPOT_UPGRADE=1
-sudo bash /etc/yunohost/apps/hotspot/scripts/remove &> /dev/null
-bash ./install "${domain}" "${path}" "${wifi_ssid}" "${wifi_passphrase}" "${firmware_nonfree}"
-
-sudo cp -a "${tmpdir}/settings.yml" /etc/yunohost/apps/hotspot/
-sudo rm -r "${tmpdir}/"
 
 # Changes
 
-if [ -z "$(ynh_setting hotspot ip6_firewall)" ]; then
-  multissid=$(ynh_setting hotspot multissid)
+if [[ -z $(ynh_app_setting_get $app ip6_firewall) ]]; then
   ip6_firewall=$(printf '1|%.0s' $(seq "${multissid}"))
   ip6_firewall=$(echo "${ip6_firewall%?}")
 
-  sudo yunohost app setting hotspot ip6_firewall -v "${ip6_firewall}"
+  ynh_app_setting_set "${app}" ip6_firewall -v "${ip6_firewall}"
 fi
 
 ynh_systemctl start ynh-hotspot
-
-exit 0

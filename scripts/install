@@ -1,75 +1,130 @@
 #!/bin/bash
 
-# Wifi Hotspot app for YunoHost 
+# Wifi Hotspot app for YunoHost
 # Copyright (C) 2015 Julien Vaubourg <julien@vaubourg.com>
 # Contribute at https://github.com/labriqueinternet/hotspot_ynh
-# 
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Affero General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# This is an upgrade?
-upgrade=$([ "${HOTSPOT_UPGRADE}" == 1 ] && echo true || echo false)
+#=================================================
+# GENERIC START
+#=================================================
+# IMPORT GENERIC HELPERS
+#=================================================
+
+source _common.sh
+source /usr/share/yunohost/helpers
+
+#=================================================
+# MANAGE SCRIPT FAILURE
+#=================================================
+
+# Exit if an error occurs during the execution of the script
+ynh_abort_if_errors
+
+#=================================================
+# RETRIEVE ARGUMENTS FROM THE MANIFEST
+#=================================================
 
 # Retrieve arguments
-domain=${1}
-url_path=${2}
-wifi_ssid=${3}
-wifi_passphrase=${4}
-firmware_nonfree=${5}
+domain=$YNH_APP_ARG_DOMAIN
+path_url=$YNH_APP_ARG_PATH
+wifi_ssid=$YNH_APP_ARG_WIFI_SSID
+wifi_passphrase=$YNH_APP_ARG_WIFI_PASSPHRASE
+firmware_nonfree=$YNH_APP_ARG_FIRMWARE_NONFREE
 
-if ! $upgrade; then
+app=$YNH_APP_INSTANCE_NAME
 
-  source ./helpers
-  source ./prerequisites
+#=================================================
+# CHECK IF THE APP CAN BE INSTALLED WITH THESE ARGS
+#=================================================
 
-  # Check arguments
-  if [ -z "${wifi_ssid}" -o -z "${wifi_passphrase}" ]; then
-    echo "ERROR: Your Wifi Hotspot needs a name and a password" >&2
-    exit 1
-  fi
-  
-  wifi_passphrase_length="$(echo -n "${wifi_passphrase}" | wc -c)"
-  if [ "${wifi_passphrase_length}" -lt 8 -o "${wifi_passphrase_length}" -gt 63 ]; then
-    echo "ERROR: Your password must from 8 to 63 characters (WPA2 passphrase)" >&2
-    exit 1
-  fi
-  
-  echo "${wifi_passphrase}" | grep -qP '[^[:print:]]'
-  if [ $? -eq 0 ]; then
-    echo "ERROR: Only printable ASCII characters are permitted in your password (WPA2 passphrase)" >&2
-    exit 1
-  fi
+# Check destination directory
+final_path="/var/www/$app"
+test ! -e "$final_path" || ynh_die "This path already contains a folder"
 
+# Normalize the url path syntax
+path_url=$(ynh_normalize_url_path "$path_url")
+
+# Check web path availability
+ynh_webpath_available "$domain" "$path_url"
+# Register (book) web path
+ynh_webpath_register "$app" "$domain" "$path_url"
+
+#=================================================
+# STORE SETTINGS FROM MANIFEST
+#=================================================
+
+ynh_app_setting_set "$app" domain "$domain"
+ynh_app_setting_set "$app" final_path "$final_path"
+ynh_app_setting_set "$app" wifi_ssid "$wifi_ssid"
+ynh_app_setting_set "$app" wifi_passphrase "$wifi_passphrase"
+ynh_app_setting_set "$app" firmware_nonfree "$firmware_nonfree"
+
+#=================================================
+# STANDARD MODIFICATIONS
+#=================================================
+# INSTALL DEPENDENCIES
+#=================================================
+
+ynh_install_app_dependencies "$pkg_dependencies"
+
+#=================================================
+# SPECIFIC SETUP
+#=================================================
+# RUN PREREQUISITES
+#=================================================
+
+source ./prerequisites
+
+#=================================================
+# CHECK PARAMETERS
+#=================================================
+
+# Check arguments
+if [[ -z $wifi_ssid || -z $wifi_passphrase ]]; then
+  ynh_die "Your Wifi Hotspot needs a name and a password"
 fi
-  
-# Check domain/path availability
-ynh_webpath_register hotspot $domain $url_path || exit 1
 
-# Install packages
-packages='php5-fpm sipcalc hostapd iptables iw dnsmasq'
+# Check passphrase length
+wifi_passphrase_length="$(echo -n "${wifi_passphrase}" | wc -c)"
+if [[ $wifi_passphrase_length -lt 8 || $wifi_passphrase_length -gt 63 ]]; then
+  ynh_die "Your password must from 8 to 63 characters (WPA2 passphrase)"
+fi
+
+# Check no special characters are present in the passphrase
+if [[ $wifi_passphrase =~ [^[:print:]] ]]; then
+  ynh_die "Only printable ASCII characters are permitted in your password (WPA2 passphrase)"
+fi
+
+#=================================================
+# INSTALL NONFREE FIRWARE IF REQUESTED
+#=================================================
+
 export DEBIAN_FRONTEND=noninteractive
 
 # Packaged USB Wireless Device firmwares
 # Based on https://wiki.debian.org/WiFi#USB_Devices
-if [ "${firmware_nonfree}" == yes ]; then
+if [[ $firmware_nonfree == yes ]]; then
   # check if non-free is set on sources.list
   if ! grep -q non-free /etc/apt/sources.list ; then
     sudo sed '/debian/{s/main/& non-free/}' -i /etc/apt/sources.list
   fi
 
-  packages="$packages firmware-linux-free firmware-linux-nonfree firmware-atheros firmware-realtek firmware-ralink firmware-libertas atmel-firmware zd1211-firmware"
+  packages=$nonfree_packages
 else
-  packages="$packages firmware-linux-free"
+  packages=$free_packages
 
   # Extract from http://packages.trisquel.info/toutatis-updates/open-ath9k-htc-firmware
   # https://www.fsf.org/news/ryf-certification-thinkpenguin-usb-with-atheros-chip
@@ -80,66 +135,76 @@ fi
 
 sudo apt-get --assume-yes --force-yes install ${packages}
 
-if [ $? -ne 0 ]; then
+if [[ $? -ne 0 ]]; then
   sudo apt-get update
   sudo apt-get --assume-yes --force-yes install ${packages}
 fi
 
-if ! $upgrade; then
+#=================================================
+# CHECK PARAMETERS
+#=================================================
 
-  # Compute extra arguments
-  if [ -z "${ip6_net}" ]; then
-    ip6_net=none
-    ip6_addr=none
-  
-    if [ -e /tmp/.ynh-vpnclient-started ]; then
-      vpnclient_ip6_net=$(sudo yunohost app setting vpnclient ip6_net 2>&1)
-      vpnclient_ip6_addr=$(sudo yunohost app setting vpnclient ip6_addr 2>&1)
-  
-      if [[ "${vpnclient_ip6_net}" =~ :: && "${vpnclient_ip6_addr}" =~ :: ]]; then
-        ip6_net=${vpnclient_ip6_net}
-        ip6_addr=${vpnclient_ip6_addr}
-      fi
+if [[ ! -v ip6_net ]]; then # if ip6_net not set
+  ip6_net=none
+  ip6_addr=none
+
+  if [[ -e /tmp/.ynh-vpnclient-started ]]; then
+    vpnclient_ip6_net=$(sudo yunohost app setting vpnclient ip6_net 2>&1)
+    vpnclient_ip6_addr=$(sudo yunohost app setting vpnclient ip6_addr 2>&1)
+
+    if [[ $vpnclient_ip6_net =~ :: && $vpnclient_ip6_addr =~ :: ]]; then
+      ip6_net=${vpnclient_ip6_net}
+      ip6_addr=${vpnclient_ip6_addr}
     fi
   fi
-  
-  wifi_device=$(sudo bash ../conf/iw_devices | awk -F\| '{ print $1 }')
-  
-  # Save arguments
-
-  if [ -z "${wifi_device}" ]; then
-    sudo yunohost app setting hotspot service_enabled -v 0
-    wifi_device=none
-  else
-    sudo yunohost app setting hotspot service_enabled -v 1
-  fi
-
-  sudo yunohost app setting hotspot multissid -v 1
-  sudo yunohost app setting hotspot wifi_ssid -v "${wifi_ssid}"
-  sudo yunohost app setting hotspot wifi_secure -v 1
-  sudo yunohost app setting hotspot wifi_passphrase -v "${wifi_passphrase}"
-  sudo yunohost app setting hotspot wifi_device -v "${wifi_device}"
-  sudo yunohost app setting hotspot wifi_channel -v 6
-  sudo yunohost app setting hotspot ip6_addr -v "${ip6_addr}"
-  sudo yunohost app setting hotspot ip6_firewall -v 1
-  sudo yunohost app setting hotspot ip6_net -v "${ip6_net}"
-  sudo yunohost app setting hotspot ip6_dns0 -v 2001:913::8
-  sudo yunohost app setting hotspot ip6_dns1 -v 2001:910:800::12
-  sudo yunohost app setting hotspot ip4_dns0 -v 80.67.188.188
-  sudo yunohost app setting hotspot ip4_dns1 -v 80.67.169.12
-  sudo yunohost app setting hotspot ip4_nat_prefix -v 10.0.242
-  sudo yunohost app setting hotspot vpnclient -v no
-
 fi
 
-# Install custom scripts
+wifi_device=$(sudo bash ../conf/iw_devices | awk -F\| '{ print $1 }')
+
+# Save arguments
+
+if [[ -z $wifi_device ]]; then
+  ynh_app_setting_set $app service_enabled -v 0
+  wifi_device=none
+else
+  ynh_app_setting_set $app service_enabled -v 1
+fi
+
+#=================================================
+# SAVE SETTINGS
+#=================================================
+
+ynh_app_setting_set $app multissid -v 1
+ynh_app_setting_set $app wifi_ssid -v "${wifi_ssid}"
+ynh_app_setting_set $app wifi_secure -v 1
+ynh_app_setting_set $app wifi_passphrase -v "${wifi_passphrase}"
+ynh_app_setting_set $app wifi_device -v "${wifi_device}"
+ynh_app_setting_set $app wifi_channel -v 6
+ynh_app_setting_set $app ip6_addr -v "${ip6_addr}"
+ynh_app_setting_set $app ip6_firewall -v 1
+ynh_app_setting_set $app ip6_net -v "${ip6_net}"
+ynh_app_setting_set $app ip6_dns0 -v 2001:913::8
+ynh_app_setting_set $app ip6_dns1 -v 2001:910:800::12
+ynh_app_setting_set $app ip4_dns0 -v 80.67.188.188
+ynh_app_setting_set $app ip4_dns1 -v 80.67.169.12
+ynh_app_setting_set $app ip4_nat_prefix -v 10.0.242
+ynh_app_setting_set $app vpnclient -v no
+
+
+#=================================================
+# INSTALL CUSTOM SCRIPTS
+#=================================================
+
 sudo install -o root -g root -m 0755 ../conf/iw_multissid /usr/local/bin/
 sudo install -o root -g root -m 0755 ../conf/iw_devices /usr/local/bin/
 sudo install -o root -g root -m 0755 ../conf/iw_ssids /usr/local/bin/
 sudo install -o root -g root -m 0755 ../conf/ipv6_expanded /usr/local/bin/
 sudo install -o root -g root -m 0755 ../conf/ipv6_compressed /usr/local/bin/
 
-# Copy confs
+#=================================================
+# COPY CONFIGS
+#=================================================
+
 sudo mkdir -pm 0755 /var/log/nginx/
 sudo mkdir -pm 0755 /etc/dnsmasq.dhcpd/
 sudo chown root: /etc/dnsmasq.dhcpd/
@@ -150,7 +215,10 @@ sudo install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dn
 sudo install -b -o root -g root -m 0644 ../conf/nginx_wifiadmin.conf "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
 sudo install -b -o root -g root -m 0644 ../conf/phpfpm_wifiadmin.conf /etc/php5/fpm/pool.d/wifiadmin.conf
 
-# Copy web sources
+#=================================================
+# COPY WEB SOURCES
+#=================================================
+
 sudo mkdir -pm 0755 /var/www/wifiadmin/
 sudo cp -a ../sources/* /var/www/wifiadmin/
 
@@ -158,12 +226,15 @@ sudo chown -R root: /var/www/wifiadmin/
 sudo chmod -R 0644 /var/www/wifiadmin/*
 sudo find /var/www/wifiadmin/ -type d -exec chmod +x {} \;
 
-# Fix confs
+#=================================================
+# FIX CONFIGS
+#=================================================
+
 ## hostapd
 sudo sed 's|^DAEMON_CONF=$|&/etc/hostapd/hostapd.conf|' -i /etc/init.d/hostapd
 
 ## nginx
-sudo sed "s|<TPL:NGINX_LOCATION>|${url_path}|g" -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
+sudo sed "s|<TPL:NGINX_LOCATION>|${path_url}|g" -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
 sudo sed 's|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g' -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
 sudo sed 's|<TPL:PHP_NAME>|wifiadmin|g' -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
 
@@ -174,44 +245,42 @@ sudo sed 's|<TPL:PHP_GROUP>|admins|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
 sudo sed 's|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
 
 # Fix sources
-sudo sed "s|<TPL:NGINX_LOCATION>|${url_path}|g" -i /var/www/wifiadmin/config.php
+sudo sed "s|<TPL:NGINX_LOCATION>|${path_url}|g" -i /var/www/wifiadmin/config.php
 
 # Copy init script
 sudo install -o root -g root -m 0755 ../conf/ynh-hotspot /usr/local/bin/
 sudo install -o root -g root -m 0644 ../conf/ynh-hotspot.service /etc/systemd/system/
 
 # Update firewall for DHCP
-sudo yunohost firewall allow --no-upnp --ipv6 UDP 547
-sudo yunohost firewall allow --no-upnp UDP 67
+yunohost firewall allow --no-upnp --ipv6 UDP 547
+yunohost firewall allow --no-upnp UDP 67
 
 # Set default inits
 # The boot order of these services are important, so they are disabled by default
 # and the ynh-hotspot service handles them.
-sudo systemctl disable hostapd
-sudo systemctl stop hostapd
-sudo systemctl enable php5-fpm
-sudo systemctl restart php5-fpm
-sudo systemctl reload nginx
+systemctl disable hostapd
+systemctl stop hostapd
+systemctl enable php5-fpm
+systemctl restart php5-fpm
+systemctl reload nginx
 
 # Remove IPv6 address set if there is a VPN installed
-if [ "${ip6_addr}" != none ]; then
+if [[ $ip6_addr != none ]]; then
   sudo ip -6 address show dev tun0 2> /dev/null | grep -q "${ip6_addr}/"
-  if [ "$?" -eq 0 ]; then
+  if [[ "$?" -eq 0 ]]; then
     sudo ip address delete "${ip6_addr}/128" dev tun0 &> /dev/null
   fi
 fi
 
-sudo systemctl enable ynh-hotspot
-sudo yunohost service add ynh-hotspot
+systemctl enable ynh-hotspot
+yunohost service add ynh-hotspot
 
-if [ "${wifi_device}" == none ]; then
+if [[ $wifi_device == none ]]; then
   echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
 fi
 
-if ! $upgrade; then
-  ynh_systemctl start ynh-hotspot
-fi
+# start the app
+ynh_systemctl start ynh-hotspot
 
-sudo yunohost app ssowatconf
-
-exit 0
+# Reload SSOwat config
+yunohost app ssowatconf
