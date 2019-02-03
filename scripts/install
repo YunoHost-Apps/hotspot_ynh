@@ -129,6 +129,7 @@ else
   # Extract from http://packages.trisquel.info/toutatis-updates/open-ath9k-htc-firmware
   # https://www.fsf.org/news/ryf-certification-thinkpenguin-usb-with-atheros-chip
   # https://wiki.debian.org/ath9k_htc/open_firmware
+  mkdir -p /lib/firmware
   sudo install -b -o root -g root -m 0644 ../conf/firmware_htc-7010.fw /lib/firmware/htc_7010.fw
   sudo install -b -o root -g root -m 0644 ../conf/firmware_htc-9271.fw /lib/firmware/htc_9271.fw
 fi
