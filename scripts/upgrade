@@ -49,7 +49,7 @@ if [[ -z $(ynh_app_setting_get $app ip6_firewall) ]]; then
   ip6_firewall=$(printf '1|%.0s' $(seq "${multissid}"))
   ip6_firewall=$(echo "${ip6_firewall%?}")
 
-  ynh_app_setting_set "${app}" ip6_firewall -v "${ip6_firewall}"
+  ynh_app_setting_set "${app}" ip6_firewall "${ip6_firewall}"
 fi
 
 ynh_systemctl start ynh-hotspot
