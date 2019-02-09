@@ -29,7 +29,7 @@ function ynh_systemctl()
 
   # Save and release the lock...
   cp $LOCKFILE $LOCKFILE.bkp.$$
-  rm $LOCKFILE
+  ynh_secure_remove $LOCKFILE
 
   # Wait for the end of the action
   wait $SYSCTLACTION
