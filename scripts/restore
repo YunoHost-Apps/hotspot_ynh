@@ -27,4 +27,4 @@ git --work-tree "${tmpdir}/" --git-dir "${tmpdir}/.git/" reset --hard "${gitcomm
 cd "${tmpdir}/scripts/"
 bash ./upgrade
 
-sudo rm -r "${tmpdir}/"
+rm -r "${tmpdir}/"
