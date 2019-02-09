@@ -45,6 +45,7 @@
       },
       {
         "name": "wifi_ssid",
+        "type": "string",
         "ask": {
             "en": "Choose a wifi name (SSID)",
             "fr": "Choisissez un nom pour le wifi (SSID)"
@@ -63,6 +64,7 @@
       },
       {
         "name": "firmware_nonfree",
+        "type": "boolean",
         "choice": ["yes", "no"],
         "ask": {
             "en": "Install non-free firmwares - in addition to the free ones - for the wifi dongle (yes/no)",
