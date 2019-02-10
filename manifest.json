@@ -64,7 +64,7 @@
       },
       {
         "name": "firmware_nonfree",
-        "type": "boolean",
+        "type": "string",
         "choice": ["yes", "no"],
         "ask": {
             "en": "Install non-free firmwares - in addition to the free ones - for the wifi dongle (yes/no)",
