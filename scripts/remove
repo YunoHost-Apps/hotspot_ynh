@@ -58,6 +58,7 @@ for FILE in $(ls /etc/hostapd/hostapd.conf{.tpl?,})
 do
     ynh_secure_remove "$FILE"
 done
+ynh_secure_remove /etc/sudoers.d/hotspot_ynh
 
 # Remove packages
 if [[ $firmware_nonfree == yes ]]; then
@@ -79,3 +80,6 @@ systemctl reload nginx
 
 # Remove sources
 ynh_secure_remove /var/www/wifiadmin/
+
+# Remove user
+ynh_system_user_delete ${app}

@@ -45,6 +45,7 @@ wifi_passphrase=$YNH_APP_ARG_WIFI_PASSPHRASE
 firmware_nonfree=$YNH_APP_ARG_FIRMWARE_NONFREE
 
 app=$YNH_APP_INSTANCE_NAME
+sysuser="${app}"
 
 # the service name must match the service template files
 service_name='ynh-hotspot'
@@ -197,6 +198,19 @@ ynh_app_setting_set $app ip4_nat_prefix 10.0.242
 ynh_app_setting_set $app vpnclient no
 ynh_app_setting_set $app service_name $service_name
 
+#=================================================
+# CREATE DEDICATED USER
+#=================================================
+
+# Ensure the app has its own system user
+if ! ynh_system_user_exists ${sysuser}
+then
+  ynh_system_user_create ${sysuser}
+fi
+
+# Ensure the system user has enough sudo permissions
+install -b -o root -g root -m 0440 ../conf/sudoers.conf /etc/sudoers.d/${app}_ynh
+ynh_replace_string "__HOTSPOT_SYSUSER__" "${sysuser}" /etc/sudoers.d/${app}_ynh
 
 #=================================================
 # INSTALL CUSTOM SCRIPTS
@@ -246,10 +260,10 @@ sed 's|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g' -i "/etc/nginx/conf.d/${domai
 sed 's|<TPL:PHP_NAME>|wifiadmin|g' -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
 
 ## php-fpm
-sed 's|<TPL:PHP_NAME>|wifiadmin|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
-sed 's|<TPL:PHP_USER>|admin|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
-sed 's|<TPL:PHP_GROUP>|admins|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
-sed 's|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
+sed "s|<TPL:PHP_NAME>|wifiadmin|g" -i /etc/php5/fpm/pool.d/wifiadmin.conf
+sed "s|<TPL:PHP_USER>|${sysuser}|g" -i /etc/php5/fpm/pool.d/wifiadmin.conf
+sed "s|<TPL:PHP_GROUP>|${sysuser}|g" -i /etc/php5/fpm/pool.d/wifiadmin.conf
+sed "s|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g" -i /etc/php5/fpm/pool.d/wifiadmin.conf
 
 # Fix sources
 sed "s|<TPL:NGINX_LOCATION>|${path_url}|g" -i /var/www/wifiadmin/config.php
