@@ -60,7 +60,7 @@ do
 done
 
 # Remove packages
-if [[ $firmware_nonfree -eq 1 ]]; then
+if [[ $firmware_nonfree == yes ]]; then
   packages=$nonfree_packages
 else
   packages=$free_packages

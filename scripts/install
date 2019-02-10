@@ -116,7 +116,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 # Packaged USB Wireless Device firmwares
 # Based on https://wiki.debian.org/WiFi#USB_Devices
-if [[ $firmware_nonfree -eq 1 ]]; then
+if [[ $firmware_nonfree == yes ]]; then
   # check if non-free is set on sources.list
   if ! grep -q non-free /etc/apt/sources.list ; then
     sed '/debian/{s/main/& non-free/}' -i /etc/apt/sources.list

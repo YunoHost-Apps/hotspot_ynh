@@ -5,7 +5,7 @@
 		path="/path"	(PATH)
 		wifi_ssid="myNeutralNetwork"
 		wifi_passphrase="VhegT8oev0jZI"	(PASSWORD)
-		firmware_nonfree=0
+		firmware_nonfree="no"
 	; Checks
 		pkg_linter=1
 		setup_sub_dir=1
