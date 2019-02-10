@@ -54,6 +54,7 @@ yunohost firewall disallow UDP 67
 ynh_secure_remove /etc/dnsmasq.dhcpd/
 ynh_secure_remove /etc/nginx/conf.d/${domain}.d/wifiadmin.conf
 ynh_secure_remove /etc/php5/fpm/pool.d/wifiadmin.conf
+ynh_secure_remove /etc/NetworkManager/conf.d/ynh-hotspot-nm.conf
 for FILE in $(ls /etc/hostapd/hostapd.conf{.tpl?,})
 do
     ynh_secure_remove "$FILE"

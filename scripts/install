@@ -216,6 +216,11 @@ install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq
 install -b -o root -g root -m 0644 ../conf/nginx_wifiadmin.conf "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
 install -b -o root -g root -m 0644 ../conf/phpfpm_wifiadmin.conf /etc/php5/fpm/pool.d/wifiadmin.conf
 
+# add config if NetworkManager is installed
+if dpkg -s network-manager >/dev/null 2>&1; then
+  install -b -o root -g root -m 0644 ../conf/ynh-hotspot-nm.conf /etc/NetworkManager/conf.d/
+fi
+
 #=================================================
 # COPY WEB SOURCES
 #=================================================
@@ -248,9 +253,6 @@ sed 's|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g' -i /etc/php5/fpm/pool.d/wifia
 # Fix sources
 sed "s|<TPL:NGINX_LOCATION>|${path_url}|g" -i /var/www/wifiadmin/config.php
 
-# Fix network interface
-grep -q -x -F 'auto wlan0' /etc/network/interfaces || echo 'auto wlan0' >> /etc/network/interfaces
-
 # make sure rfkill does not block the radio
 rfkill unblock wifi wlan
 
@@ -261,6 +263,11 @@ install -o root -g root -m 0644 ../conf/ynh-hotspot.service /etc/systemd/system/
 # Update firewall for DHCP
 yunohost firewall allow --no-upnp --ipv6 UDP 547
 yunohost firewall allow --no-upnp UDP 67
+
+# Restart network-manager if it is installed
+if dpkg -s network-manager >/dev/null 2>&1; then
+  systemctl reload network-manager
+fi
 
 # Set default inits
 # The boot order of these services are important, so they are disabled by default
