@@ -274,7 +274,7 @@ if [[ $ip6_addr != none ]]; then
 fi
 
 systemctl enable ynh-hotspot
-yunohost service add ynh-hotspot
+yunohost service add ynh-hotspot --description "creates a Wi-Fi access point"
 
 if [[ $wifi_device == none ]]; then
   echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
