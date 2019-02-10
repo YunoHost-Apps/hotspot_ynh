@@ -248,6 +248,12 @@ sed 's|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g' -i /etc/php5/fpm/pool.d/wifia
 # Fix sources
 sed "s|<TPL:NGINX_LOCATION>|${path_url}|g" -i /var/www/wifiadmin/config.php
 
+# Fix network interface
+grep -q -x -F 'auto wlan0' /etc/network/interfaces || echo 'auto wlan0' >> /etc/network/interfaces
+
+# make sure rfkill does not block the radio
+rfkill unblock wifi wlan
+
 # Copy init script
 install -o root -g root -m 0755 ../conf/ynh-hotspot /usr/local/bin/
 install -o root -g root -m 0644 ../conf/ynh-hotspot.service /etc/systemd/system/
