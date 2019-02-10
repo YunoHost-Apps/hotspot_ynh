@@ -47,7 +47,7 @@ function service_status() {
 }
 
 function service_faststatus() {
-  exec('sudo systemctl is-active hostapd', $output, $retcode);
+  exec('systemctl is-active hostapd', $output, $retcode);
 
   return $retcode;
 }
