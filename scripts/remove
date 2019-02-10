@@ -39,18 +39,25 @@ firmware_nonfree=$(ynh_app_setting_get $app firmware_nonfree)
 systemctl stop ynh-hotspot
 systemctl disable ynh-hotspot
 yunohost service remove ynh-hotspot
-sudo rm -f /etc/systemd/system/ynh-hotspot.service /usr/local/bin/ynh-hotspot
-sudo rm -f /tmp/.ynh-hotspot-*
+ynh_secure_remove /etc/systemd/system/ynh-hotspot.service
+ynh_secure_remove /usr/local/bin/ynh-hotspot
+for FILE in $(ls /tmp/.ynh-hotspot-*)
+do
+    ynh_secure_remove "$FILE"
+done
 
 # Update firewall for DHCP
-sudo yunohost firewall disallow --ipv6 UDP 547
-sudo yunohost firewall disallow UDP 67
+yunohost firewall disallow --ipv6 UDP 547
+yunohost firewall disallow UDP 67
 
 # Remove confs
-sudo rm -fr /etc/dnsmasq.dhcpd/
-sudo rm -f /etc/hostapd/hostapd.conf{.tpl?,}
-sudo rm -f /etc/nginx/conf.d/${domain}.d/wifiadmin.conf
-sudo rm -f /etc/php5/fpm/pool.d/wifiadmin.conf
+ynh_secure_remove /etc/dnsmasq.dhcpd/
+ynh_secure_remove /etc/nginx/conf.d/${domain}.d/wifiadmin.conf
+ynh_secure_remove /etc/php5/fpm/pool.d/wifiadmin.conf
+for FILE in $(ls /etc/hostapd/hostapd.conf{.tpl?,})
+do
+    ynh_secure_remove "$FILE"
+done
 
 # Remove packages
 if [[ $firmware_nonfree == yes ]]; then
@@ -60,15 +67,15 @@ else
 
   # Remove free firmwares
   if ! dpkg -l firmware-atheros &> /dev/null; then
-    sudo rm -f /lib/firmware/htc_7010.fw
-    sudo rm -f /lib/firmware/htc_9271.fw
+    ynh_secure_remove /lib/firmware/htc_7010.fw
+    ynh_secure_remove /lib/firmware/htc_9271.fw
   fi
 fi
-sudo apt-get --assume-yes --force-yes remove ${packages}
+apt-get --assume-yes --force-yes remove ${packages}
 
 # Restart services
 systemctl restart php5-fpm
 systemctl reload nginx
 
 # Remove sources
-sudo rm -rf /var/www/wifiadmin/
+ynh_secure_remove /var/www/wifiadmin/

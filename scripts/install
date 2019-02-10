@@ -119,7 +119,7 @@ export DEBIAN_FRONTEND=noninteractive
 if [[ $firmware_nonfree == yes ]]; then
   # check if non-free is set on sources.list
   if ! grep -q non-free /etc/apt/sources.list ; then
-    sudo sed '/debian/{s/main/& non-free/}' -i /etc/apt/sources.list
+    sed '/debian/{s/main/& non-free/}' -i /etc/apt/sources.list
   fi
 
   packages=$nonfree_packages
@@ -130,15 +130,15 @@ else
   # https://www.fsf.org/news/ryf-certification-thinkpenguin-usb-with-atheros-chip
   # https://wiki.debian.org/ath9k_htc/open_firmware
   mkdir -p /lib/firmware
-  sudo install -b -o root -g root -m 0644 ../conf/firmware_htc-7010.fw /lib/firmware/htc_7010.fw
-  sudo install -b -o root -g root -m 0644 ../conf/firmware_htc-9271.fw /lib/firmware/htc_9271.fw
+  install -b -o root -g root -m 0644 ../conf/firmware_htc-7010.fw /lib/firmware/htc_7010.fw
+  install -b -o root -g root -m 0644 ../conf/firmware_htc-9271.fw /lib/firmware/htc_9271.fw
 fi
 
-sudo apt-get --assume-yes --force-yes install ${packages}
+apt-get --assume-yes --force-yes install ${packages}
 
 if [[ $? -ne 0 ]]; then
-  sudo apt-get update
-  sudo apt-get --assume-yes --force-yes install ${packages}
+  apt-get update
+  apt-get --assume-yes --force-yes install ${packages}
 fi
 
 #=================================================
@@ -150,8 +150,8 @@ if [[ ! -v ip6_net ]]; then # if ip6_net not set
   ip6_addr=none
 
   if [[ -e /tmp/.ynh-vpnclient-started ]]; then
-    vpnclient_ip6_net=$(sudo yunohost app setting vpnclient ip6_net 2>&1)
-    vpnclient_ip6_addr=$(sudo yunohost app setting vpnclient ip6_addr 2>&1)
+    vpnclient_ip6_net=$(sudo ynh_app_setting_set vpnclient ip6_net 2>&1)
+    vpnclient_ip6_addr=$(sudo ynh_app_setting_set vpnclient ip6_addr 2>&1)
 
     if [[ $vpnclient_ip6_net =~ :: && $vpnclient_ip6_addr =~ :: ]]; then
       ip6_net=${vpnclient_ip6_net}
@@ -196,61 +196,61 @@ ynh_app_setting_set $app vpnclient -v no
 # INSTALL CUSTOM SCRIPTS
 #=================================================
 
-sudo install -o root -g root -m 0755 ../conf/iw_multissid /usr/local/bin/
-sudo install -o root -g root -m 0755 ../conf/iw_devices /usr/local/bin/
-sudo install -o root -g root -m 0755 ../conf/iw_ssids /usr/local/bin/
-sudo install -o root -g root -m 0755 ../conf/ipv6_expanded /usr/local/bin/
-sudo install -o root -g root -m 0755 ../conf/ipv6_compressed /usr/local/bin/
+install -o root -g root -m 0755 ../conf/iw_multissid /usr/local/bin/
+install -o root -g root -m 0755 ../conf/iw_devices /usr/local/bin/
+install -o root -g root -m 0755 ../conf/iw_ssids /usr/local/bin/
+install -o root -g root -m 0755 ../conf/ipv6_expanded /usr/local/bin/
+install -o root -g root -m 0755 ../conf/ipv6_compressed /usr/local/bin/
 
 #=================================================
 # COPY CONFIGS
 #=================================================
 
-sudo mkdir -pm 0755 /var/log/nginx/
-sudo mkdir -pm 0755 /etc/dnsmasq.dhcpd/
-sudo chown root: /etc/dnsmasq.dhcpd/
+mkdir -pm 0755 /var/log/nginx/
+mkdir -pm 0755 /etc/dnsmasq.dhcpd/
+chown root: /etc/dnsmasq.dhcpd/
 
-sudo install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl? /etc/hostapd/
-sudo install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl
-sudo install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl
-sudo install -b -o root -g root -m 0644 ../conf/nginx_wifiadmin.conf "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
-sudo install -b -o root -g root -m 0644 ../conf/phpfpm_wifiadmin.conf /etc/php5/fpm/pool.d/wifiadmin.conf
+install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl? /etc/hostapd/
+install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl
+install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl
+install -b -o root -g root -m 0644 ../conf/nginx_wifiadmin.conf "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
+install -b -o root -g root -m 0644 ../conf/phpfpm_wifiadmin.conf /etc/php5/fpm/pool.d/wifiadmin.conf
 
 #=================================================
 # COPY WEB SOURCES
 #=================================================
 
-sudo mkdir -pm 0755 /var/www/wifiadmin/
-sudo cp -a ../sources/* /var/www/wifiadmin/
+mkdir -pm 0755 /var/www/wifiadmin/
+cp -a ../sources/* /var/www/wifiadmin/
 
-sudo chown -R root: /var/www/wifiadmin/
-sudo chmod -R 0644 /var/www/wifiadmin/*
-sudo find /var/www/wifiadmin/ -type d -exec chmod +x {} \;
+chown -R root: /var/www/wifiadmin/
+chmod -R 0644 /var/www/wifiadmin/*
+find /var/www/wifiadmin/ -type d -exec chmod +x {} \;
 
 #=================================================
 # FIX CONFIGS
 #=================================================
 
 ## hostapd
-sudo sed 's|^DAEMON_CONF=$|&/etc/hostapd/hostapd.conf|' -i /etc/init.d/hostapd
+sed 's|^DAEMON_CONF=$|&/etc/hostapd/hostapd.conf|' -i /etc/init.d/hostapd
 
 ## nginx
-sudo sed "s|<TPL:NGINX_LOCATION>|${path_url}|g" -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
-sudo sed 's|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g' -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
-sudo sed 's|<TPL:PHP_NAME>|wifiadmin|g' -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
+sed "s|<TPL:NGINX_LOCATION>|${path_url}|g" -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
+sed 's|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g' -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
+sed 's|<TPL:PHP_NAME>|wifiadmin|g' -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
 
 ## php-fpm
-sudo sed 's|<TPL:PHP_NAME>|wifiadmin|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
-sudo sed 's|<TPL:PHP_USER>|admin|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
-sudo sed 's|<TPL:PHP_GROUP>|admins|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
-sudo sed 's|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
+sed 's|<TPL:PHP_NAME>|wifiadmin|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
+sed 's|<TPL:PHP_USER>|admin|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
+sed 's|<TPL:PHP_GROUP>|admins|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
+sed 's|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g' -i /etc/php5/fpm/pool.d/wifiadmin.conf
 
 # Fix sources
-sudo sed "s|<TPL:NGINX_LOCATION>|${path_url}|g" -i /var/www/wifiadmin/config.php
+sed "s|<TPL:NGINX_LOCATION>|${path_url}|g" -i /var/www/wifiadmin/config.php
 
 # Copy init script
-sudo install -o root -g root -m 0755 ../conf/ynh-hotspot /usr/local/bin/
-sudo install -o root -g root -m 0644 ../conf/ynh-hotspot.service /etc/systemd/system/
+install -o root -g root -m 0755 ../conf/ynh-hotspot /usr/local/bin/
+install -o root -g root -m 0644 ../conf/ynh-hotspot.service /etc/systemd/system/
 
 # Update firewall for DHCP
 yunohost firewall allow --no-upnp --ipv6 UDP 547
@@ -267,9 +267,9 @@ systemctl reload nginx
 
 # Remove IPv6 address set if there is a VPN installed
 if [[ $ip6_addr != none ]]; then
-  sudo ip -6 address show dev tun0 2> /dev/null | grep -q "${ip6_addr}/"
+  ip -6 address show dev tun0 2> /dev/null | grep -q "${ip6_addr}/"
   if [[ "$?" -eq 0 ]]; then
-    sudo ip address delete "${ip6_addr}/128" dev tun0 &> /dev/null
+    ip address delete "${ip6_addr}/128" dev tun0 &> /dev/null
   fi
 fi
 

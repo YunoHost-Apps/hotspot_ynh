@@ -24,12 +24,12 @@ function ynh_systemctl()
   local LOCKFILE="/var/run/moulinette_yunohost.lock"
 
   # Launch the action
-  sudo systemctl "$ACTION" "$SERVICE" &
+  systemctl "$ACTION" "$SERVICE" &
   local SYSCTLACTION=$!
 
   # Save and release the lock...
   cp $LOCKFILE $LOCKFILE.bkp.$$
-  rm $LOCKFILE
+  ynh_secure_remove $LOCKFILE
 
   # Wait for the end of the action
   wait $SYSCTLACTION
