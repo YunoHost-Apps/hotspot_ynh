@@ -285,7 +285,7 @@ if [ "$1" != restart ]; then
 
   echo -n "Retrieving Yunohost settings... "
 
-  ynh_service_enabled=$(ynh_setting_get hotspot service_enabled)
+  ynh_service_enabled=$(systemctl is-enabled ynh-hotspot)
   ynh_wifi_device=$(ynh_setting_get hotspot wifi_device)
   ynh_wifi_channel=$(ynh_setting_get hotspot wifi_channel)
   ynh_multissid=$(ynh_setting_get hotspot multissid)

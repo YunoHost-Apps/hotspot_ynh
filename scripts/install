@@ -46,6 +46,9 @@ firmware_nonfree=$YNH_APP_ARG_FIRMWARE_NONFREE
 
 app=$YNH_APP_INSTANCE_NAME
 
+# the service name must match the service template files
+service_name='ynh-hotspot'
+
 #=================================================
 # CHECK IF THE APP CAN BE INSTALLED WITH THESE ARGS
 #=================================================
@@ -165,9 +168,11 @@ wifi_device=$(sudo bash ../conf/iw_devices | awk -F\| '{ print $1 }')
 # Save arguments
 
 if [[ -z $wifi_device ]]; then
+  ynh_systemctl disable $service_name
   ynh_app_setting_set $app service_enabled 0
   wifi_device=none
 else
+  ynh_systemctl enable $service_name
   ynh_app_setting_set $app service_enabled 1
 fi
 
@@ -190,6 +195,7 @@ ynh_app_setting_set $app ip4_dns0 80.67.188.188
 ynh_app_setting_set $app ip4_dns1 80.67.169.12
 ynh_app_setting_set $app ip4_nat_prefix 10.0.242
 ynh_app_setting_set $app vpnclient no
+ynh_app_setting_set $app service_name $service_name
 
 
 #=================================================
@@ -249,8 +255,8 @@ sed 's|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g' -i /etc/php5/fpm/pool.d/wifia
 sed "s|<TPL:NGINX_LOCATION>|${path_url}|g" -i /var/www/wifiadmin/config.php
 
 # Copy init script
-install -o root -g root -m 0755 ../conf/ynh-hotspot /usr/local/bin/
-install -o root -g root -m 0644 ../conf/ynh-hotspot.service /etc/systemd/system/
+install -o root -g root -m 0755 ../conf/$service_name /usr/local/bin/
+install -o root -g root -m 0644 ../conf/$service_name.service /etc/systemd/system/
 
 # Update firewall for DHCP
 yunohost firewall allow --no-upnp --ipv6 UDP 547
@@ -273,15 +279,15 @@ if [[ $ip6_addr != none ]]; then
   fi
 fi
 
-systemctl enable ynh-hotspot
-yunohost service add ynh-hotspot --description "creates a Wi-Fi access point"
+# register the service
+yunohost service add $service_name --description "creates a Wi-Fi access point"
 
+# start the service if device is present
 if [[ $wifi_device == none ]]; then
   echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
+else
+  ynh_systemctl start $service_name
 fi
-
-# start the app
-ynh_systemctl start ynh-hotspot
 
 # Reload SSOwat config
 yunohost app ssowatconf
