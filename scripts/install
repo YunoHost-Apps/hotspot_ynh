@@ -169,11 +169,9 @@ wifi_device=$(sudo bash ../conf/iw_devices | awk -F\| '{ print $1 }')
 # Save arguments
 
 if [[ -z $wifi_device ]]; then
-  ynh_systemctl disable $service_name
   ynh_app_setting_set $app service_enabled 0
   wifi_device=none
 else
-  ynh_systemctl enable $service_name
   ynh_app_setting_set $app service_enabled 1
 fi
 
@@ -296,10 +294,11 @@ fi
 # register the service
 yunohost service add $service_name --description "creates a Wi-Fi access point"
 
-# start the service if device is present
+# enable and start the service if device is present
 if [[ $wifi_device == none ]]; then
   echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
 else
+  ynh_systemctl enable $service_name
   ynh_systemctl start $service_name
 fi
 
