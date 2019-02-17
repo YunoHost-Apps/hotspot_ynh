@@ -36,8 +36,8 @@ domain=$(ynh_app_setting_get $app domain)
 firmware_nonfree=$(ynh_app_setting_get $app firmware_nonfree)
 
 # The End
-systemctl stop ynh-hotspot
-systemctl disable ynh-hotspot
+yunohost service stop ynh-hotspot
+yunohost service disable ynh-hotspot
 yunohost service remove ynh-hotspot
 ynh_secure_remove /etc/systemd/system/ynh-hotspot.service
 ynh_secure_remove /usr/local/bin/ynh-hotspot
