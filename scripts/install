@@ -277,11 +277,11 @@ yunohost firewall allow --no-upnp UDP 67
 # Set default inits
 # The boot order of these services are important, so they are disabled by default
 # and the ynh-hotspot service handles them.
-systemctl disable hostapd
-systemctl stop hostapd
-systemctl enable php5-fpm
-systemctl restart php5-fpm
-systemctl reload nginx
+yunohost service disable hostapd
+yunohost service stop hostapd
+yunohost service enable php5-fpm
+yunohost service restart php5-fpm
+yunohost service reload nginx
 
 # Remove IPv6 address set if there is a VPN installed
 if [[ $ip6_addr != none ]]; then
@@ -292,14 +292,14 @@ if [[ $ip6_addr != none ]]; then
 fi
 
 # register the service
-yunohost service add $service_name --description "creates a Wi-Fi access point"
+yunohost service add $service_name --description "creates a Wi-Fi access point" --need_lock
 
 # enable and start the service if device is present
 if [[ $wifi_device == none ]]; then
   echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
 else
-  ynh_systemctl enable $service_name
-  ynh_systemctl start $service_name
+  yunohost service enable $service_name
+  yunohost service start $service_name
 fi
 
 # Reload SSOwat config
