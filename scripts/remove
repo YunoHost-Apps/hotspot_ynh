@@ -41,7 +41,7 @@ systemctl disable ynh-hotspot
 yunohost service remove ynh-hotspot
 ynh_secure_remove /etc/systemd/system/ynh-hotspot.service
 ynh_secure_remove /usr/local/bin/ynh-hotspot
-for FILE in $(ls /tmp/.ynh-hotspot-*)
+for FILE in $(ls /tmp/.ynh-hotspot-* 2>/dev/null)
 do
     ynh_secure_remove "$FILE"
 done
@@ -51,10 +51,10 @@ yunohost firewall disallow --ipv6 UDP 547
 yunohost firewall disallow UDP 67
 
 # Remove confs
-ynh_secure_remove /etc/dnsmasq.dhcpd/
+ynh_secure_remove /etc/dnsmasq.dhcpd
 ynh_secure_remove /etc/nginx/conf.d/${domain}.d/wifiadmin.conf
 ynh_secure_remove /etc/php5/fpm/pool.d/wifiadmin.conf
-for FILE in $(ls /etc/hostapd/hostapd.conf{.tpl?,})
+for FILE in $(ls /etc/hostapd/hostapd.conf{.tpl?,} 2>/dev/null)
 do
     ynh_secure_remove "$FILE"
 done
@@ -79,7 +79,7 @@ systemctl restart php5-fpm
 systemctl reload nginx
 
 # Remove sources
-ynh_secure_remove /var/www/wifiadmin/
+ynh_secure_remove /var/www/wifiadmin
 
 # Remove user
 ynh_system_user_delete ${app}
