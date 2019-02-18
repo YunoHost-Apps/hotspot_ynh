@@ -52,4 +52,7 @@ if [[ -z $(ynh_app_setting_get $app ip6_firewall) ]]; then
   ynh_app_setting_set "${app}" ip6_firewall "${ip6_firewall}"
 fi
 
+# Make sure that the yunohost service has a description and need-lock enabled
+yunohost service remove ynh-hotspot
+yunohost service add ynh-hotspot --description "creates a Wi-Fi access point" --need_lock
 yunohost service start ynh-hotspot
