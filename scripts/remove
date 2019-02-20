@@ -34,13 +34,28 @@ app=$YNH_APP_INSTANCE_NAME
 
 domain=$(ynh_app_setting_get $app domain)
 firmware_nonfree=$(ynh_app_setting_get $app firmware_nonfree)
+service_name=$(ynh_app_setting_get $app service_name)
 
-# The End
-systemctl stop ynh-hotspot
-systemctl disable ynh-hotspot
-yunohost service remove ynh-hotspot
-ynh_secure_remove /etc/systemd/system/ynh-hotspot.service
-ynh_secure_remove /usr/local/bin/ynh-hotspot
+#=================================================
+# REMOVE SERVICE FROM ADMIN PANEL
+#=================================================
+
+# Remove a service from the admin panel, added by `yunohost service add`
+if yunohost service status | grep -q $app
+then
+	echo "Remove $app service"
+	yunohost service remove $app
+fi
+
+#=================================================
+# STOP AND REMOVE SERVICE
+#=================================================
+
+# Remove the dedicated systemd config
+ynh_remove_systemd_config $service_name
+
+ynh_secure_remove /usr/local/bin/$service_name
+
 for FILE in $(ls /tmp/.ynh-hotspot-* 2>/dev/null)
 do
     ynh_secure_remove "$FILE"
