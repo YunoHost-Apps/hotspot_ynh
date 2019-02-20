@@ -76,18 +76,15 @@ done
 ynh_secure_remove /etc/sudoers.d/hotspot_ynh
 
 # Remove packages
-if [[ $firmware_nonfree == yes ]]; then
-  packages=$nonfree_packages
-else
-  packages=$free_packages
-
+if [[ $firmware_nonfree -eq 0 ]]; then
   # Remove free firmwares
   if ! dpkg -l firmware-atheros &> /dev/null; then
     ynh_secure_remove /lib/firmware/htc_7010.fw
     ynh_secure_remove /lib/firmware/htc_9271.fw
   fi
 fi
-apt-get --assume-yes --force-yes remove ${packages}
+
+ynh_remove_app_dependencies
 
 # Restart services
 systemctl restart php5-fpm
