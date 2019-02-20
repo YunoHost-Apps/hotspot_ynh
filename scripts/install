@@ -79,10 +79,38 @@ ynh_app_setting_set "$app" firmware_nonfree "$firmware_nonfree"
 #=================================================
 # STANDARD MODIFICATIONS
 #=================================================
+# INSTALL NONFREE FIRWARE IF REQUESTED
+#=================================================
+
+export DEBIAN_FRONTEND=noninteractive
+
+# Packaged USB Wireless Device firmwares
+# Based on https://wiki.debian.org/WiFi#USB_Devices
+if [[ $firmware_nonfree -eq 1 ]]; then
+  # check if non-free is set on sources.list
+  if ! grep -q non-free /etc/apt/sources.list ; then
+    sed '/debian/{s/main/& non-free/}' -i /etc/apt/sources.list
+  fi
+
+  packages=$nonfree_packages
+else
+  packages=$free_packages
+
+  # Extract from http://packages.trisquel.info/toutatis-updates/open-ath9k-htc-firmware
+  # https://www.fsf.org/news/ryf-certification-thinkpenguin-usb-with-atheros-chip
+  # https://wiki.debian.org/ath9k_htc/open_firmware
+  mkdir -p /lib/firmware
+  install -b -o root -g root -m 0644 ../conf/firmware_htc-7010.fw /lib/firmware/htc_7010.fw
+  install -b -o root -g root -m 0644 ../conf/firmware_htc-9271.fw /lib/firmware/htc_9271.fw
+fi
+
+ynh_package_update
+
+#=================================================
 # INSTALL DEPENDENCIES
 #=================================================
 
-ynh_install_app_dependencies "$pkg_dependencies"
+ynh_install_app_dependencies "$pkg_dependencies" "$packages"
 
 #=================================================
 # SPECIFIC SETUP
@@ -110,39 +138,6 @@ fi
 # Check no special characters are present in the passphrase
 if [[ $wifi_passphrase =~ [^[:print:]] ]]; then
   ynh_die "Only printable ASCII characters are permitted in your password (WPA2 passphrase)"
-fi
-
-#=================================================
-# INSTALL NONFREE FIRWARE IF REQUESTED
-#=================================================
-
-export DEBIAN_FRONTEND=noninteractive
-
-# Packaged USB Wireless Device firmwares
-# Based on https://wiki.debian.org/WiFi#USB_Devices
-if [[ $firmware_nonfree == yes ]]; then
-  # check if non-free is set on sources.list
-  if ! grep -q non-free /etc/apt/sources.list ; then
-    sed '/debian/{s/main/& non-free/}' -i /etc/apt/sources.list
-  fi
-
-  packages=$nonfree_packages
-else
-  packages=$free_packages
-
-  # Extract from http://packages.trisquel.info/toutatis-updates/open-ath9k-htc-firmware
-  # https://www.fsf.org/news/ryf-certification-thinkpenguin-usb-with-atheros-chip
-  # https://wiki.debian.org/ath9k_htc/open_firmware
-  mkdir -p /lib/firmware
-  install -b -o root -g root -m 0644 ../conf/firmware_htc-7010.fw /lib/firmware/htc_7010.fw
-  install -b -o root -g root -m 0644 ../conf/firmware_htc-9271.fw /lib/firmware/htc_9271.fw
-fi
-
-apt-get --assume-yes --force-yes install ${packages}
-
-if [[ $? -ne 0 ]]; then
-  apt-get update
-  apt-get --assume-yes --force-yes install ${packages}
 fi
 
 #=================================================
