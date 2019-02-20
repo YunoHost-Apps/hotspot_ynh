@@ -263,7 +263,13 @@ sed "s|<TPL:NGINX_LOCATION>|${path_url}|g" -i /var/www/wifiadmin/config.php
 
 # Copy init script
 install -o root -g root -m 0755 ../conf/$service_name /usr/local/bin/
-install -o root -g root -m 0644 ../conf/$service_name.service /etc/systemd/system/
+
+#=================================================
+# SETUP SYSTEMD
+#=================================================
+
+# Create a dedicated systemd config
+ynh_add_systemd_config $service_name
 
 # Update firewall for DHCP
 yunohost firewall allow --no-upnp --ipv6 UDP 547
@@ -276,6 +282,11 @@ systemctl disable hostapd
 systemctl stop hostapd
 systemctl enable php5-fpm
 systemctl restart php5-fpm
+
+#=================================================
+# RELOAD NGINX
+#=================================================
+
 systemctl reload nginx
 
 # Remove IPv6 address set if there is a VPN installed
