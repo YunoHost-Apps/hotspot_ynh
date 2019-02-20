@@ -5,7 +5,7 @@
 		path="/path"	(PATH)
 		wifi_ssid="myNeutralNetwork"
 		wifi_passphrase="VhegT8oev0jZI"	(PASSWORD)
-		firmware_nonfree="no"
+		firmware_nonfree=0
 	; Checks
 		pkg_linter=1
 		setup_sub_dir=1
@@ -33,4 +33,4 @@
 	Level 7=auto
 	Level 8=0
 	Level 9=0
-        Level 10=0
+    Level 10=0
