@@ -15,12 +15,12 @@
     "url": "http://julien.vaubourg.com"
   },
   "requirements": {
-    "yunohost": ">= 2.2.0",
-    "moulinette": ">= 2.4.0"
+    "yunohost": ">= 3.4"
   },
   "multi_instance": false,
   "services": [
-    "php5-fpm"
+    "nginx",
+    "php7.0-fpm"
   ],
   "arguments": {
     "install" : [

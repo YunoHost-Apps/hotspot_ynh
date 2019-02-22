@@ -45,7 +45,6 @@ wifi_passphrase=$YNH_APP_ARG_WIFI_PASSPHRASE
 firmware_nonfree=$YNH_APP_ARG_FIRMWARE_NONFREE
 
 app=$YNH_APP_INSTANCE_NAME
-sysuser="${app}"
 
 # the service name must match the service template files
 service_name='ynh-hotspot'
@@ -53,22 +52,61 @@ service_name='ynh-hotspot'
 #=================================================
 # CHECK IF THE APP CAN BE INSTALLED WITH THESE ARGS
 #=================================================
+ynh_print_info "Validating installation parameters..."
 
 # Check destination directory
 final_path="/var/www/$app"
 test ! -e "$final_path" || ynh_die "This path already contains a folder"
 
 # Normalize the url path syntax
-path_url=$(ynh_normalize_url_path "$path_url")
+path_url=$(ynh_normalize_url_path $path_url)
 
-# Check web path availability
-ynh_webpath_available "$domain" "$path_url"
 # Register (book) web path
-ynh_webpath_register "$app" "$domain" "$path_url"
+ynh_webpath_register $app $domain $path_url
+
+# Check arguments
+if [[ -z $wifi_ssid || -z $wifi_passphrase ]]; then
+  ynh_die "Your Wifi Hotspot needs a name and a password"
+fi
+
+# Check passphrase length
+wifi_passphrase_length="$(echo -n "${wifi_passphrase}" | wc -c)"
+if [[ $wifi_passphrase_length -lt 8 || $wifi_passphrase_length -gt 63 ]]; then
+  ynh_die "Your password must from 8 to 63 characters (WPA2 passphrase)"
+fi
+
+# Check no special characters are present in the passphrase
+if [[ $wifi_passphrase =~ [^[:print:]] ]]; then
+  ynh_die "Only printable ASCII characters are permitted in your password (WPA2 passphrase)"
+fi
+
+#=================================================
+# RUN PREREQUISITES
+#=================================================
+
+source ./prerequisites
+
+if [[ ! -v ip6_net ]]; then # if ip6_net not set
+  ip6_net=none
+  ip6_addr=none
+
+  if [[ -e /tmp/.ynh-vpnclient-started ]]; then
+    vpnclient_ip6_net=$(yunohost app setting vpnclient ip6_net 2>&1)
+    vpnclient_ip6_addr=$(yunohost app setting vpnclient ip6_addr 2>&1)
+
+    if [[ $vpnclient_ip6_net =~ :: && $vpnclient_ip6_addr =~ :: ]]; then
+      ip6_net=${vpnclient_ip6_net}
+      ip6_addr=${vpnclient_ip6_addr}
+    fi
+  fi
+fi
+
+wifi_device=$(sudo bash ../conf/iw_devices | awk -F\| '{ print $1 }')
 
 #=================================================
 # STORE SETTINGS FROM MANIFEST
 #=================================================
+ynh_print_info "Storing installation settings..."
 
 ynh_app_setting_set "$app" domain "$domain"
 ynh_app_setting_set "$app" final_path "$final_path"
@@ -76,8 +114,41 @@ ynh_app_setting_set "$app" wifi_ssid "$wifi_ssid"
 ynh_app_setting_set "$app" wifi_passphrase "$wifi_passphrase"
 ynh_app_setting_set "$app" firmware_nonfree "$firmware_nonfree"
 
+ynh_app_setting_set $app multissid 1
+ynh_app_setting_set $app wifi_ssid "${wifi_ssid}"
+ynh_app_setting_set $app wifi_secure 1
+ynh_app_setting_set $app wifi_passphrase "${wifi_passphrase}"
+ynh_app_setting_set $app wifi_device "${wifi_device}"
+ynh_app_setting_set $app wifi_channel 6
+ynh_app_setting_set $app ip6_addr "${ip6_addr}"
+ynh_app_setting_set $app ip6_firewall 1
+ynh_app_setting_set $app ip6_net "${ip6_net}"
+ynh_app_setting_set $app ip6_dns0 2001:913::8
+ynh_app_setting_set $app ip6_dns1 2001:910:800::12
+ynh_app_setting_set $app ip4_dns0 80.67.188.188
+ynh_app_setting_set $app ip4_dns1 80.67.169.12
+ynh_app_setting_set $app ip4_nat_prefix 10.0.242
+ynh_app_setting_set $app vpnclient no
+ynh_app_setting_set $app service_name $service_name
+
+if [[ -z $wifi_device ]]; then
+  ynh_app_setting_set $app service_enabled 0
+  wifi_device=none
+else
+  ynh_app_setting_set $app service_enabled 1
+fi
+
 #=================================================
 # STANDARD MODIFICATIONS
+#=================================================
+# FIND AND OPEN A PORT
+#=================================================
+ynh_print_info "Configuring firewall..."
+
+# Update firewall for DHCP
+ynh_exec_warn_less yunohost firewall allow --no-upnp --ipv6 UDP 547
+ynh_exec_warn_less yunohost firewall allow --no-upnp UDP 67
+
 #=================================================
 # INSTALL NONFREE FIRWARE IF REQUESTED
 #=================================================
@@ -109,101 +180,37 @@ ynh_package_update
 #=================================================
 # INSTALL DEPENDENCIES
 #=================================================
+ynh_print_info "Installing dependencies..."
 
 ynh_install_app_dependencies "$pkg_dependencies" "$packages"
 
 #=================================================
-# SPECIFIC SETUP
+# NGINX CONFIGURATION
 #=================================================
-# RUN PREREQUISITES
-#=================================================
+ynh_print_info "Configuring nginx web server..."
 
-source ./prerequisites
-
-#=================================================
-# CHECK PARAMETERS
-#=================================================
-
-# Check arguments
-if [[ -z $wifi_ssid || -z $wifi_passphrase ]]; then
-  ynh_die "Your Wifi Hotspot needs a name and a password"
-fi
-
-# Check passphrase length
-wifi_passphrase_length="$(echo -n "${wifi_passphrase}" | wc -c)"
-if [[ $wifi_passphrase_length -lt 8 || $wifi_passphrase_length -gt 63 ]]; then
-  ynh_die "Your password must from 8 to 63 characters (WPA2 passphrase)"
-fi
-
-# Check no special characters are present in the passphrase
-if [[ $wifi_passphrase =~ [^[:print:]] ]]; then
-  ynh_die "Only printable ASCII characters are permitted in your password (WPA2 passphrase)"
-fi
-
-#=================================================
-# CHECK PARAMETERS
-#=================================================
-
-if [[ ! -v ip6_net ]]; then # if ip6_net not set
-  ip6_net=none
-  ip6_addr=none
-
-  if [[ -e /tmp/.ynh-vpnclient-started ]]; then
-    vpnclient_ip6_net=$(yunohost app setting vpnclient ip6_net 2>&1)
-    vpnclient_ip6_addr=$(yunohost app setting vpnclient ip6_addr 2>&1)
-
-    if [[ $vpnclient_ip6_net =~ :: && $vpnclient_ip6_addr =~ :: ]]; then
-      ip6_net=${vpnclient_ip6_net}
-      ip6_addr=${vpnclient_ip6_addr}
-    fi
-  fi
-fi
-
-wifi_device=$(sudo bash ../conf/iw_devices | awk -F\| '{ print $1 }')
-
-# Save arguments
-
-if [[ -z $wifi_device ]]; then
-  ynh_app_setting_set $app service_enabled 0
-  wifi_device=none
-else
-  ynh_app_setting_set $app service_enabled 1
-fi
-
-#=================================================
-# SAVE SETTINGS
-#=================================================
-
-ynh_app_setting_set $app multissid 1
-ynh_app_setting_set $app wifi_ssid "${wifi_ssid}"
-ynh_app_setting_set $app wifi_secure 1
-ynh_app_setting_set $app wifi_passphrase "${wifi_passphrase}"
-ynh_app_setting_set $app wifi_device "${wifi_device}"
-ynh_app_setting_set $app wifi_channel 6
-ynh_app_setting_set $app ip6_addr "${ip6_addr}"
-ynh_app_setting_set $app ip6_firewall 1
-ynh_app_setting_set $app ip6_net "${ip6_net}"
-ynh_app_setting_set $app ip6_dns0 2001:913::8
-ynh_app_setting_set $app ip6_dns1 2001:910:800::12
-ynh_app_setting_set $app ip4_dns0 80.67.188.188
-ynh_app_setting_set $app ip4_dns1 80.67.169.12
-ynh_app_setting_set $app ip4_nat_prefix 10.0.242
-ynh_app_setting_set $app vpnclient no
-ynh_app_setting_set $app service_name $service_name
+# Create a dedicated nginx config
+ynh_add_nginx_config
 
 #=================================================
 # CREATE DEDICATED USER
 #=================================================
+ynh_print_info "Configuring system user..."
 
-# Ensure the app has its own system user
-if ! ynh_system_user_exists ${sysuser}
-then
-  ynh_system_user_create ${sysuser}
-fi
+# Create a system user
+ynh_system_user_create $app
 
 # Ensure the system user has enough sudo permissions
 install -b -o root -g root -m 0440 ../conf/sudoers.conf /etc/sudoers.d/${app}_ynh
-ynh_replace_string "__HOTSPOT_SYSUSER__" "${sysuser}" /etc/sudoers.d/${app}_ynh
+ynh_replace_string "__HOTSPOT_SYSUSER__" "${app}" /etc/sudoers.d/${app}_ynh
+
+#=================================================
+# PHP-FPM CONFIGURATION
+#=================================================
+ynh_print_info "Configuring php-fpm..."
+
+# Create a dedicated php-fpm config
+ynh_add_fpm_config
 
 #=================================================
 # INSTALL CUSTOM SCRIPTS
@@ -219,74 +226,57 @@ install -o root -g root -m 0755 ../conf/ipv6_compressed /usr/local/bin/
 # COPY CONFIGS
 #=================================================
 
-mkdir -pm 0755 /var/log/nginx/
 mkdir -pm 0755 /etc/dnsmasq.dhcpd/
 chown root: /etc/dnsmasq.dhcpd/
 
 install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl? /etc/hostapd/
 install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl
 install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl
-install -b -o root -g root -m 0644 ../conf/nginx_wifiadmin.conf "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
-install -b -o root -g root -m 0644 ../conf/phpfpm_wifiadmin.conf /etc/php5/fpm/pool.d/wifiadmin.conf
+
+# Copy init script
+install -o root -g root -m 0755 ../conf/$service_name /usr/local/bin/
 
 #=================================================
 # COPY WEB SOURCES
 #=================================================
 
-mkdir -pm 0755 /var/www/wifiadmin/
-cp -a ../sources/* /var/www/wifiadmin/
+mkdir -pm 0755 ${final_path}/
+cp -a ../sources/* ${final_path}/
 
-chown -R root: /var/www/wifiadmin/
-chmod -R 0644 /var/www/wifiadmin/*
-find /var/www/wifiadmin/ -type d -exec chmod +x {} \;
+chown -R root: ${final_path}/
+chmod -R 0644 ${final_path}/*
+find ${final_path}/ -type d -exec chmod +x {} \;
 
 #=================================================
 # FIX CONFIGS
 #=================================================
 
 ## hostapd
-sed 's|^DAEMON_CONF=$|&/etc/hostapd/hostapd.conf|' -i /etc/init.d/hostapd
-
-## nginx
-sed "s|<TPL:NGINX_LOCATION>|${path_url}|g" -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
-sed 's|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g' -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
-sed 's|<TPL:PHP_NAME>|wifiadmin|g' -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
-
-## php-fpm
-sed "s|<TPL:PHP_NAME>|wifiadmin|g" -i /etc/php5/fpm/pool.d/wifiadmin.conf
-sed "s|<TPL:PHP_USER>|${sysuser}|g" -i /etc/php5/fpm/pool.d/wifiadmin.conf
-sed "s|<TPL:PHP_GROUP>|${sysuser}|g" -i /etc/php5/fpm/pool.d/wifiadmin.conf
-sed "s|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g" -i /etc/php5/fpm/pool.d/wifiadmin.conf
+ynh_replace_string "^DAEMON_CONF=$" "&/etc/hostapd/hostapd.conf" /etc/init.d/hostapd
 
 # Fix sources
-sed "s|<TPL:NGINX_LOCATION>|${path_url}|g" -i /var/www/wifiadmin/config.php
-
-# Copy init script
-install -o root -g root -m 0755 ../conf/$service_name /usr/local/bin/
+ynh_replace_string "__PATH__" "${path_url}" "$final_path/config.php"
 
 #=================================================
 # SETUP SYSTEMD
 #=================================================
+ynh_print_info "Configuring a systemd service..."
 
 # Create a dedicated systemd config
 ynh_add_systemd_config $service_name
-
-# Update firewall for DHCP
-yunohost firewall allow --no-upnp --ipv6 UDP 547
-yunohost firewall allow --no-upnp UDP 67
 
 # Set default inits
 # The boot order of these services are important, so they are disabled by default
 # and the ynh-hotspot service handles them.
 systemctl disable hostapd
 systemctl stop hostapd
-systemctl enable php5-fpm
-systemctl restart php5-fpm
 
 #=================================================
-# RELOAD NGINX
+# RELOAD NGINX AND PHP-FPM
 #=================================================
+ynh_print_info "Reloading nginx web server..."
 
+systemctl reload php7.0-fpm
 systemctl reload nginx
 
 # Remove IPv6 address set if there is a VPN installed
