@@ -86,23 +86,6 @@ fi
 
 source ./prerequisites
 
-if [[ ! -v ip6_net ]]; then # if ip6_net not set
-  ip6_net=none
-  ip6_addr=none
-
-  if [[ -e /tmp/.ynh-vpnclient-started ]]; then
-    vpnclient_ip6_net=$(yunohost app setting vpnclient ip6_net 2>&1)
-    vpnclient_ip6_addr=$(yunohost app setting vpnclient ip6_addr 2>&1)
-
-    if [[ $vpnclient_ip6_net =~ :: && $vpnclient_ip6_addr =~ :: ]]; then
-      ip6_net=${vpnclient_ip6_net}
-      ip6_addr=${vpnclient_ip6_addr}
-    fi
-  fi
-fi
-
-wifi_device=$(sudo bash ../conf/iw_devices | awk -F\| '{ print $1 }')
-
 #=================================================
 # STORE SETTINGS FROM MANIFEST
 #=================================================
@@ -113,30 +96,6 @@ ynh_app_setting_set "$app" final_path "$final_path"
 ynh_app_setting_set "$app" wifi_ssid "$wifi_ssid"
 ynh_app_setting_set "$app" wifi_passphrase "$wifi_passphrase"
 ynh_app_setting_set "$app" firmware_nonfree "$firmware_nonfree"
-
-ynh_app_setting_set $app multissid 1
-ynh_app_setting_set $app wifi_ssid "${wifi_ssid}"
-ynh_app_setting_set $app wifi_secure 1
-ynh_app_setting_set $app wifi_passphrase "${wifi_passphrase}"
-ynh_app_setting_set $app wifi_device "${wifi_device}"
-ynh_app_setting_set $app wifi_channel 6
-ynh_app_setting_set $app ip6_addr "${ip6_addr}"
-ynh_app_setting_set $app ip6_firewall 1
-ynh_app_setting_set $app ip6_net "${ip6_net}"
-ynh_app_setting_set $app ip6_dns0 2001:913::8
-ynh_app_setting_set $app ip6_dns1 2001:910:800::12
-ynh_app_setting_set $app ip4_dns0 80.67.188.188
-ynh_app_setting_set $app ip4_dns1 80.67.169.12
-ynh_app_setting_set $app ip4_nat_prefix 10.0.242
-ynh_app_setting_set $app vpnclient no
-ynh_app_setting_set $app service_name $service_name
-
-if [[ -z $wifi_device ]]; then
-  ynh_app_setting_set $app service_enabled 0
-  wifi_device=none
-else
-  ynh_app_setting_set $app service_enabled 1
-fi
 
 #=================================================
 # STANDARD MODIFICATIONS
@@ -222,6 +181,47 @@ install -o root -g root -m 0755 ../conf/iw_ssids /usr/local/bin/
 install -o root -g root -m 0755 ../conf/ipv6_expanded /usr/local/bin/
 install -o root -g root -m 0755 ../conf/ipv6_compressed /usr/local/bin/
 
+if [[ ! -v ip6_net ]]; then # if ip6_net not set
+  ip6_net=none
+  ip6_addr=none
+
+  if [[ -e /tmp/.ynh-vpnclient-started ]]; then
+    vpnclient_ip6_net=$(ynh_app_setting_get vpnclient ip6_net 2>&1)
+    vpnclient_ip6_addr=$(ynh_app_setting_get vpnclient ip6_addr 2>&1)
+
+    if [[ $vpnclient_ip6_net =~ :: && $vpnclient_ip6_addr =~ :: ]]; then
+      ip6_net=${vpnclient_ip6_net}
+      ip6_addr=${vpnclient_ip6_addr}
+    fi
+  fi
+fi
+
+wifi_device=$(sudo bash ../conf/iw_devices | awk -F\| '{ print $1 }')
+
+ynh_app_setting_set $app multissid 1
+ynh_app_setting_set $app wifi_ssid "${wifi_ssid}"
+ynh_app_setting_set $app wifi_secure 1
+ynh_app_setting_set $app wifi_passphrase "${wifi_passphrase}"
+ynh_app_setting_set $app wifi_device "${wifi_device}"
+ynh_app_setting_set $app wifi_channel 6
+ynh_app_setting_set $app ip6_addr "${ip6_addr}"
+ynh_app_setting_set $app ip6_firewall 1
+ynh_app_setting_set $app ip6_net "${ip6_net}"
+ynh_app_setting_set $app ip6_dns0 2001:913::8
+ynh_app_setting_set $app ip6_dns1 2001:910:800::12
+ynh_app_setting_set $app ip4_dns0 80.67.188.188
+ynh_app_setting_set $app ip4_dns1 80.67.169.12
+ynh_app_setting_set $app ip4_nat_prefix 10.0.242
+ynh_app_setting_set $app vpnclient no
+ynh_app_setting_set $app service_name $service_name
+
+if [[ -z $wifi_device ]]; then
+  ynh_app_setting_set $app service_enabled 0
+  wifi_device=none
+else
+  ynh_app_setting_set $app service_enabled 1
+fi
+
 #=================================================
 # COPY CONFIGS
 #=================================================
@@ -294,9 +294,12 @@ yunohost service add $service_name --description "creates a Wi-Fi access point"
 if [[ $wifi_device == none ]]; then
   echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
 else
-  ynh_systemctl enable $service_name
-  ynh_systemctl start $service_name
+  systemctl enable $service_name
+  systemctl start $service_name
 fi
 
-# Reload SSOwat config
-yunohost app ssowatconf
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_print_info "Installation of $app completed"
