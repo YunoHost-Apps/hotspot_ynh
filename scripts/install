@@ -258,6 +258,13 @@ ynh_replace_string "^DAEMON_CONF=$" "&/etc/hostapd/hostapd.conf" /etc/init.d/hos
 ynh_replace_string "__PATH__" "${path_url}" "$final_path/config.php"
 
 #=================================================
+# STORE THE CONFIG FILE CHECKSUM
+#=================================================
+
+# Calculate and store the config file checksum into the app settings
+ynh_store_file_checksum "$final_path/config.php"
+
+#=================================================
 # SETUP SYSTEMD
 #=================================================
 ynh_print_info "Configuring a systemd service..."
