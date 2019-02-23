@@ -284,6 +284,7 @@ systemctl stop hostapd
 #=================================================
 ynh_print_info "Reloading nginx web server..."
 
+systemctl restart php7.0-fpm
 systemctl reload nginx
 
 # Remove IPv6 address set if there is a VPN installed
