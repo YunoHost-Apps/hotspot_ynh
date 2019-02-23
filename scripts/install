@@ -243,7 +243,7 @@ install -o root -g root -m 0755 ../conf/$service_name /usr/local/bin/
 mkdir -pm 0755 ${final_path}/
 cp -a ../sources/* ${final_path}/
 
-chown -R root: ${final_path}/
+chown -R www-data: ${final_path}/
 chmod -R 0644 ${final_path}/*
 find ${final_path}/ -type d -exec chmod +x {} \;
 
