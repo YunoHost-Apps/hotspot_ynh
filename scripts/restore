@@ -6,7 +6,7 @@
 # IMPORT GENERIC HELPERS
 #=================================================
 
-source _common.sh
+source ../settings/scripts/_common.sh
 source /usr/share/yunohost/helpers
 
 #=================================================
@@ -17,14 +17,132 @@ source /usr/share/yunohost/helpers
 ynh_abort_if_errors
 
 #=================================================
+# LOAD SETTINGS
+#=================================================
+ynh_print_info "Loading settings..."
 
-gitcommit=$(sudo grep revision /etc/yunohost/apps/hotspot/status.json | sed 's/.*"revision": "\([^"]\+\)".*/\1/')
-tmpdir=$(mktemp -dp /tmp/ hotspot-restore-XXXXX)
+app=$YNH_APP_INSTANCE_NAME
 
-git clone https://github.com/labriqueinternet/hotspot_ynh.git "${tmpdir}/"
-git --work-tree "${tmpdir}/" --git-dir "${tmpdir}/.git/" reset --hard "${gitcommit}"
+domain=$(ynh_app_setting_get $app domain)
+path_url=$(ynh_app_setting_get $app path)
+final_path=$(ynh_app_setting_get $app final_path)
+firmware_nonfree=$(ynh_app_setting_get $app firmware_nonfree)
 
-cd "${tmpdir}/scripts/"
-bash ./upgrade
+#=================================================
+# CHECK IF THE APP CAN BE RESTORED
+#=================================================
+ynh_print_info "Validating restoration parameters..."
 
-ynh_secure_remove "${tmpdir}/"
+ynh_webpath_available $domain $path_url \
+	|| ynh_die "Path not available: ${domain}${path_url}"
+test ! -d $final_path \
+	|| ynh_die "There is already a directory: $final_path "
+
+#=================================================
+# STANDARD RESTORATION STEPS
+#=================================================
+# RESTORE THE NGINX CONFIGURATION
+#=================================================
+
+ynh_restore_file "/etc/nginx/conf.d/$domain.d/$app.conf"
+
+#=================================================
+# RESTORE THE APP MAIN DIR
+#=================================================
+ynh_print_info "Restoring the app main directory..."
+
+ynh_restore_file "$final_path"
+
+if [[ $firmware_nonfree -eq 1 ]]; then
+  # check if non-free is set on sources.list
+  if ! grep -q non-free /etc/apt/sources.list ; then
+    sed '/debian/{s/main/& non-free/}' -i /etc/apt/sources.list
+  fi
+
+  packages=$nonfree_packages
+else
+  packages=$free_packages
+
+  ynh_restore_file "/lib/firmware/htc_7010.fw"
+  ynh_restore_file "/lib/firmware/htc_9271.fw"
+fi
+
+ynh_restore_file "/etc/sudoers.d/${app}_ynh"
+
+ynh_restore_file "/usr/local/bin/iw_multissid"
+ynh_restore_file "/usr/local/bin/iw_devices"
+ynh_restore_file "/usr/local/bin/iw_ssids"
+ynh_restore_file "/usr/local/bin/ipv6_expanded"
+ynh_restore_file "/usr/local/bin/ipv6_compressed"
+
+for FILE in $(ls /etc/hostapd/hostapd.conf{.tpl?,} 2>/dev/null)
+do
+    ynh_restore_file "$FILE"
+done
+ynh_restore_file "/etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl"
+ynh_restore_file "/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl"
+
+ynh_restore_file  "/usr/local/bin/$service_name"
+
+ynh_restore_file "/etc/init.d/hostapd"
+
+#=================================================
+# RECREATE THE DEDICATED USER
+#=================================================
+ynh_print_info "Recreating the dedicated system user..."
+
+# Create the dedicated user (if not existing)
+ynh_system_user_create $app
+
+#=================================================
+# RESTORE USER RIGHTS
+#=================================================
+
+# Restore permissions on app files
+chown -R www-data: $final_path
+
+#=================================================
+# RESTORE THE PHP-FPM CONFIGURATION
+#=================================================
+
+ynh_restore_file "/etc/php/7.0/fpm/pool.d/$app.conf"
+
+#=================================================
+# SPECIFIC RESTORATION
+#=================================================
+# REINSTALL DEPENDENCIES
+#=================================================
+ynh_print_info "Reinstalling dependencies..."
+
+# Define and install dependencies
+ynh_install_app_dependencies "$pkg_dependencies" "$packages"
+
+#=================================================
+# RESTORE SYSTEMD
+#=================================================
+ynh_print_info "Restoring the systemd configuration..."
+
+ynh_restore_file "/etc/systemd/system/$app.service"
+systemctl enable $app.service
+
+#=================================================
+# ADVERTISE SERVICE IN ADMIN PANEL
+#=================================================
+
+yunohost service add $app --log "/var/log/$app/$app.log"
+
+#=================================================
+# GENERIC FINALIZATION
+#=================================================
+# RELOAD NGINX AND PHP-FPM
+#=================================================
+ynh_print_info "Reloading nginx web server and php-fpm..."
+
+systemctl restart php7.0-fpm
+systemctl reload nginx
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_print_info "Restoration completed for $app"
