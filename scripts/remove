@@ -76,13 +76,22 @@ ynh_secure_remove "$final_path"
 
 ynh_secure_remove /usr/local/bin/$service_name
 
+ynh_secure_remove "/usr/local/bin/iw_multissid"
+ynh_secure_remove "/usr/local/bin/iw_devices"
+ynh_secure_remove "/usr/local/bin/iw_ssids"
+ynh_secure_remove "/usr/local/bin/ipv6_expanded"
+ynh_secure_remove "/usr/local/bin/ipv6_compressed"
+
+ynh_secure_remove "/etc/sudoers.d/${app}_ynh"
+
 for FILE in $(ls /tmp/.ynh-hotspot-* 2>/dev/null)
 do
     ynh_secure_remove "$FILE"
 done
 
 # Remove confs
-ynh_secure_remove /etc/dnsmasq.dhcpd
+ynh_secure_remove "/etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl"
+ynh_secure_remove "/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl"
 for FILE in $(ls /etc/hostapd/hostapd.conf{.tpl?,} 2>/dev/null)
 do
     ynh_secure_remove "$FILE"
