@@ -196,7 +196,7 @@ if [[ ! -v ip6_net ]]; then # if ip6_net not set
   fi
 fi
 
-wifi_device=$(sudo bash ../conf/iw_devices | awk -F\| '{ print $1 }')
+wifi_device=$(bash ../conf/iw_devices | awk -F\| '{ print $1 }')
 
 ynh_app_setting_set $app multissid 1
 ynh_app_setting_set $app wifi_ssid "${wifi_ssid}"
