@@ -263,6 +263,7 @@ ynh_replace_string "__PATH__" "${path_url}" "$final_path/config.php"
 
 # Calculate and store the config file checksum into the app settings
 ynh_store_file_checksum "$final_path/config.php"
+ynh_store_file_checksum "/etc/init.d/hostapd"
 
 #=================================================
 # SETUP SYSTEMD
@@ -294,7 +295,7 @@ if [[ $ip6_addr != none ]]; then
 fi
 
 # register the service
-yunohost service add $service_name --description "creates a Wi-Fi access point"
+yunohost service add $service_name --description "Creates a Wi-Fi access point"
 
 # enable and start the service if device is present
 if [[ $wifi_device == none ]]; then
