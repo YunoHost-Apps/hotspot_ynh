@@ -11,7 +11,7 @@
 		setup_root=1
 		setup_nourl=0
 		setup_private=1
-		setup_public=1
+		setup_public=0
 		upgrade=1
 		upgrade=1	from_commit=16b705afde210215c99e328f3417302dad89c63e
 		backup_restore=1
