@@ -83,7 +83,7 @@ ynh_backup "/etc/php/7.0/fpm/pool.d/$app.conf"
 #=================================================
 ynh_print_info "Backing up systemd configuration..."
 
-ynh_backup "/etc/systemd/system/$app.service"
+ynh_backup "/etc/systemd/system/$service_name.service"
 
 #=================================================
 # END OF SCRIPT
