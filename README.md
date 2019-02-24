@@ -1,14 +1,14 @@
-# Wifi Hotspot [![Build Status](https://travis-ci.org/labriqueinternet/hotspot_ynh.svg?branch=master)](https://travis-ci.org/labriqueinternet/hotspot_ynh)
+# Wi-Fi Hotspot [![Build Status](https://travis-ci.org/labriqueinternet/hotspot_ynh.svg?branch=master)](https://travis-ci.org/labriqueinternet/hotspot_ynh) [![Integration level](https://dash.yunohost.org/integration/hotspot.svg)](https://dash.yunohost.org/appci/app/hotspot)
 
 [![Install LaBriqueInterNet Hotspot with YunoHost](https://install-app.yunohost.org/install-with-yunohost.png)](https://install-app.yunohost.org/?app=hotspot)
 
 ## Overview
 
-Hotspot wifi app for [YunoHost](http://yunohost.org/).
+Hotspot Wi-Fi app for [YunoHost](http://yunohost.org/).
 
-* Broadcast your own Wifi internet access in addition to your self-hosted web services.
+* Broadcast your own Wi-Fi internet access in addition to your self-hosted web services.
 * Without internet access, it's a [PirateBox](https://en.wikipedia.org/wiki/PirateBox).
-* With the [VPN Client app for YunoHost](https://github.com/labriqueinternet/vpnclient_ynh), it's an encrypted Wifi internet access (eventually with [neutral access](https://en.wikipedia.org/wiki/Net_neutrality), without filters, and with IPv6, depending on your VPN provider).
+* With the [VPN Client app for YunoHost](https://github.com/labriqueinternet/vpnclient_ynh), it's an encrypted Wi-Fi internet access (eventually with [neutral access](https://en.wikipedia.org/wiki/Net_neutrality), without filters, and with IPv6, depending on your VPN provider).
 
 This YunoHost app is a part of the "[La Brique Internet](http://labriqueinter.net)" project but can be used independently.
 
@@ -20,11 +20,14 @@ This YunoHost app is a part of the "[La Brique Internet](http://labriqueinter.ne
 * Announce DNS resolvers (IPv6 with RDNSS/DHCPv6 and IPv4 with DHCPv4)
 * Automatic clients configuration (IPv6 with SLAAC/DHCPv6 and IPv4 with DHCPv4)
 * Set an IPv6 from your delegated prefix (*prefix::42*) on the server, to use for the AAAA records
-* Web interface ([screenshot](https://raw.githubusercontent.com/labriqueinternet/hotspot_ynh/master/screenshot.png))
+
+## Screeshot
+
+![Screenshot of the web interface](https://raw.githubusercontent.com/labriqueinternet/hotspot_ynh/master/screenshot.png)
 
 ## Friendly apps
 
-Some other YunoHost apps have this Hotspot wifi app as prerequisite, in order to offer a service through a wifi access point.
+Some other YunoHost apps have this Hotspot Wi-Fi app as prerequisite, in order to offer a service through a Wi-Fi access point.
 
 With a multissid wireless card (most can do that), you can create multiple access points.
 
@@ -44,7 +47,6 @@ In this manner, with this example, you can provide 3 access points at the same t
 
 ## Prerequisites
 
-* Debian Jessie
-* YunoHost >= 2.2.0
+* Debian Stretch
+* YunoHost >= 3.2.0
 
-**[BUG REPORTS SHOULD BE OPEN HERE](https://dev.yunohost.org)**
