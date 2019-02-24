@@ -37,7 +37,7 @@ ynh_print_info "Backing up the main app directory..."
 
 ynh_backup "$final_path"
 
-if [[ $firmware_nonfree -eq 1 ]]; then
+if [[ $firmware_nonfree -eq 0 ]]; then
   ynh_backup "/lib/firmware/htc_7010.fw"
   ynh_backup "/lib/firmware/htc_9271.fw"
 fi

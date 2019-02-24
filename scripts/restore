@@ -64,7 +64,6 @@ if [[ $firmware_nonfree -eq 1 ]]; then
 else
   packages=$free_packages
 
-  mkdir -p /lib/firmware
   ynh_restore_file "/lib/firmware/htc_7010.fw"
   ynh_restore_file "/lib/firmware/htc_9271.fw"
 fi
