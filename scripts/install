@@ -297,14 +297,14 @@ if [[ $ip6_addr != none ]]; then
 fi
 
 # register the service
-yunohost service add $service_name --description "Creates a Wi-Fi access point"
+yunohost service add $service_name --description "Creates a Wi-Fi access point" --need_lock
 
 # enable and start the service if device is present
 if [[ $wifi_device == none ]]; then
   echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
 else
-  systemctl enable $service_name
-  systemctl start $service_name
+  yunohost service enable $service_name
+  yunohost service start $service_name
 fi
 
 #=================================================

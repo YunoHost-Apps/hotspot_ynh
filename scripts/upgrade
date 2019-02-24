@@ -127,7 +127,12 @@ ynh_store_file_checksum "$final_path/config.php"
 ynh_print_info "Upgrading systemd configuration..."
 
 # Create a dedicated systemd config
-ynh_add_systemd_config
+ynh_add_systemd_config $service_name
+
+# Make sure that the yunohost service has a description and need-lock enabled
+yunohost service remove $service_name
+yunohost service add $service_name --description "Creates a Wi-Fi access point" --need_lock
+yunohost service start $service_name
 
 #=================================================
 # GENERIC FINALIZATION
