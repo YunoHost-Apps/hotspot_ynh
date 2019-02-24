@@ -27,6 +27,7 @@ domain=$(ynh_app_setting_get $app domain)
 path_url=$(ynh_app_setting_get $app path)
 final_path=$(ynh_app_setting_get $app final_path)
 firmware_nonfree=$(ynh_app_setting_get $app firmware_nonfree)
+service_name=$(ynh_app_setting_get $app service_name)
 
 #=================================================
 # CHECK IF THE APP CAN BE RESTORED
@@ -122,8 +123,8 @@ ynh_install_app_dependencies "$pkg_dependencies" "$packages"
 #=================================================
 ynh_print_info "Restoring the systemd configuration..."
 
-ynh_restore_file "/etc/systemd/system/$app.service"
-systemctl enable $app.service
+ynh_restore_file "/etc/systemd/system/$service_name.service"
+systemctl enable $service_name.service
 
 #=================================================
 # ADVERTISE SERVICE IN ADMIN PANEL
