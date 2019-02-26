@@ -134,8 +134,6 @@ else
   install -b -o root -g root -m 0644 ../conf/firmware_htc-9271.fw /lib/firmware/htc_9271.fw
 fi
 
-ynh_package_update
-
 #=================================================
 # INSTALL DEPENDENCIES
 #=================================================
