@@ -20,6 +20,7 @@ domain=$(ynh_app_setting_get $app domain)
 path_url=$(ynh_app_setting_get $app path)
 final_path=$(ynh_app_setting_get $app final_path)
 firmware_nonfree=$(ynh_app_setting_get $app firmware_nonfree)
+service_name=$(ynh_app_setting_get $app service_name)
 
 #=================================================
 # ENSURE DOWNWARD COMPATIBILITY
