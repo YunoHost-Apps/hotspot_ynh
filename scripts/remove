@@ -44,7 +44,7 @@ final_path=$(ynh_app_setting_get $app final_path)
 #=================================================
 
 # Remove a service from the admin panel, added by `yunohost service add`
-if yunohost service status | grep -q $service_name
+if yunohost service status $service_name >/dev/null 2>&1
 then
 	ynh_print_info "Removing $app service"
 	yunohost service remove $service_name
