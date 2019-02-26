@@ -47,7 +47,7 @@ final_path=$(ynh_app_setting_get $app final_path)
 if yunohost service status $service_name >/dev/null 2>&1
 then
 	ynh_print_info "Removing $app service"
-  yunohost service stop $service_name
+	yunohost service stop $service_name
 	yunohost service remove $service_name
 fi
 
