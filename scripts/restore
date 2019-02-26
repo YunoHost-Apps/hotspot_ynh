@@ -130,7 +130,7 @@ systemctl enable $service_name.service
 # ADVERTISE SERVICE IN ADMIN PANEL
 #=================================================
 
-yunohost service add $app --log "/var/log/$app/$app.log"
+yunohost service add $service_name --description "Creates a Wi-Fi access point" --need_lock
 
 #=================================================
 # GENERIC FINALIZATION
