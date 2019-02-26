@@ -74,10 +74,6 @@ ynh_print_info "Upgrading source files..."
 # Download, check integrity, uncompress and patch the source from app.src
 cp -a ../sources/* ${final_path}/
 
-chown -R www-data: ${final_path}/
-chmod -R 0644 ${final_path}/*
-find ${final_path}/ -type d -exec chmod +x {} \;
-
 #=================================================
 # NGINX CONFIGURATION
 #=================================================
@@ -141,12 +137,9 @@ yunohost service start $service_name
 #=================================================
 
 # Set permissions on app files
-chown -R www-data: $final_path
-
-#=================================================
-# SETUP SSOWAT
-#=================================================
-ynh_print_info "Upgrading SSOwat configuration..."
+chown -R $app: ${final_path}/
+chmod -R 0644 ${final_path}/*
+find ${final_path}/ -type d -exec chmod +x {} \;
 
 #=================================================
 # RELOAD NGINX
