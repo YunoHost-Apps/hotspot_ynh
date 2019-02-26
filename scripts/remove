@@ -97,7 +97,6 @@ for FILE in $(ls /etc/hostapd/hostapd.conf{.tpl?,} 2>/dev/null)
 do
     ynh_secure_remove "$FILE"
 done
-ynh_secure_remove /etc/sudoers.d/hotspot_ynh
 
 # Remove packages
 if [[ $firmware_nonfree -eq 0 ]]; then
