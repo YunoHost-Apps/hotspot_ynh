@@ -212,7 +212,6 @@ ynh_app_setting_set $app ip4_dns1 80.67.169.12
 ynh_app_setting_set $app ip4_nat_prefix 10.0.242
 ynh_app_setting_set $app vpnclient no
 ynh_app_setting_set $app service_name $service_name
-ynh_app_setting_set $app packages $packages
 
 if [[ -z $wifi_device ]]; then
   ynh_app_setting_set $app service_enabled 0

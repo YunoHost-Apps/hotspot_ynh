@@ -20,7 +20,6 @@ domain=$(ynh_app_setting_get $app domain)
 path_url=$(ynh_app_setting_get $app path)
 final_path=$(ynh_app_setting_get $app final_path)
 firmware_nonfree=$(ynh_app_setting_get $app firmware_nonfree)
-packages=$(ynh_app_setting_get $app packages)
 
 #=================================================
 # ENSURE DOWNWARD COMPATIBILITY
@@ -31,16 +30,6 @@ ynh_print_info "Ensuring downward compatibility..."
 if [ -z $final_path ]; then
 	final_path=/var/www/$app
 	ynh_app_setting_set $app final_path $final_path
-fi
-
-if [ -z $packages ]; then
-  if [[ $firmware_nonfree -eq 1 ]]; then
-    packages=$nonfree_packages
-  else
-    packages=$free_packages
-  fi
-
-  ynh_app_setting_set $app packages $packages
 fi
 
 #=================================================
@@ -86,6 +75,12 @@ ynh_add_nginx_config
 # UPGRADE DEPENDENCIES
 #=================================================
 ynh_print_info "Upgrading dependencies..."
+
+if [[ $firmware_nonfree -eq 1 ]]; then
+  packages=$nonfree_packages
+else
+  packages=$free_packages
+fi
 
 ynh_install_app_dependencies "$pkg_dependencies" "$packages"
 
