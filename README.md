@@ -2,6 +2,8 @@
 
 [![Install LaBriqueInterNet Hotspot with YunoHost](https://install-app.yunohost.org/install-with-yunohost.png)](https://install-app.yunohost.org/?app=hotspot)
 
+This YunoHost app is a part of the "[La Brique Internet](http://labriqueinter.net)" project but can be used independently.
+
 ## Overview
 
 Hotspot Wi-Fi app for [YunoHost](http://yunohost.org/).
@@ -9,8 +11,6 @@ Hotspot Wi-Fi app for [YunoHost](http://yunohost.org/).
 * Broadcast your own Wi-Fi internet access in addition to your self-hosted web services.
 * Without internet access, it's a [PirateBox](https://en.wikipedia.org/wiki/PirateBox).
 * With the [VPN Client app for YunoHost](https://github.com/labriqueinternet/vpnclient_ynh), it's an encrypted Wi-Fi internet access (eventually with [neutral access](https://en.wikipedia.org/wiki/Net_neutrality), without filters, and with IPv6, depending on your VPN provider).
-
-This YunoHost app is a part of the "[La Brique Internet](http://labriqueinter.net)" project but can be used independently.
 
 ## Features
 
