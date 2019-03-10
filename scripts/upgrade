@@ -48,6 +48,11 @@ elif [ $firmware_nonfree = "no" ]; then
 	ynh_app_setting_set $app firmware_nonfree $firmware_nonfree
 fi
 
+if [ -z $service_name ]; then
+	service_name="ynh-hotspot"
+	ynh_app_setting_set $app service_name $service_name
+fi
+
 #=================================================
 # BACKUP BEFORE UPGRADE THEN ACTIVE TRAP
 #=================================================
