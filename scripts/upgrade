@@ -33,6 +33,21 @@ if [ -z $final_path ]; then
 	ynh_app_setting_set $app final_path $final_path
 fi
 
+if [ -d /var/www/wifiadmin/ ]; then
+	mv /var/www/wifiadmin $final_path
+	mv /etc/php/7.0/fpm/pool.d/wifiadmin.conf /etc/php/7.0/fpm/pool.d/$app.conf
+	ynh_replace_string "wifiadmin" "$app" /etc/php/7.0/fpm/pool.d/$app.conf
+	systemctl reload php7.0-fpm
+fi
+
+if [ $firmware_nonfree = "yes" ]; then
+	firmware_nonfree=1
+	ynh_app_setting_set $app firmware_nonfree $firmware_nonfree
+elif [ $firmware_nonfree = "no" ]; then
+	firmware_nonfree=0
+	ynh_app_setting_set $app firmware_nonfree $firmware_nonfree
+fi
+
 #=================================================
 # BACKUP BEFORE UPGRADE THEN ACTIVE TRAP
 #=================================================
@@ -122,7 +137,6 @@ ynh_print_info "Upgrading systemd configuration..."
 ynh_add_systemd_config $service_name
 
 # Make sure that the yunohost service has a description and need-lock enabled
-yunohost service remove $service_name
 yunohost service add $service_name --description "Creates a Wi-Fi access point" --need_lock
 yunohost service start $service_name
 

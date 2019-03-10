@@ -13,7 +13,7 @@
 		setup_private=1
 		setup_public=0
 		upgrade=1
-		upgrade=1	from_commit=75f57d67acaa6cbe571a64aa77ec7ade8104c729
+		upgrade=1	from_commit=546fd17712c7a9df428a4f26e7f8e4394884aaaf
 		backup_restore=1
 		multi_instance=0
 		incorrect_path=1
@@ -30,3 +30,7 @@
 	Level 8=0
 	Level 9=0
 	Level 10=0
+;;; Upgrade options
+	; commit=546fd17712c7a9df428a4f26e7f8e4394884aaaf
+		name=29 Jan 2019
+		manifest_arg=domain=DOMAIN&path=PATH&wifi_ssid="myNeutralNetwork"&wifi_passphrase=PASSWORD&firmware_nonfree="no"
