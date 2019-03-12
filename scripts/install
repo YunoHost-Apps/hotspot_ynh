@@ -293,8 +293,7 @@ systemctl reload nginx
 
 # Remove IPv6 address set if there is a VPN installed
 if [[ $ip6_addr != none ]]; then
-  ip -6 address show dev tun0 2> /dev/null | grep -q "${ip6_addr}/"
-  if [[ "$?" -eq 0 ]]; then
+  if ip -6 address show dev tun0 2> /dev/null | grep -q "${ip6_addr}/"; then
     ip address delete "${ip6_addr}/128" dev tun0 &> /dev/null
   fi
 fi
