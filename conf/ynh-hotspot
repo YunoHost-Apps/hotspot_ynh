@@ -320,7 +320,7 @@ case "$1" in
   start)
     if is_running; then
       echo "Already started"
-    elif [ "${ynh_service_enabled}" -eq 0 ]; then
+    elif [ "${ynh_service_enabled}" != "enabled" ]; then
       echo "Disabled service"
     else
       echo "[hotspot] Starting..."
@@ -469,7 +469,7 @@ case "$1" in
   status)
     exitcode=0
 
-    if [ "${ynh_service_enabled}" -eq 0 ]; then
+    if [ "${ynh_service_enabled}" != "enabled" ]; then
       echo "[ERR] Hotspot Service disabled"
       exitcode=1
     fi
