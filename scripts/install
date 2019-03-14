@@ -64,6 +64,18 @@ path_url=$(ynh_normalize_url_path $path_url)
 # Register (book) web path
 ynh_webpath_register $app $domain $path_url
 
+# If we're on armbian, force $firmware_nonfree
+# because armbian-firmware conflicts with the non-free packages ...
+if dpkg --list | grep -q armbian-firmware; then
+  echo "You are running Armbian and non-free firmware are known to conflict with armbian-firwmare. " >&2
+  firmware_nonfree="no"
+  echo "Variable firmware_non_free has been forced to 'no'" >&2
+fi
+
+#=================================================
+# STORE SETTINGS FROM MANIFEST
+#=================================================
+
 # Check arguments
 if [[ -z $wifi_ssid || -z $wifi_passphrase ]]; then
   ynh_die "Your Wifi Hotspot needs a name and a password"
