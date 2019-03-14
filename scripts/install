@@ -287,6 +287,7 @@ yunohost firewall allow --no-upnp UDP 67
 # and the ynh-hotspot service handles them.
 systemctl disable hostapd
 systemctl stop hostapd
+systemctl unmask hostapd # On some system e.g. RPi, for some reason hostapd is masked after install ...
 systemctl enable php5-fpm
 systemctl restart php5-fpm
 systemctl reload nginx
