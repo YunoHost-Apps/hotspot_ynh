@@ -68,13 +68,15 @@ ynh_webpath_register $app $domain $path_url
 # because armbian-firmware conflicts with the non-free packages ...
 if dpkg --list | grep -q armbian-firmware; then
   echo "You are running Armbian and non-free firmware are known to conflict with armbian-firwmare. " >&2
-  firmware_nonfree="no"
+  firmware_nonfree=0
   echo "Variable firmware_non_free has been forced to 'no'" >&2
 fi
 
-#=================================================
-# STORE SETTINGS FROM MANIFEST
-#=================================================
+if [ $firmware_nonfree = "no" ]; then
+  firmware_nonfree=0
+elif [ $firmware_nonfree = "yes" ]; then
+  firmware_nonfree=1
+fi
 
 # Check arguments
 if [[ -z $wifi_ssid || -z $wifi_passphrase ]]; then
