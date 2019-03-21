@@ -259,6 +259,10 @@ find /var/www/wifiadmin/ -type d -exec chmod +x {} \;
 
 ## hostapd
 sed 's|^DAEMON_CONF=$|&/etc/hostapd/hostapd.conf|' -i /etc/init.d/hostapd
+# We also need to put this in /etc/default/hostapd because on some setup
+# like RPi, the version of hostapd is different and /etc/init.d/hostapd
+# isnt used ... instead the service is "pure systemd" ...
+echo "DAEMON_CONF=/etc/hostapd/hostapd.conf" > /etc/default/hostapd
 
 ## nginx
 sed "s|<TPL:NGINX_LOCATION>|${path_url}|g" -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
@@ -287,14 +291,14 @@ yunohost firewall allow --no-upnp UDP 67
 # and the ynh-hotspot service handles them.
 systemctl disable hostapd
 systemctl stop hostapd
+systemctl unmask hostapd # On some system e.g. RPi, for some reason hostapd is masked after install ...
 systemctl enable php5-fpm
 systemctl restart php5-fpm
 systemctl reload nginx
 
 # Remove IPv6 address set if there is a VPN installed
 if [[ $ip6_addr != none ]]; then
-  ip -6 address show dev tun0 2> /dev/null | grep -q "${ip6_addr}/"
-  if [[ "$?" -eq 0 ]]; then
+  if ip -6 address show dev tun0 2> /dev/null | grep -q "${ip6_addr}/"; then
     ip address delete "${ip6_addr}/128" dev tun0 &> /dev/null
   fi
 fi
