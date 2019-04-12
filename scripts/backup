@@ -1,14 +1,12 @@
 #!/bin/bash
 
-# nothing to do...
-
 #=================================================
 # GENERIC START
 #=================================================
 # IMPORT GENERIC HELPERS
 #=================================================
 
-source _common.sh
+source ../settings/scripts/_common.sh
 source /usr/share/yunohost/helpers
 
 #=================================================
@@ -17,3 +15,78 @@ source /usr/share/yunohost/helpers
 
 # Exit if an error occurs during the execution of the script
 ynh_abort_if_errors
+
+#=================================================
+# LOAD SETTINGS
+#=================================================
+ynh_print_info "Loading installation settings..."
+
+app=$YNH_APP_INSTANCE_NAME
+
+final_path=$(ynh_app_setting_get $app final_path)
+domain=$(ynh_app_setting_get $app domain)
+firmware_nonfree=$(ynh_app_setting_get $app firmware_nonfree)
+service_name=$(ynh_app_setting_get $app service_name)
+
+#=================================================
+# STANDARD BACKUP STEPS
+#=================================================
+# BACKUP THE APP MAIN DIR
+#=================================================
+ynh_print_info "Backing up the main app directory..."
+
+ynh_backup "$final_path"
+
+if [[ $firmware_nonfree -eq 0 ]]; then
+  ynh_backup "/lib/firmware/htc_7010.fw"
+  ynh_backup "/lib/firmware/htc_9271.fw"
+fi
+
+ynh_backup "/etc/sudoers.d/${app}_ynh"
+
+ynh_backup "/usr/local/bin/iw_multissid"
+ynh_backup "/usr/local/bin/iw_devices"
+ynh_backup "/usr/local/bin/iw_ssids"
+ynh_backup "/usr/local/bin/ipv6_expanded"
+ynh_backup "/usr/local/bin/ipv6_compressed"
+
+for FILE in $(ls /etc/hostapd/hostapd.conf{.tpl?,} 2>/dev/null)
+do
+    ynh_backup "$FILE"
+done
+ynh_backup "/etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl"
+ynh_backup "/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl"
+
+ynh_backup  "/usr/local/bin/$service_name"
+
+ynh_backup "/etc/init.d/hostapd"
+
+
+#=================================================
+# BACKUP THE NGINX CONFIGURATION
+#=================================================
+ynh_print_info "Backing up nginx web server configuration..."
+
+ynh_backup "/etc/nginx/conf.d/$domain.d/$app.conf"
+
+#=================================================
+# BACKUP THE PHP-FPM CONFIGURATION
+#=================================================
+ynh_print_info "Backing up php-fpm configuration..."
+
+ynh_backup "/etc/php/7.0/fpm/pool.d/$app.conf"
+
+#=================================================
+# SPECIFIC BACKUP
+#=================================================
+# BACKUP SYSTEMD
+#=================================================
+ynh_print_info "Backing up systemd configuration..."
+
+ynh_backup "/etc/systemd/system/$service_name.service"
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_print_info "Backup script completed for $app. (YunoHost will then actually copy those files to the archive)."

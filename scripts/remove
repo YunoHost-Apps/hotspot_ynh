@@ -34,52 +34,124 @@ app=$YNH_APP_INSTANCE_NAME
 
 domain=$(ynh_app_setting_get $app domain)
 firmware_nonfree=$(ynh_app_setting_get $app firmware_nonfree)
+service_name=$(ynh_app_setting_get $app service_name)
+final_path=$(ynh_app_setting_get $app final_path)
 
-# The End
-yunohost service stop ynh-hotspot
-yunohost service disable ynh-hotspot
-yunohost service remove ynh-hotspot
-ynh_secure_remove /etc/systemd/system/ynh-hotspot.service
-ynh_secure_remove /usr/local/bin/ynh-hotspot
+#=================================================
+# STANDARD REMOVE
+#=================================================
+# REMOVE SERVICE FROM ADMIN PANEL
+#=================================================
+
+# Remove a service from the admin panel, added by `yunohost service add`
+if yunohost service status $service_name >/dev/null 2>&1
+then
+	ynh_print_info "Removing $app service"
+	yunohost service stop $service_name
+	yunohost service remove $service_name
+fi
+
+#=================================================
+# STOP AND REMOVE SERVICE
+#=================================================
+ynh_print_info "Stopping and removing the systemd service"
+
+# Remove the dedicated systemd config
+ynh_remove_systemd_config
+
+#=================================================
+# REMOVE DEPENDENCIES
+#=================================================
+ynh_print_info "Removing dependencies"
+
+# Remove metapackage and its dependencies
+ynh_remove_app_dependencies
+
+#=================================================
+# REMOVE APP MAIN DIR
+#=================================================
+ynh_print_info "Removing app main directory"
+
+# Remove the app directory securely
+ynh_secure_remove "$final_path"
+
+ynh_secure_remove /usr/local/bin/$service_name
+
+ynh_secure_remove "/usr/local/bin/iw_multissid"
+ynh_secure_remove "/usr/local/bin/iw_devices"
+ynh_secure_remove "/usr/local/bin/iw_ssids"
+ynh_secure_remove "/usr/local/bin/ipv6_expanded"
+ynh_secure_remove "/usr/local/bin/ipv6_compressed"
+
+ynh_secure_remove "/etc/sudoers.d/${app}_ynh"
+
 for FILE in $(ls /tmp/.ynh-hotspot-* 2>/dev/null)
 do
     ynh_secure_remove "$FILE"
 done
 
-# Update firewall for DHCP
-yunohost firewall disallow --ipv6 UDP 547
-yunohost firewall disallow UDP 67
-
 # Remove confs
-ynh_secure_remove /etc/dnsmasq.dhcpd
-ynh_secure_remove /etc/nginx/conf.d/${domain}.d/wifiadmin.conf
-ynh_secure_remove /etc/php5/fpm/pool.d/wifiadmin.conf
+ynh_secure_remove "/etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl"
+ynh_secure_remove "/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl"
 for FILE in $(ls /etc/hostapd/hostapd.conf{.tpl?,} 2>/dev/null)
 do
     ynh_secure_remove "$FILE"
 done
-ynh_secure_remove /etc/sudoers.d/hotspot_ynh
 
 # Remove packages
-if [[ $firmware_nonfree == yes ]]; then
-  packages=$nonfree_packages
-else
-  packages=$free_packages
-
+if [[ $firmware_nonfree -eq 0 ]]; then
   # Remove free firmwares
   if ! dpkg -l firmware-atheros &> /dev/null; then
     ynh_secure_remove /lib/firmware/htc_7010.fw
     ynh_secure_remove /lib/firmware/htc_9271.fw
   fi
 fi
-apt-get --assume-yes --force-yes remove ${packages}
 
-# Restart services
-systemctl restart php5-fpm
-systemctl reload nginx
+#=================================================
+# REMOVE NGINX CONFIGURATION
+#=================================================
+ynh_print_info "Removing nginx web server configuration"
 
-# Remove sources
-ynh_secure_remove /var/www/wifiadmin
+# Remove the dedicated nginx config
+ynh_remove_nginx_config
 
-# Remove user
-ynh_system_user_delete ${app}
+#=================================================
+# REMOVE PHP-FPM CONFIGURATION
+#=================================================
+ynh_print_info "Removing php-fpm configuration"
+
+# Remove the dedicated php-fpm config
+ynh_remove_fpm_config
+
+#=================================================
+# CLOSE A PORT
+#=================================================
+
+if yunohost firewall list | grep -q "\- 547$"
+then
+	ynh_print_info "Closing port 547"
+	ynh_exec_warn_less yunohost firewall disallow TCP 547
+fi
+
+
+if yunohost firewall list | grep -q "\- 67$"
+then
+	ynh_print_info "Closing port 67"
+	ynh_exec_warn_less yunohost firewall disallow TCP 67
+fi
+
+#=================================================
+# GENERIC FINALIZATION
+#=================================================
+# REMOVE DEDICATED USER
+#=================================================
+ynh_print_info "Removing the dedicated system user"
+
+# Delete a system user
+ynh_system_user_delete $app
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_print_info "Removal of $app completed"

@@ -45,7 +45,6 @@ wifi_passphrase=$YNH_APP_ARG_WIFI_PASSPHRASE
 firmware_nonfree=$YNH_APP_ARG_FIRMWARE_NONFREE
 
 app=$YNH_APP_INSTANCE_NAME
-sysuser="${app}"
 
 # the service name must match the service template files
 service_name='ynh-hotspot'
@@ -53,56 +52,31 @@ service_name='ynh-hotspot'
 #=================================================
 # CHECK IF THE APP CAN BE INSTALLED WITH THESE ARGS
 #=================================================
+ynh_print_info "Validating installation parameters..."
 
 # Check destination directory
 final_path="/var/www/$app"
 test ! -e "$final_path" || ynh_die "This path already contains a folder"
 
 # Normalize the url path syntax
-path_url=$(ynh_normalize_url_path "$path_url")
+path_url=$(ynh_normalize_url_path $path_url)
 
-# Check web path availability
-ynh_webpath_available "$domain" "$path_url"
 # Register (book) web path
-ynh_webpath_register "$app" "$domain" "$path_url"
+ynh_webpath_register $app $domain $path_url
 
 # If we're on armbian, force $firmware_nonfree
 # because armbian-firmware conflicts with the non-free packages ...
 if dpkg --list | grep -q armbian-firmware; then
   echo "You are running Armbian and non-free firmware are known to conflict with armbian-firwmare. " >&2
-  firmware_nonfree="no"
+  firmware_nonfree=0
   echo "Variable firmware_non_free has been forced to 'no'" >&2
 fi
 
-#=================================================
-# STORE SETTINGS FROM MANIFEST
-#=================================================
-
-ynh_app_setting_set "$app" domain "$domain"
-ynh_app_setting_set "$app" final_path "$final_path"
-ynh_app_setting_set "$app" wifi_ssid "$wifi_ssid"
-ynh_app_setting_set "$app" wifi_passphrase "$wifi_passphrase"
-ynh_app_setting_set "$app" firmware_nonfree "$firmware_nonfree"
-
-#=================================================
-# STANDARD MODIFICATIONS
-#=================================================
-# INSTALL DEPENDENCIES
-#=================================================
-
-ynh_install_app_dependencies "$pkg_dependencies"
-
-#=================================================
-# SPECIFIC SETUP
-#=================================================
-# RUN PREREQUISITES
-#=================================================
-
-source ./prerequisites
-
-#=================================================
-# CHECK PARAMETERS
-#=================================================
+if [ $firmware_nonfree = "no" ]; then
+  firmware_nonfree=0
+elif [ $firmware_nonfree = "yes" ]; then
+  firmware_nonfree=1
+fi
 
 # Check arguments
 if [[ -z $wifi_ssid || -z $wifi_passphrase ]]; then
@@ -121,6 +95,34 @@ if [[ $wifi_passphrase =~ [^[:print:]] ]]; then
 fi
 
 #=================================================
+# RUN PREREQUISITES
+#=================================================
+
+source ./prerequisites
+
+#=================================================
+# STORE SETTINGS FROM MANIFEST
+#=================================================
+ynh_print_info "Storing installation settings..."
+
+ynh_app_setting_set "$app" domain "$domain"
+ynh_app_setting_set "$app" final_path "$final_path"
+ynh_app_setting_set "$app" wifi_ssid "$wifi_ssid"
+ynh_app_setting_set "$app" wifi_passphrase "$wifi_passphrase"
+ynh_app_setting_set "$app" firmware_nonfree "$firmware_nonfree"
+
+#=================================================
+# STANDARD MODIFICATIONS
+#=================================================
+# FIND AND OPEN A PORT
+#=================================================
+ynh_print_info "Configuring firewall..."
+
+# Update firewall for DHCP
+ynh_exec_warn_less yunohost firewall allow --no-upnp --ipv6 UDP 547
+ynh_exec_warn_less yunohost firewall allow --no-upnp UDP 67
+
+#=================================================
 # INSTALL NONFREE FIRWARE IF REQUESTED
 #=================================================
 
@@ -128,7 +130,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 # Packaged USB Wireless Device firmwares
 # Based on https://wiki.debian.org/WiFi#USB_Devices
-if [[ $firmware_nonfree == yes ]]; then
+if [[ $firmware_nonfree -eq 1 ]]; then
   # check if non-free is set on sources.list
   if ! grep -q non-free /etc/apt/sources.list ; then
     sed '/debian/{s/main/& non-free/}' -i /etc/apt/sources.list
@@ -146,24 +148,58 @@ else
   install -b -o root -g root -m 0644 ../conf/firmware_htc-9271.fw /lib/firmware/htc_9271.fw
 fi
 
-apt-get --assume-yes --force-yes install ${packages}
+#=================================================
+# INSTALL DEPENDENCIES
+#=================================================
+ynh_print_info "Installing dependencies..."
 
-if [[ $? -ne 0 ]]; then
-  apt-get update
-  apt-get --assume-yes --force-yes install ${packages}
-fi
+ynh_install_app_dependencies "$pkg_dependencies" "$packages"
 
 #=================================================
-# CHECK PARAMETERS
+# NGINX CONFIGURATION
 #=================================================
+ynh_print_info "Configuring nginx web server..."
+
+# Create a dedicated nginx config
+ynh_add_nginx_config
+
+#=================================================
+# CREATE DEDICATED USER
+#=================================================
+ynh_print_info "Configuring system user..."
+
+# Create a system user
+ynh_system_user_create $app
+
+# Ensure the system user has enough sudo permissions
+install -b -o root -g root -m 0440 ../conf/sudoers.conf /etc/sudoers.d/${app}_ynh
+ynh_replace_string "__HOTSPOT_SYSUSER__" "${app}" /etc/sudoers.d/${app}_ynh
+
+#=================================================
+# PHP-FPM CONFIGURATION
+#=================================================
+ynh_print_info "Configuring php-fpm..."
+
+# Create a dedicated php-fpm config
+ynh_add_fpm_config
+
+#=================================================
+# INSTALL CUSTOM SCRIPTS
+#=================================================
+
+install -o root -g root -m 0755 ../conf/iw_multissid /usr/local/bin/
+install -o root -g root -m 0755 ../conf/iw_devices /usr/local/bin/
+install -o root -g root -m 0755 ../conf/iw_ssids /usr/local/bin/
+install -o root -g root -m 0755 ../conf/ipv6_expanded /usr/local/bin/
+install -o root -g root -m 0755 ../conf/ipv6_compressed /usr/local/bin/
 
 if [[ ! -v ip6_net ]]; then # if ip6_net not set
   ip6_net=none
   ip6_addr=none
 
   if [[ -e /tmp/.ynh-vpnclient-started ]]; then
-    vpnclient_ip6_net=$(yunohost app setting vpnclient ip6_net 2>&1)
-    vpnclient_ip6_addr=$(yunohost app setting vpnclient ip6_addr 2>&1)
+    vpnclient_ip6_net=$(ynh_app_setting_get vpnclient ip6_net 2>&1)
+    vpnclient_ip6_addr=$(ynh_app_setting_get vpnclient ip6_addr 2>&1)
 
     if [[ $vpnclient_ip6_net =~ :: && $vpnclient_ip6_addr =~ :: ]]; then
       ip6_net=${vpnclient_ip6_net}
@@ -172,20 +208,7 @@ if [[ ! -v ip6_net ]]; then # if ip6_net not set
   fi
 fi
 
-wifi_device=$(sudo bash ../conf/iw_devices | awk -F\| '{ print $1 }')
-
-# Save arguments
-
-if [[ -z $wifi_device ]]; then
-  ynh_app_setting_set $app service_enabled 0
-  wifi_device=none
-else
-  ynh_app_setting_set $app service_enabled 1
-fi
-
-#=================================================
-# SAVE SETTINGS
-#=================================================
+wifi_device=$(bash ../conf/iw_devices | awk -F\| '{ print $1 }')
 
 ynh_app_setting_set $app multissid 1
 ynh_app_setting_set $app wifi_ssid "${wifi_ssid}"
@@ -204,87 +227,67 @@ ynh_app_setting_set $app ip4_nat_prefix 10.0.242
 ynh_app_setting_set $app vpnclient no
 ynh_app_setting_set $app service_name $service_name
 
-#=================================================
-# CREATE DEDICATED USER
-#=================================================
-
-# Ensure the app has its own system user
-if ! ynh_system_user_exists ${sysuser}
-then
-  ynh_system_user_create ${sysuser}
+if [[ -z $wifi_device ]]; then
+  ynh_app_setting_set $app service_enabled 0
+  wifi_device=none
+else
+  ynh_app_setting_set $app service_enabled 1
 fi
-
-# Ensure the system user has enough sudo permissions
-install -b -o root -g root -m 0440 ../conf/sudoers.conf /etc/sudoers.d/${app}_ynh
-ynh_replace_string "__HOTSPOT_SYSUSER__" "${sysuser}" /etc/sudoers.d/${app}_ynh
-
-#=================================================
-# INSTALL CUSTOM SCRIPTS
-#=================================================
-
-install -o root -g root -m 0755 ../conf/iw_multissid /usr/local/bin/
-install -o root -g root -m 0755 ../conf/iw_devices /usr/local/bin/
-install -o root -g root -m 0755 ../conf/iw_ssids /usr/local/bin/
-install -o root -g root -m 0755 ../conf/ipv6_expanded /usr/local/bin/
-install -o root -g root -m 0755 ../conf/ipv6_compressed /usr/local/bin/
 
 #=================================================
 # COPY CONFIGS
 #=================================================
 
-mkdir -pm 0755 /var/log/nginx/
 mkdir -pm 0755 /etc/dnsmasq.dhcpd/
 chown root: /etc/dnsmasq.dhcpd/
 
 install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl? /etc/hostapd/
 install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl
 install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl
-install -b -o root -g root -m 0644 ../conf/nginx_wifiadmin.conf "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
-install -b -o root -g root -m 0644 ../conf/phpfpm_wifiadmin.conf /etc/php5/fpm/pool.d/wifiadmin.conf
+
+# Copy init script
+install -o root -g root -m 0755 ../conf/$service_name /usr/local/bin/
 
 #=================================================
 # COPY WEB SOURCES
 #=================================================
 
-mkdir -pm 0755 /var/www/wifiadmin/
-cp -a ../sources/* /var/www/wifiadmin/
+mkdir -pm 0755 ${final_path}/
+cp -a ../sources/* ${final_path}/
 
-chown -R root: /var/www/wifiadmin/
-chmod -R 0644 /var/www/wifiadmin/*
-find /var/www/wifiadmin/ -type d -exec chmod +x {} \;
+chown -R $app: ${final_path}/
+chmod -R 0644 ${final_path}/*
+find ${final_path}/ -type d -exec chmod +x {} \;
 
 #=================================================
 # FIX CONFIGS
 #=================================================
 
 ## hostapd
-sed 's|^DAEMON_CONF=$|&/etc/hostapd/hostapd.conf|' -i /etc/init.d/hostapd
+ynh_replace_string "^DAEMON_CONF=$" "&/etc/hostapd/hostapd.conf" /etc/init.d/hostapd
 # We also need to put this in /etc/default/hostapd because on some setup
 # like RPi, the version of hostapd is different and /etc/init.d/hostapd
 # isnt used ... instead the service is "pure systemd" ...
 echo "DAEMON_CONF=/etc/hostapd/hostapd.conf" > /etc/default/hostapd
 
-## nginx
-sed "s|<TPL:NGINX_LOCATION>|${path_url}|g" -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
-sed 's|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g' -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
-sed 's|<TPL:PHP_NAME>|wifiadmin|g' -i "/etc/nginx/conf.d/${domain}.d/wifiadmin.conf"
-
-## php-fpm
-sed "s|<TPL:PHP_NAME>|wifiadmin|g" -i /etc/php5/fpm/pool.d/wifiadmin.conf
-sed "s|<TPL:PHP_USER>|${sysuser}|g" -i /etc/php5/fpm/pool.d/wifiadmin.conf
-sed "s|<TPL:PHP_GROUP>|${sysuser}|g" -i /etc/php5/fpm/pool.d/wifiadmin.conf
-sed "s|<TPL:NGINX_REALPATH>|/var/www/wifiadmin/|g" -i /etc/php5/fpm/pool.d/wifiadmin.conf
-
 # Fix sources
-sed "s|<TPL:NGINX_LOCATION>|${path_url}|g" -i /var/www/wifiadmin/config.php
+ynh_replace_string "__PATH__" "${path_url}" "$final_path/config.php"
 
-# Copy init script
-install -o root -g root -m 0755 ../conf/$service_name /usr/local/bin/
-install -o root -g root -m 0644 ../conf/$service_name.service /etc/systemd/system/
+#=================================================
+# STORE THE CONFIG FILE CHECKSUM
+#=================================================
 
-# Update firewall for DHCP
-yunohost firewall allow --no-upnp --ipv6 UDP 547
-yunohost firewall allow --no-upnp UDP 67
+# Calculate and store the config file checksum into the app settings
+ynh_store_file_checksum "$final_path/config.php"
+ynh_store_file_checksum "/etc/init.d/hostapd"
+
+#=================================================
+# SETUP SYSTEMD
+#=================================================
+ynh_print_info "Configuring a systemd service..."
+
+# Create a dedicated systemd config
+ynh_add_systemd_config $service_name
 
 # Set default inits
 # The boot order of these services are important, so they are disabled by default
@@ -292,8 +295,13 @@ yunohost firewall allow --no-upnp UDP 67
 systemctl disable hostapd
 systemctl stop hostapd
 systemctl unmask hostapd # On some system e.g. RPi, for some reason hostapd is masked after install ...
-systemctl enable php5-fpm
-systemctl restart php5-fpm
+
+#=================================================
+# RELOAD NGINX AND PHP-FPM
+#=================================================
+ynh_print_info "Reloading nginx web server..."
+
+systemctl restart php7.0-fpm
 systemctl reload nginx
 
 # Remove IPv6 address set if there is a VPN installed
@@ -304,7 +312,7 @@ if [[ $ip6_addr != none ]]; then
 fi
 
 # register the service
-yunohost service add $service_name --description "creates a Wi-Fi access point" --need_lock
+yunohost service add $service_name --description "Creates a Wi-Fi access point" --need_lock
 
 # enable and start the service if device is present
 if [[ $wifi_device == none ]]; then
@@ -314,5 +322,8 @@ else
   yunohost service start $service_name
 fi
 
-# Reload SSOwat config
-yunohost app ssowatconf
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_print_info "Installation of $app completed"

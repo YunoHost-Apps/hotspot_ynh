@@ -19,7 +19,8 @@
   },
   "multi_instance": false,
   "services": [
-    "php5-fpm"
+    "nginx",
+    "php7.0-fpm"
   ],
   "arguments": {
     "install" : [
@@ -64,13 +65,12 @@
       {
         "name": "firmware_nonfree",
         "type": "string",
-        "choice": ["yes", "no"],
         "ask": {
             "en": "Install non-free firmwares - in addition to the free ones - for the wifi dongle (yes/no)",
             "fr": "Installer des firmwares non-libres (en plus des libres) pour la clé USB wifi (yes/no)"
         },
-        "example": "yes",
-        "default": "yes"
+        "choice": [ "yes", "no" ],
+        "default": "no"
       }
     ]
   }
