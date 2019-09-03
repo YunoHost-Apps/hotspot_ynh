@@ -57,7 +57,7 @@ fi
 ynh_print_info "Stopping and removing the systemd service"
 
 # Remove the dedicated systemd config
-ynh_remove_systemd_config
+ynh_remove_systemd_config $service_name
 
 #=================================================
 # REMOVE DEPENDENCIES
