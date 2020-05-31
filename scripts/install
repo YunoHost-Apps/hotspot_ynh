@@ -37,7 +37,6 @@ ynh_abort_if_errors
 # RETRIEVE ARGUMENTS FROM THE MANIFEST
 #=================================================
 
-# Retrieve arguments
 domain=$YNH_APP_ARG_DOMAIN
 path_url=$YNH_APP_ARG_PATH
 wifi_ssid=$YNH_APP_ARG_WIFI_SSID
@@ -52,17 +51,13 @@ service_name='ynh-hotspot'
 #=================================================
 # CHECK IF THE APP CAN BE INSTALLED WITH THESE ARGS
 #=================================================
-ynh_print_info "Validating installation parameters..."
+ynh_script_progression --message="Validating installation parameters..."
 
-# Check destination directory
-final_path="/var/www/$app"
-test ! -e "$final_path" || ynh_die "This path already contains a folder"
-
-# Normalize the url path syntax
-path_url=$(ynh_normalize_url_path $path_url)
+final_path=/var/www/$app
+test ! -e "$final_path" || ynh_die --message="This path already contains a folder"
 
 # Register (book) web path
-ynh_webpath_register $app $domain $path_url
+ynh_webpath_register --app=$app --domain=$domain --path_url=$path_url
 
 # If we're on armbian, force $firmware_nonfree
 # because armbian-firmware conflicts with the non-free packages ...
@@ -80,18 +75,18 @@ fi
 
 # Check arguments
 if [[ -z $wifi_ssid || -z $wifi_passphrase ]]; then
-  ynh_die "Your Wifi Hotspot needs a name and a password"
+  ynh_die --message="Your Wifi Hotspot needs a name and a password"
 fi
 
 # Check passphrase length
 wifi_passphrase_length="$(echo -n "${wifi_passphrase}" | wc -c)"
 if [[ $wifi_passphrase_length -lt 8 || $wifi_passphrase_length -gt 63 ]]; then
-  ynh_die "Your password must from 8 to 63 characters (WPA2 passphrase)"
+  ynh_die --message="Your password must from 8 to 63 characters (WPA2 passphrase)"
 fi
 
 # Check no special characters are present in the passphrase
 if [[ $wifi_passphrase =~ [^[:print:]] ]]; then
-  ynh_die "Only printable ASCII characters are permitted in your password (WPA2 passphrase)"
+  ynh_die --message="Only printable ASCII characters are permitted in your password (WPA2 passphrase)"
 fi
 
 #=================================================
@@ -103,20 +98,19 @@ source ./prerequisites
 #=================================================
 # STORE SETTINGS FROM MANIFEST
 #=================================================
-ynh_print_info "Storing installation settings..."
+ynh_script_progression --message="Storing installation settings..."
 
-ynh_app_setting_set "$app" domain "$domain"
-ynh_app_setting_set "$app" final_path "$final_path"
-ynh_app_setting_set "$app" wifi_ssid "$wifi_ssid"
-ynh_app_setting_set "$app" wifi_passphrase "$wifi_passphrase"
-ynh_app_setting_set "$app" firmware_nonfree "$firmware_nonfree"
+ynh_app_setting_set --app=$app --key=domain --value="$domain"
+ynh_app_setting_set --app=$app --key=wifi_ssid --value="$wifi_ssid"
+ynh_app_setting_set --app=$app --key=wifi_passphrase --value="$wifi_passphrase"
+ynh_app_setting_set --app=$app --key=firmware_nonfree --value="$firmware_nonfree"
 
 #=================================================
 # STANDARD MODIFICATIONS
 #=================================================
 # FIND AND OPEN A PORT
 #=================================================
-ynh_print_info "Configuring firewall..."
+ynh_script_progression --message="Configuring firewall..."
 
 # Update firewall for DHCP
 ynh_exec_warn_less yunohost firewall allow --no-upnp --ipv6 UDP 547
@@ -125,6 +119,7 @@ ynh_exec_warn_less yunohost firewall allow --no-upnp UDP 67
 #=================================================
 # INSTALL NONFREE FIRWARE IF REQUESTED
 #=================================================
+ynh_script_progression --message="Installing firmware..."
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -135,11 +130,9 @@ if [[ $firmware_nonfree -eq 1 ]]; then
   if ! grep -q non-free /etc/apt/sources.list ; then
     sed '/debian/{s/main/& non-free/}' -i /etc/apt/sources.list
   fi
-
   packages=$nonfree_packages
 else
   packages=$free_packages
-
   # Extract from http://packages.trisquel.info/toutatis-updates/open-ath9k-htc-firmware
   # https://www.fsf.org/news/ryf-certification-thinkpenguin-usb-with-atheros-chip
   # https://wiki.debian.org/ath9k_htc/open_firmware
@@ -151,14 +144,14 @@ fi
 #=================================================
 # INSTALL DEPENDENCIES
 #=================================================
-ynh_print_info "Installing dependencies..."
+ynh_script_progression --message="Creating a MySQL database..."
 
 ynh_install_app_dependencies "$pkg_dependencies" "$packages"
 
 #=================================================
 # NGINX CONFIGURATION
 #=================================================
-ynh_print_info "Configuring nginx web server..."
+ynh_script_progression --message="Configuring nginx web server..."
 
 # Create a dedicated nginx config
 ynh_add_nginx_config
@@ -166,26 +159,28 @@ ynh_add_nginx_config
 #=================================================
 # CREATE DEDICATED USER
 #=================================================
-ynh_print_info "Configuring system user..."
+ynh_script_progression --message="Configuring system user..."
 
 # Create a system user
-ynh_system_user_create $app
+ynh_system_user_create --username=$app
 
 # Ensure the system user has enough sudo permissions
 install -b -o root -g root -m 0440 ../conf/sudoers.conf /etc/sudoers.d/${app}_ynh
-ynh_replace_string "__HOTSPOT_SYSUSER__" "${app}" /etc/sudoers.d/${app}_ynh
+ynh_replace_string --match_string="__HOTSPOT_SYSUSER__" --replace_string="${app}" --target_file="/etc/sudoers.d/${app}_ynh"
 
 #=================================================
 # PHP-FPM CONFIGURATION
 #=================================================
-ynh_print_info "Configuring php-fpm..."
+ynh_script_progression --message="Configuring php-fpm..."
 
 # Create a dedicated php-fpm config
 ynh_add_fpm_config
+phpversion=$(ynh_app_setting_get --app=$app --key=phpversion)
 
 #=================================================
 # INSTALL CUSTOM SCRIPTS
 #=================================================
+ynh_script_progression --message="Installing custom script..."
 
 install -o root -g root -m 0755 ../conf/iw_multissid /usr/local/bin/
 install -o root -g root -m 0755 ../conf/iw_devices /usr/local/bin/
@@ -210,33 +205,34 @@ fi
 
 wifi_device=$(bash ../conf/iw_devices | awk -F\| '{ print $1 }')
 
-ynh_app_setting_set $app multissid 1
-ynh_app_setting_set $app wifi_ssid "${wifi_ssid}"
-ynh_app_setting_set $app wifi_secure 1
-ynh_app_setting_set $app wifi_passphrase "${wifi_passphrase}"
-ynh_app_setting_set $app wifi_device "${wifi_device}"
-ynh_app_setting_set $app wifi_channel 6
-ynh_app_setting_set $app ip6_addr "${ip6_addr}"
-ynh_app_setting_set $app ip6_firewall 1
-ynh_app_setting_set $app ip6_net "${ip6_net}"
-ynh_app_setting_set $app ip6_dns0 2001:913::8
-ynh_app_setting_set $app ip6_dns1 2001:910:800::12
-ynh_app_setting_set $app ip4_dns0 80.67.188.188
-ynh_app_setting_set $app ip4_dns1 80.67.169.12
-ynh_app_setting_set $app ip4_nat_prefix 10.0.242
-ynh_app_setting_set $app vpnclient no
-ynh_app_setting_set $app service_name $service_name
+ynh_app_setting_set --app=$app --key=multissid --value=1
+ynh_app_setting_set --app=$app --key=wifi_ssid --value="${wifi_ssid}"
+ynh_app_setting_set --app=$app --key=wifi_secure --value=1
+ynh_app_setting_set --app=$app --key=wifi_passphrase --value="${wifi_passphrase}"
+ynh_app_setting_set --app=$app --key=wifi_device --value="${wifi_device}"
+ynh_app_setting_set --app=$app --key=wifi_channel --value=6
+ynh_app_setting_set --app=$app --key=ip6_addr --value="${ip6_addr}"
+ynh_app_setting_set --app=$app --key=ip6_firewall --value=1
+ynh_app_setting_set --app=$app --key=ip6_net --value="${ip6_net}"
+ynh_app_setting_set --app=$app --key=ip6_dns0 --value=2001:913::8
+ynh_app_setting_set --app=$app --key=ip6_dns1 --value=2001:910:800::12
+ynh_app_setting_set --app=$app --key=ip4_dns0 --value=80.67.188.188
+ynh_app_setting_set --app=$app --key=ip4_dns1 --value=80.67.169.12
+ynh_app_setting_set --app=$app --key=ip4_nat_prefix --value=10.0.242
+ynh_app_setting_set --app=$app --key=vpnclient --value=no
+ynh_app_setting_set --app=$app --key=service_name --value=$service_name
 
 if [[ -z $wifi_device ]]; then
-  ynh_app_setting_set $app service_enabled 0
+  ynh_app_setting_set --app=$app --key=service_enabled --value=0
   wifi_device=none
 else
-  ynh_app_setting_set $app service_enabled 1
+  ynh_app_setting_set --app=$app --key=service_enabled --value=1
 fi
 
 #=================================================
 # COPY CONFIGS
 #=================================================
+ynh_script_progression --message="Copying configuration..."
 
 mkdir -pm 0755 /etc/dnsmasq.dhcpd/
 chown root: /etc/dnsmasq.dhcpd/
@@ -247,11 +243,14 @@ install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq
 
 # Copy init script
 install -o root -g root -m 0755 ../conf/$service_name /usr/local/bin/
+ynh_replace_string --match_string="__PHPVERSION__" --replace_string="${phpversion}" --target_file="/usr/local/bin/$service_name"
 
 #=================================================
 # COPY WEB SOURCES
 #=================================================
+ynh_script_progression --message="Copy web sources..."
 
+ynh_app_setting_set --app=$app --key=final_path --value=$final_path
 mkdir -pm 0755 ${final_path}/
 cp -a ../sources/* ${final_path}/
 
@@ -262,32 +261,34 @@ find ${final_path}/ -type d -exec chmod +x {} \;
 #=================================================
 # FIX CONFIGS
 #=================================================
+ynh_script_progression --message="Fix config..."
 
 ## hostapd
-ynh_replace_string "^DAEMON_CONF=$" "&/etc/hostapd/hostapd.conf" /etc/init.d/hostapd
+ynh_replace_string --match_string="^DAEMON_CONF=$" --replace_string="&/etc/hostapd/hostapd.conf" --target_file=/etc/init.d/hostapd
 # We also need to put this in /etc/default/hostapd because on some setup
 # like RPi, the version of hostapd is different and /etc/init.d/hostapd
 # isnt used ... instead the service is "pure systemd" ...
 echo "DAEMON_CONF=/etc/hostapd/hostapd.conf" > /etc/default/hostapd
 
 # Fix sources
-ynh_replace_string "__PATH__" "${path_url}" "$final_path/config.php"
+ynh_replace_string --match_string="__PATH__" --replace_string="${path_url}" --target_file="$final_path/config.php"
 
 #=================================================
 # STORE THE CONFIG FILE CHECKSUM
 #=================================================
+ynh_script_progression --message="Storing the config file checksum..."
 
 # Calculate and store the config file checksum into the app settings
-ynh_store_file_checksum "$final_path/config.php"
-ynh_store_file_checksum "/etc/init.d/hostapd"
+ynh_store_file_checksum --file="$final_path/config.php"
+ynh_store_file_checksum --file="/etc/init.d/hostapd"
 
 #=================================================
 # SETUP SYSTEMD
 #=================================================
-ynh_print_info "Configuring a systemd service..."
+ynh_script_progression --message="Configuring a systemd service..."
 
 # Create a dedicated systemd config
-ynh_add_systemd_config $service_name
+ynh_add_systemd_config --service=$service_name
 
 # Set default inits
 # The boot order of these services are important, so they are disabled by default
@@ -296,14 +297,6 @@ systemctl disable hostapd
 systemctl stop hostapd
 systemctl unmask hostapd # On some system e.g. RPi, for some reason hostapd is masked after install ...
 
-#=================================================
-# RELOAD NGINX AND PHP-FPM
-#=================================================
-ynh_print_info "Reloading nginx web server..."
-
-systemctl restart php7.0-fpm
-systemctl reload nginx
-
 # Remove IPv6 address set if there is a VPN installed
 if [[ $ip6_addr != none ]]; then
   if ip -6 address show dev tun0 2> /dev/null | grep -q "${ip6_addr}/"; then
@@ -311,19 +304,35 @@ if [[ $ip6_addr != none ]]; then
   fi
 fi
 
-# register the service
-yunohost service add $service_name --description "Creates a Wi-Fi access point" --need_lock
+#=================================================
+# INTEGRATE SERVICE IN YUNOHOST
+#=================================================
+ynh_script_progression --message="Integrating service in YunoHost..."
 
-# enable and start the service if device is present
+yunohost service add $service_name --description "Creates a Wi-Fi access point" --log_type "systemd" --need_lock
+
+#=================================================
+# START SYSTEMD SERVICE
+#=================================================
+ynh_script_progression --message="Starting a systemd service..."
+
+# Start a systemd service if device is present
 if [[ $wifi_device == none ]]; then
   echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
 else
-  yunohost service enable $service_name
-  yunohost service start $service_name
+  ynh_systemd_action --service_name=$service_name --action="start" --log_path=systemd #--line_match="Started YunoHost Wifi Hotspot"
 fi
+
+#=================================================
+# RELOAD NGINX AND PHP-FPM
+#=================================================
+ynh_script_progression --message="Reloading nginx web server..."
+
+ynh_systemd_action --service_name=php$phpversion-fpm --action=reload
+ynh_systemd_action --service_name=nginx --action=reload
 
 #=================================================
 # END OF SCRIPT
 #=================================================
 
-ynh_print_info "Installation of $app completed"
+ynh_script_progression --message="Installation of $app completed"

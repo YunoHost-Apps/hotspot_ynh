@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #=================================================
-# GENERIC STARTING
+# GENERIC START
 #=================================================
 # IMPORT GENERIC HELPERS
 #=================================================
@@ -29,24 +29,25 @@ source /usr/share/yunohost/helpers
 #=================================================
 # LOAD SETTINGS
 #=================================================
+ynh_script_progression --message="Loading installation settings..."
 
 app=$YNH_APP_INSTANCE_NAME
 
-domain=$(ynh_app_setting_get $app domain)
-firmware_nonfree=$(ynh_app_setting_get $app firmware_nonfree)
-service_name=$(ynh_app_setting_get $app service_name)
-final_path=$(ynh_app_setting_get $app final_path)
+domain=$(ynh_app_setting_get --app=$app --key=domain)
+firmware_nonfree=$(ynh_app_setting_get --app=$app --key=firmware_nonfree)
+service_name=$(ynh_app_setting_get --app=$app --key=service_name)
+final_path=$(ynh_app_setting_get --app=$app --key=final_path)
 
 #=================================================
 # STANDARD REMOVE
 #=================================================
-# REMOVE SERVICE FROM ADMIN PANEL
+# REMOVE SERVICE INTEGRATION IN YUNOHOST
 #=================================================
 
-# Remove a service from the admin panel, added by `yunohost service add`
+# Remove the service from the list of services known by Yunohost (added from `yunohost service add`)
 if yunohost service status $service_name >/dev/null 2>&1
 then
-	ynh_print_info "Removing $app service"
+	ynh_script_progression --message="Removing $app service"
 	yunohost service stop $service_name
 	yunohost service remove $service_name
 fi
@@ -54,15 +55,15 @@ fi
 #=================================================
 # STOP AND REMOVE SERVICE
 #=================================================
-ynh_print_info "Stopping and removing the systemd service"
+ynh_script_progression --message="Stopping and removing the systemd service..."
 
 # Remove the dedicated systemd config
-ynh_remove_systemd_config $service_name
+ynh_remove_systemd_config --service=$service_name
 
 #=================================================
 # REMOVE DEPENDENCIES
 #=================================================
-ynh_print_info "Removing dependencies"
+ynh_script_progression --message="Removing dependencies..."
 
 # Remove metapackage and its dependencies
 ynh_remove_app_dependencies
@@ -70,47 +71,47 @@ ynh_remove_app_dependencies
 #=================================================
 # REMOVE APP MAIN DIR
 #=================================================
-ynh_print_info "Removing app main directory"
+ynh_script_progression --message="Removing app main directory..."
 
 # Remove the app directory securely
-ynh_secure_remove "$final_path"
+ynh_secure_remove --file="$final_path"
 
-ynh_secure_remove /usr/local/bin/$service_name
+ynh_secure_remove --file="/usr/local/bin/$service_name"
 
-ynh_secure_remove "/usr/local/bin/iw_multissid"
-ynh_secure_remove "/usr/local/bin/iw_devices"
-ynh_secure_remove "/usr/local/bin/iw_ssids"
-ynh_secure_remove "/usr/local/bin/ipv6_expanded"
-ynh_secure_remove "/usr/local/bin/ipv6_compressed"
+ynh_secure_remove --file="/usr/local/bin/iw_multissid"
+ynh_secure_remove --file="/usr/local/bin/iw_devices"
+ynh_secure_remove --file="/usr/local/bin/iw_ssids"
+ynh_secure_remove --file="/usr/local/bin/ipv6_expanded"
+ynh_secure_remove --file="/usr/local/bin/ipv6_compressed"
 
-ynh_secure_remove "/etc/sudoers.d/${app}_ynh"
+ynh_secure_remove --file="/etc/sudoers.d/${app}_ynh"
 
 for FILE in $(ls /tmp/.ynh-hotspot-* 2>/dev/null)
 do
-    ynh_secure_remove "$FILE"
+    ynh_secure_remove --file="$FILE"
 done
 
 # Remove confs
-ynh_secure_remove "/etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl"
-ynh_secure_remove "/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl"
+ynh_secure_remove --file="/etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl"
+ynh_secure_remove --file="/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl"
 for FILE in $(ls /etc/hostapd/hostapd.conf{.tpl?,} 2>/dev/null)
 do
-    ynh_secure_remove "$FILE"
+    ynh_secure_remove --file="$FILE"
 done
 
 # Remove packages
 if [[ $firmware_nonfree -eq 0 ]]; then
   # Remove free firmwares
   if ! dpkg -l firmware-atheros &> /dev/null; then
-    ynh_secure_remove /lib/firmware/htc_7010.fw
-    ynh_secure_remove /lib/firmware/htc_9271.fw
+    ynh_secure_remove --file="/lib/firmware/htc_7010.fw"
+    ynh_secure_remove --file="/lib/firmware/htc_9271.fw"
   fi
 fi
 
 #=================================================
 # REMOVE NGINX CONFIGURATION
 #=================================================
-ynh_print_info "Removing nginx web server configuration"
+ynh_script_progression --message="Removing nginx web server configuration..."
 
 # Remove the dedicated nginx config
 ynh_remove_nginx_config
@@ -118,7 +119,7 @@ ynh_remove_nginx_config
 #=================================================
 # REMOVE PHP-FPM CONFIGURATION
 #=================================================
-ynh_print_info "Removing php-fpm configuration"
+ynh_script_progression --message="Removing php-fpm configuration..."
 
 # Remove the dedicated php-fpm config
 ynh_remove_fpm_config
@@ -129,14 +130,14 @@ ynh_remove_fpm_config
 
 if yunohost firewall list | grep -q "\- 547$"
 then
-	ynh_print_info "Closing port 547"
+	ynh_script_progression --message="Closing port 547"
 	ynh_exec_warn_less yunohost firewall disallow TCP 547
 fi
 
 
 if yunohost firewall list | grep -q "\- 67$"
 then
-	ynh_print_info "Closing port 67"
+	ynh_script_progression --message="Closing port 67"
 	ynh_exec_warn_less yunohost firewall disallow TCP 67
 fi
 
@@ -145,13 +146,13 @@ fi
 #=================================================
 # REMOVE DEDICATED USER
 #=================================================
-ynh_print_info "Removing the dedicated system user"
+ynh_script_progression --message="Removing the dedicated system user..."
 
 # Delete a system user
-ynh_system_user_delete $app
+ynh_system_user_delete --username=$app
 
 #=================================================
 # END OF SCRIPT
 #=================================================
 
-ynh_print_info "Removal of $app completed"
+ynh_script_progression --message="Removal of $app completed"
