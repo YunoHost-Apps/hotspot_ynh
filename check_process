@@ -14,6 +14,7 @@
 		setup_public=0
 		upgrade=1
 		upgrade=1	from_commit=546fd17712c7a9df428a4f26e7f8e4394884aaaf
+		upgrade=1	from_commit=ec919eb58fdc9c358ddbe17558874ae968a7f527
 		backup_restore=1
 		multi_instance=0
 		incorrect_path=1
@@ -34,3 +35,5 @@
 	; commit=546fd17712c7a9df428a4f26e7f8e4394884aaaf
 		name=29 Jan 2019
 		manifest_arg=domain=DOMAIN&path=PATH&wifi_ssid="myNeutralNetwork"&wifi_passphrase=PASSWORD&firmware_nonfree="no"
+	; commit=ec919eb58fdc9c358ddbe17558874ae968a7f527
+		name=3 Sep 2019 / 1.2.0

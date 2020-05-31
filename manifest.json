@@ -7,7 +7,7 @@
     "fr": "Hotspot Wifi"
   },
   "url": "https://github.com/labriqueinternet/hotspot_ynh",
-  "version": "1.2.0",
+  "version": "1.2.0~ynh2",
   "license": "AGPL-3.0",
   "maintainer": {
     "name": "Julien Vaubourg",
