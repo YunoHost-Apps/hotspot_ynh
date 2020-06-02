@@ -35,6 +35,11 @@ upgrade_type=$(ynh_check_app_version_changed)
 #=================================================
 ynh_script_progression --message="Ensuring downward compatibility..."
 
+if [ -z $phpversion ]; then
+	phpversion=7.0
+	ynh_app_setting_set --app=$app --key=phpversion --value=$phpversion
+fi
+
 # If final_path doesn't exist, create it
 if [ -z "$final_path" ]; then
 	final_path=/var/www/$app
@@ -50,15 +55,15 @@ fi
 
 if [ $firmware_nonfree = "yes" ]; then
 	firmware_nonfree=1
-	ynh_app_setting_set $app firmware_nonfree $firmware_nonfree
+	ynh_app_setting_set --app=$app --key=firmware_nonfree --value=$firmware_nonfree
 elif [ $firmware_nonfree = "no" ]; then
 	firmware_nonfree=0
-	ynh_app_setting_set $app firmware_nonfree $firmware_nonfree
+	ynh_app_setting_set --app=$app --key=firmware_nonfree --value=$firmware_nonfree
 fi
 
 if [ -z $service_name ]; then
 	service_name="ynh-hotspot"
-	ynh_app_setting_set $app service_name $service_name
+	ynh_app_setting_set --app=$app --key=service_name --value=$service_name
 fi
 
 #=================================================
@@ -139,6 +144,7 @@ ynh_script_progression --message="Upgrading php-fpm configuration..."
 
 # Create a dedicated php-fpm config
 ynh_add_fpm_config
+phpversion=$(ynh_app_setting_get --app=$app --key=phpversion)
 
 #=================================================
 # SPECIFIC UPGRADE
