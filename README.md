@@ -10,7 +10,6 @@ If you don't have YunoHost, please see [here](https://yunohost.org/#/install) to
 > This YunoHost app is a part of the "[La Brique Internet](http://labriqueinter.net)" project but can be used independently.
 
 ## Overview
-
 Hotspot Wi-Fi app for [YunoHost](http://yunohost.org/).
 
 * Broadcast your own Wi-Fi internet access in addition to your self-hosted web services.
@@ -35,6 +34,7 @@ Hotspot Wi-Fi app for [YunoHost](http://yunohost.org/).
 * Announce DNS resolvers (IPv6 with RDNSS/DHCPv6 and IPv4 with DHCPv4)
 * Automatic clients configuration (IPv6 with SLAAC/DHCPv6 and IPv4 with DHCPv4)
 * Set an IPv6 from your delegated prefix (*prefix::42*) on the server, to use for the AAAA records
+
 
 ### Supported architectures
 
