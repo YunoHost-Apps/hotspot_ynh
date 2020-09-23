@@ -289,12 +289,6 @@ devfromid() {
 
 if [ "$1" != restart ]; then
 
-  # Restart php7.0-fpm at the first start (it needs to be restarted after the slapd start)
-  if [ ! -e /tmp/.ynh-hotspot-boot ]; then
-    touch /tmp/.ynh-hotspot-boot
-    systemctl restart php__PHPVERSION__-fpm
-  fi
-
   # Variables
 
   echo -n "Retrieving Yunohost settings... "
