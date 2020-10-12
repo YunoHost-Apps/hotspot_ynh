@@ -256,11 +256,25 @@ ynh_setting_get() {
 }
 
 ynh_setting_set() {
-  app=${1}
-  setting=${2}
-  value=${3}
 
-  yunohost app setting "${app}" "${setting}" -v "${value}"
+    # This is a partial copypasta of the official ynh_app_setting internal helper
+    # In particular, we do this instead of relying on 'yunohost app setting' for
+    # performance reasons (it takes a few second to run every yunohost commands)
+    # and to remove the need for the infamous '--need-lock' option/issue.
+
+    app="$1" key="$2" value="${3:-}" python2.7 - <<EOF
+import os, yaml, sys
+app = os.environ['app']
+key, value = os.environ['key'], os.environ.get('value', None)
+setting_file = "/etc/yunohost/apps/%s/settings.yml" % app
+assert os.path.exists(setting_file), "Setting file %s does not exists ?" % setting_file
+with open(setting_file) as f:
+    settings = yaml.load(f)
+settings[key] = value
+with open(setting_file, "w") as f:
+    yaml.safe_dump(settings, f, default_flow_style=False)
+EOF
+
 }
 
 devfromid() {
@@ -274,12 +288,6 @@ devfromid() {
 }
 
 if [ "$1" != restart ]; then
-
-  # Restart php7.0-fpm at the first start (it needs to be restarted after the slapd start)
-  if [ ! -e /tmp/.ynh-hotspot-boot ]; then
-    touch /tmp/.ynh-hotspot-boot
-    systemctl restart php__PHPVERSION__-fpm
-  fi
 
   # Variables
 

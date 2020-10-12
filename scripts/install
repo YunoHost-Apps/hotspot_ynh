@@ -309,7 +309,7 @@ fi
 #=================================================
 ynh_script_progression --message="Integrating service in YunoHost..."
 
-yunohost service add $service_name --description "Creates a Wi-Fi access point" --need_lock
+yunohost service add $service_name --description "Creates a Wi-Fi access point"
 
 #=================================================
 # START SYSTEMD SERVICE
@@ -322,14 +322,6 @@ if [[ $wifi_device == none ]]; then
 else
   ynh_systemd_action --service_name=$service_name --action="start" --log_path=systemd #--line_match="Started YunoHost Wifi Hotspot"
 fi
-
-#=================================================
-# RELOAD NGINX AND PHP-FPM
-#=================================================
-ynh_script_progression --message="Reloading nginx web server..."
-
-ynh_systemd_action --service_name=php$phpversion-fpm --action=reload
-ynh_systemd_action --service_name=nginx --action=reload
 
 #=================================================
 # END OF SCRIPT

@@ -136,7 +136,7 @@ systemctl enable $service_name.service
 #=================================================
 ynh_script_progression --message="Integrating service in YunoHost..."
 
-yunohost service add $service_name --description "Creates a Wi-Fi access point" --need_lock
+yunohost service add $service_name --description "Creates a Wi-Fi access point"
 
 #=================================================
 # START SYSTEMD SERVICE
