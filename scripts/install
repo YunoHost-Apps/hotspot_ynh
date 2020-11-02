@@ -144,7 +144,7 @@ fi
 #=================================================
 # INSTALL DEPENDENCIES
 #=================================================
-ynh_script_progression --message="Creating a MySQL database..."
+ynh_script_progression --message="Installing dependencies"
 
 ynh_install_app_dependencies "$pkg_dependencies" "$packages"
 
