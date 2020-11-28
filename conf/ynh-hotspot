@@ -289,12 +289,6 @@ devfromid() {
 
 if [ "$1" != restart ]; then
 
-  # Restart php7.0-fpm at the first start (it needs to be restarted after the slapd start)
-  if [ ! -e /tmp/.ynh-hotspot-boot ]; then
-    touch /tmp/.ynh-hotspot-boot
-    systemctl restart php__PHPVERSION__-fpm
-  fi
-
   # Variables
 
   echo -n "Retrieving Yunohost settings... "
@@ -337,6 +331,12 @@ case "$1" in
     elif [ "${ynh_service_enabled}" != "enabled" ]; then
       echo "Disabled service"
     else
+
+      if [ -z "${ynh_wifi_device}" ]; then
+        echo "[ERR] No wifi device selected. Make sure your wifi antenna is plugged-in / available and select it in the Hotspot admin"
+        exitcode=1
+      fi
+
       echo "[hotspot] Starting..."
       touch /tmp/.ynh-hotspot-started
 
@@ -485,6 +485,11 @@ case "$1" in
 
     if [ "${ynh_service_enabled}" != "enabled" ]; then
       echo "[ERR] Hotspot Service disabled"
+      exitcode=1
+    fi
+
+    if [ -z "${ynh_wifi_device}" ]; then
+      echo "[ERR] No wifi device selected. Make sure your wifi antenna is plugged-in / available and select it in the Hotspot admin"
       exitcode=1
     fi
 
