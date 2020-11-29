@@ -36,7 +36,7 @@ upgrade_type=$(ynh_check_app_version_changed)
 ynh_script_progression --message="Ensuring downward compatibility..."
 
 if [ -z $phpversion ]; then
-	phpversion=7.0
+	phpversion=$YNH_PHP_VERSION
 	ynh_app_setting_set --app=$app --key=phpversion --value=$phpversion
 fi
 
@@ -144,7 +144,6 @@ ynh_script_progression --message="Upgrading php-fpm configuration..."
 
 # Create a dedicated php-fpm config
 ynh_add_fpm_config
-phpversion=$(ynh_app_setting_get --app=$app --key=phpversion)
 
 #=================================================
 # SPECIFIC UPGRADE

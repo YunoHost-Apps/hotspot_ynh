@@ -129,7 +129,7 @@ ynh_install_app_dependencies "$pkg_dependencies" "$packages"
 ynh_script_progression --message="Restoring the systemd configuration..."
 
 ynh_restore_file --origin_path="/etc/systemd/system/$service_name.service"
-systemctl enable $service_name.service
+systemctl enable $service_name.service --quiet
 
 #=================================================
 # INTEGRATE SERVICE IN YUNOHOST
