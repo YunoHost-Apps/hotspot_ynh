@@ -1,8 +1,0 @@
-# Source me
-
-# Check if dnsmasq is active
-systemctl is-active dnsmasq &> /dev/null
-
-if [[ $? -ne 0 ]]; then
-  ynh_die --message="You need to enable dnsmasq instead of bind9 (apt-get remove bind9 && systemctl start dnsmasq)"
-fi

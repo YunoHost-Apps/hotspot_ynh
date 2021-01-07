@@ -90,12 +90,6 @@ if [[ $wifi_passphrase =~ [^[:print:]] ]]; then
 fi
 
 #=================================================
-# RUN PREREQUISITES
-#=================================================
-
-source ./prerequisites
-
-#=================================================
 # STORE SETTINGS FROM MANIFEST
 #=================================================
 ynh_script_progression --message="Storing installation settings..."
