@@ -122,9 +122,10 @@ ynh_add_nginx_config
 ynh_script_progression --message="Upgrading dependencies..."
 
 if [[ $firmware_nonfree -eq 1 ]]; then
-  packages=$nonfree_packages
+  check_armbian_nonfree_conflict
+  packages=$nonfree_firmware_packages
 else
-  packages=$free_packages
+  packages=$free_firmware_packages
 fi
 
 ynh_install_app_dependencies "$pkg_dependencies" "$packages"

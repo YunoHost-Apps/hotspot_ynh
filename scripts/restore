@@ -62,13 +62,10 @@ if [[ $firmware_nonfree -eq 1 ]]; then
   if ! grep -q non-free /etc/apt/sources.list ; then
     sed '/debian/{s/main/& non-free/}' -i /etc/apt/sources.list
   fi
-
-  packages=$nonfree_packages
+  check_armbian_nonfree_conflict
+  packages=$nonfree_firmware_packages
 else
-  packages=$free_packages
-
-  ynh_restore_file --origin_path="/lib/firmware/htc_7010.fw"
-  ynh_restore_file --origin_path="/lib/firmware/htc_9271.fw"
+  packages=$free_firmware_packages
 fi
 
 ynh_restore_file --origin_path="/etc/sudoers.d/${app}_ynh"
