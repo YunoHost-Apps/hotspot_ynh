@@ -81,13 +81,6 @@ ynh_clean_setup () {
 ynh_abort_if_errors
 
 #=================================================
-# CHECK THE PATH
-#=================================================
-
-# Normalize the URL path syntax
-path_url=$(ynh_normalize_url_path --path_url=$path_url)
-
-#=================================================
 # STANDARD UPGRADE STEPS
 #=================================================
 # STOP SYSTEMD SERVICE
@@ -199,7 +192,7 @@ find ${final_path}/ -type d -exec chmod +x {} \;
 #=================================================
 ynh_script_progression --message="Integrating service in YunoHost..."
 
-yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd"
+yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd" --needs_exposed_ports 547 67
 
 #=================================================
 # START SYSTEMD SERVICE

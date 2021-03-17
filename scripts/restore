@@ -133,7 +133,7 @@ systemctl enable $service_name.service --quiet
 #=================================================
 ynh_script_progression --message="Integrating service in YunoHost..."
 
-yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd"
+yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd" --needs_exposed_ports 547 67
 
 #=================================================
 # START SYSTEMD SERVICE

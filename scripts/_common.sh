@@ -20,7 +20,7 @@ function check_armbian_nonfree_conflict()
   if dpkg --list | grep -q armbian-firmware; then
     echo "You are running Armbian and firmware-misc-nonfree are known to conflict with armbian-firwmare. " >&2
     echo "The package firmware-misc-nonfree is a dependency of firmware-ralink, so firmware-ralink will NOT be installed" >&2
-    echo "You can manually install firmware-ralink with 'sudo apt -o Dpkg::Options::=\"--force-overwrite\" firmware-ralink'" >&2
+    echo "You can manually install firmware-ralink with 'apt -o Dpkg::Options::=\"--force-overwrite\" firmware-ralink'" >&2
     nonfree_firmware_packages=$(echo $nonfree_firmware_packages | sed 's/ firmware-ralink//')
   fi
 
