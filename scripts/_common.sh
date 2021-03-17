@@ -26,6 +26,23 @@ function check_armbian_nonfree_conflict()
 
 }
 
+
+function hot_reload_usb_wifi_cards()
+{
+  modulesList="acx-mac80211 ar5523 ar9170usb at76c50x-usb at76_usb ath9k_htc carl9170 orinoco_usb p54usb prism2_usb r8712u r8192s_usb r8192u_usb rndis_wlan rt2500usb rt2800usb rt2870sta rt73usb rtl8187 rtl8192cu usb8xxx vt6656_stage zd1201 zd1211rw"
+  modprobe --quiet --remove $modulesList || true
+  possibleUsbDevicesNeedingReload=$(dmesg | grep -Pio '(?<=usb )[0-9-]+(?=:.*firmware)' | sort | uniq)
+  for usbPath in $possibleUsbDevicesNeedingReload; do
+    if [[ -f "/sys/bus/usb/devices/$usbPath/authorized" ]]; then
+      echo "Try to reload driver for usb $usbPath" >&2
+      echo 0 > /sys/bus/usb/devices/$usbPath/authorized
+      echo 1 > /sys/bus/usb/devices/$usbPath/authorized
+      # Wait for driver reloading
+      sleep 2
+    fi
+  done
+}
+
 #=================================================
 # EXPERIMENTAL HELPERS
 #=================================================

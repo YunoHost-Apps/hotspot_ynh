@@ -140,6 +140,7 @@ yunohost service add $service_name --description "Creates a Wi-Fi access point" 
 #=================================================
 ynh_script_progression --message="Starting a systemd service..."
 
+hot_reload_usb_wifi_cards
 wifi_device=$(bash ../settings/conf/iw_devices | awk -F\| '{ print $1 }')
 
 if [[ -z $wifi_device ]]; then

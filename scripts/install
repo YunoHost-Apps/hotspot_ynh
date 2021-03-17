@@ -168,6 +168,7 @@ if [[ ! -v ip6_net ]]; then # if ip6_net not set
   fi
 fi
 
+hot_reload_usb_wifi_cards
 wifi_device=$(bash ../conf/iw_devices | awk -F\| '{ print $1 }')
 
 ynh_app_setting_set --app=$app --key=multissid --value=1
