@@ -113,14 +113,10 @@ export DEBIAN_FRONTEND=noninteractive
 # Packaged USB Wireless Device firmwares
 # Based on https://wiki.debian.org/WiFi#USB_Devices
 if [[ $firmware_nonfree -eq 1 ]]; then
-  # check if non-free is set on sources.list
-  if ! grep -q non-free /etc/apt/sources.list ; then
-    sed '/debian/{s/main/& non-free/}' -i /etc/apt/sources.list
-  fi
   check_armbian_nonfree_conflict
-  packages=$nonfree_firmware_packages
+  ynh_install_extra_app_dependencies --repo="deb http://deb.debian.org/debian $(ynh_get_debian_release) non-free" --package="$nonfree_firmware_packages"
 else
-  packages=$free_firmware_packages
+  pkg_dependencies="$pkg_dependencies $free_firmware_packages"
 fi
 
 #=================================================
@@ -128,7 +124,7 @@ fi
 #=================================================
 ynh_script_progression --message="Installing dependencies"
 
-ynh_install_app_dependencies "$pkg_dependencies" "$packages"
+ynh_install_app_dependencies "$pkg_dependencies"
 
 #=================================================
 # CREATE DEDICATED USER
