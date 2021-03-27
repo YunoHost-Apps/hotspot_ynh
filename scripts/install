@@ -247,8 +247,8 @@ ynh_replace_string --match_string="^DAEMON_CONF=$" --replace_string="&/etc/hosta
 # isnt used ... instead the service is "pure systemd" ...
 echo "DAEMON_CONF=/etc/hostapd/hostapd.conf" > /etc/default/hostapd
 
-# Fix sources
-ynh_replace_string --match_string="__PATH__" --replace_string="${path_url}" --target_file="$final_path/config.php"
+# Apply configuration
+ynh_add_config --template="config.php.tpl" --destination="$final_path/config.php"
 
 # Set default inits
 # The boot order of these services are important, so they are disabled by default
@@ -263,7 +263,6 @@ systemctl unmask hostapd # On some system e.g. RPi, for some reason hostapd is m
 ynh_script_progression --message="Storing the config file checksum..."
 
 # Calculate and store the config file checksum into the app settings
-ynh_store_file_checksum --file="$final_path/config.php"
 ynh_store_file_checksum --file="/etc/init.d/hostapd"
 
 #=================================================

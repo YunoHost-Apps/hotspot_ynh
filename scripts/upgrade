@@ -162,10 +162,7 @@ ynh_replace_string --match_string="__PHPVERSION__" --replace_string="${phpversio
 #=================================================
 ynh_script_progression --message="Modifying a config file..."
 
-ynh_backup_if_checksum_is_different --file="$final_path/config.php"
-ynh_replace_string --match_string="__PATH__" --replace_string="${path_url}" --target_file="$final_path/config.php"
-# Recalculate and store the checksum of the file for the next upgrade.
-ynh_store_file_checksum --file="$final_path/config.php"
+ynh_add_config --template="config.php.tpl" --destination="$final_path/config.php"
 
 #=================================================
 # SETUP SYSTEMD
