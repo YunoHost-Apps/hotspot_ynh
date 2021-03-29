@@ -81,13 +81,6 @@ ynh_clean_setup () {
 ynh_abort_if_errors
 
 #=================================================
-# CHECK THE PATH
-#=================================================
-
-# Normalize the URL path syntax
-path_url=$(ynh_normalize_url_path --path_url=$path_url)
-
-#=================================================
 # STANDARD UPGRADE STEPS
 #=================================================
 # STOP SYSTEMD SERVICE
@@ -122,12 +115,13 @@ ynh_add_nginx_config
 ynh_script_progression --message="Upgrading dependencies..."
 
 if [[ $firmware_nonfree -eq 1 ]]; then
-  packages=$nonfree_packages
+  check_armbian_nonfree_conflict
+  ynh_install_extra_app_dependencies --repo="deb http://deb.debian.org/debian $(ynh_get_debian_release) non-free" --package="$nonfree_firmware_packages"
 else
-  packages=$free_packages
+  pkg_dependencies="$pkg_dependencies $free_firmware_packages"
 fi
 
-ynh_install_app_dependencies "$pkg_dependencies" "$packages"
+ynh_install_app_dependencies "$pkg_dependencies"
 
 #=================================================
 # CREATE DEDICATED USER
@@ -168,10 +162,7 @@ ynh_replace_string --match_string="__PHPVERSION__" --replace_string="${phpversio
 #=================================================
 ynh_script_progression --message="Modifying a config file..."
 
-ynh_backup_if_checksum_is_different --file="$final_path/config.php"
-ynh_replace_string --match_string="__PATH__" --replace_string="${path_url}" --target_file="$final_path/config.php"
-# Recalculate and store the checksum of the file for the next upgrade.
-ynh_store_file_checksum --file="$final_path/config.php"
+ynh_add_config --template="config.php.tpl" --destination="$final_path/config.php"
 
 #=================================================
 # SETUP SYSTEMD
@@ -205,6 +196,7 @@ yunohost service add $service_name --description "Creates a Wi-Fi access point" 
 #=================================================
 ynh_script_progression --message="Starting a systemd service..."
 
+hot_reload_usb_wifi_cards
 wifi_device=$(bash ../conf/iw_devices | awk -F\| '{ print $1 }')
 
 if [[ -z $wifi_device ]]; then
