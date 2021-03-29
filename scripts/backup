@@ -41,11 +41,6 @@ ynh_print_info --message="Declaring files to be backed up..."
 
 ynh_backup --src_path="$final_path"
 
-if [[ $firmware_nonfree -eq 0 ]]; then
-	ynh_backup --src_path="/lib/firmware/htc_7010.fw"
-	ynh_backup --src_path="/lib/firmware/htc_9271.fw"
-fi
-
 ynh_backup --src_path="/etc/sudoers.d/${app}_ynh"
 
 ynh_backup --src_path="/usr/local/bin/iw_multissid"

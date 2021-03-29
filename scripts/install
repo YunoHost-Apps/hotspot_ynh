@@ -59,14 +59,6 @@ test ! -e "$final_path" || ynh_die --message="This path already contains a folde
 # Register (book) web path
 ynh_webpath_register --app=$app --domain=$domain --path_url=$path_url
 
-# If we're on armbian, force $firmware_nonfree
-# because armbian-firmware conflicts with the non-free packages ...
-if dpkg --list | grep -q armbian-firmware; then
-  echo "You are running Armbian and non-free firmware are known to conflict with armbian-firwmare. " >&2
-  firmware_nonfree=0
-  echo "Variable firmware_non_free has been forced to 'no'" >&2
-fi
-
 if [ $firmware_nonfree = "no" ]; then
   firmware_nonfree=0
 elif [ $firmware_nonfree = "yes" ]; then
@@ -90,12 +82,6 @@ if [[ $wifi_passphrase =~ [^[:print:]] ]]; then
 fi
 
 #=================================================
-# RUN PREREQUISITES
-#=================================================
-
-source ./prerequisites
-
-#=================================================
 # STORE SETTINGS FROM MANIFEST
 #=================================================
 ynh_script_progression --message="Storing installation settings..."
@@ -104,6 +90,7 @@ ynh_app_setting_set --app=$app --key=domain --value="$domain"
 ynh_app_setting_set --app=$app --key=wifi_ssid --value="$wifi_ssid"
 ynh_app_setting_set --app=$app --key=wifi_passphrase --value="$wifi_passphrase"
 ynh_app_setting_set --app=$app --key=firmware_nonfree --value="$firmware_nonfree"
+ynh_app_setting_set --app=$app --key=service_name --value=$service_name
 
 #=================================================
 # STANDARD MODIFICATIONS
@@ -126,19 +113,10 @@ export DEBIAN_FRONTEND=noninteractive
 # Packaged USB Wireless Device firmwares
 # Based on https://wiki.debian.org/WiFi#USB_Devices
 if [[ $firmware_nonfree -eq 1 ]]; then
-  # check if non-free is set on sources.list
-  if ! grep -q non-free /etc/apt/sources.list ; then
-    sed '/debian/{s/main/& non-free/}' -i /etc/apt/sources.list
-  fi
-  packages=$nonfree_packages
+  check_armbian_nonfree_conflict
+  ynh_install_extra_app_dependencies --repo="deb http://deb.debian.org/debian $(ynh_get_debian_release) non-free" --package="$nonfree_firmware_packages"
 else
-  packages=$free_packages
-  # Extract from http://packages.trisquel.info/toutatis-updates/open-ath9k-htc-firmware
-  # https://www.fsf.org/news/ryf-certification-thinkpenguin-usb-with-atheros-chip
-  # https://wiki.debian.org/ath9k_htc/open_firmware
-  mkdir -p /lib/firmware
-  install -b -o root -g root -m 0644 ../conf/firmware_htc-7010.fw /lib/firmware/htc_7010.fw
-  install -b -o root -g root -m 0644 ../conf/firmware_htc-9271.fw /lib/firmware/htc_9271.fw
+  pkg_dependencies="$pkg_dependencies $free_firmware_packages"
 fi
 
 #=================================================
@@ -146,15 +124,7 @@ fi
 #=================================================
 ynh_script_progression --message="Installing dependencies"
 
-ynh_install_app_dependencies "$pkg_dependencies" "$packages"
-
-#=================================================
-# NGINX CONFIGURATION
-#=================================================
-ynh_script_progression --message="Configuring nginx web server..."
-
-# Create a dedicated nginx config
-ynh_add_nginx_config
+ynh_install_app_dependencies "$pkg_dependencies"
 
 #=================================================
 # CREATE DEDICATED USER
@@ -167,15 +137,6 @@ ynh_system_user_create --username=$app
 # Ensure the system user has enough sudo permissions
 install -b -o root -g root -m 0440 ../conf/sudoers.conf /etc/sudoers.d/${app}_ynh
 ynh_replace_string --match_string="__HOTSPOT_SYSUSER__" --replace_string="${app}" --target_file="/etc/sudoers.d/${app}_ynh"
-
-#=================================================
-# PHP-FPM CONFIGURATION
-#=================================================
-ynh_script_progression --message="Configuring php-fpm..."
-
-# Create a dedicated php-fpm config
-ynh_add_fpm_config
-phpversion=$(ynh_app_setting_get --app=$app --key=phpversion)
 
 #=================================================
 # INSTALL CUSTOM SCRIPTS
@@ -203,6 +164,7 @@ if [[ ! -v ip6_net ]]; then # if ip6_net not set
   fi
 fi
 
+hot_reload_usb_wifi_cards
 wifi_device=$(bash ../conf/iw_devices | awk -F\| '{ print $1 }')
 
 ynh_app_setting_set --app=$app --key=multissid --value=1
@@ -220,7 +182,6 @@ ynh_app_setting_set --app=$app --key=ip4_dns0 --value=80.67.188.188
 ynh_app_setting_set --app=$app --key=ip4_dns1 --value=80.67.169.12
 ynh_app_setting_set --app=$app --key=ip4_nat_prefix --value=10.0.242
 ynh_app_setting_set --app=$app --key=vpnclient --value=no
-ynh_app_setting_set --app=$app --key=service_name --value=$service_name
 
 if [[ -z $wifi_device ]]; then
   ynh_app_setting_set --app=$app --key=service_enabled --value=0
@@ -243,12 +204,12 @@ install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq
 
 # Copy init script
 install -o root -g root -m 0755 ../conf/$service_name /usr/local/bin/
-ynh_replace_string --match_string="__PHPVERSION__" --replace_string="${phpversion}" --target_file="/usr/local/bin/$service_name"
+ynh_replace_string --match_string="__PHPVERSION__" --replace_string="${YNH_PHP_VERSION}" --target_file="/usr/local/bin/$service_name"
 
 #=================================================
 # COPY WEB SOURCES
 #=================================================
-ynh_script_progression --message="Copy web sources..."
+ynh_script_progression --message="Setting up source files..."
 
 ynh_app_setting_set --app=$app --key=final_path --value=$final_path
 mkdir -pm 0755 ${final_path}/
@@ -259,9 +220,25 @@ chmod -R 0644 ${final_path}/*
 find ${final_path}/ -type d -exec chmod +x {} \;
 
 #=================================================
-# FIX CONFIGS
+# NGINX CONFIGURATION
 #=================================================
-ynh_script_progression --message="Fix config..."
+ynh_script_progression --message="Configuring nginx web server..."
+
+# Create a dedicated nginx config
+ynh_add_nginx_config
+
+#=================================================
+# PHP-FPM CONFIGURATION
+#=================================================
+ynh_script_progression --message="Configuring php-fpm..."
+
+# Create a dedicated php-fpm config
+ynh_add_fpm_config
+
+#=================================================
+# CONFIGURE HOSTAPD
+#=================================================
+ynh_script_progression --message="Configuring hostapd..."
 
 ## hostapd
 ynh_replace_string --match_string="^DAEMON_CONF=$" --replace_string="&/etc/hostapd/hostapd.conf" --target_file=/etc/init.d/hostapd
@@ -270,8 +247,15 @@ ynh_replace_string --match_string="^DAEMON_CONF=$" --replace_string="&/etc/hosta
 # isnt used ... instead the service is "pure systemd" ...
 echo "DAEMON_CONF=/etc/hostapd/hostapd.conf" > /etc/default/hostapd
 
-# Fix sources
-ynh_replace_string --match_string="__PATH__" --replace_string="${path_url}" --target_file="$final_path/config.php"
+# Apply configuration
+ynh_add_config --template="config.php.tpl" --destination="$final_path/config.php"
+
+# Set default inits
+# The boot order of these services are important, so they are disabled by default
+# and the ynh-hotspot service handles them.
+systemctl disable hostapd --quiet
+systemctl stop hostapd
+systemctl unmask hostapd # On some system e.g. RPi, for some reason hostapd is masked after install ...
 
 #=================================================
 # STORE THE CONFIG FILE CHECKSUM
@@ -279,7 +263,6 @@ ynh_replace_string --match_string="__PATH__" --replace_string="${path_url}" --ta
 ynh_script_progression --message="Storing the config file checksum..."
 
 # Calculate and store the config file checksum into the app settings
-ynh_store_file_checksum --file="$final_path/config.php"
 ynh_store_file_checksum --file="/etc/init.d/hostapd"
 
 #=================================================
@@ -289,13 +272,6 @@ ynh_script_progression --message="Configuring a systemd service..."
 
 # Create a dedicated systemd config
 ynh_add_systemd_config --service=$service_name
-
-# Set default inits
-# The boot order of these services are important, so they are disabled by default
-# and the ynh-hotspot service handles them.
-systemctl disable hostapd
-systemctl stop hostapd
-systemctl unmask hostapd # On some system e.g. RPi, for some reason hostapd is masked after install ...
 
 # Remove IPv6 address set if there is a VPN installed
 if [[ $ip6_addr != none ]]; then
@@ -309,7 +285,7 @@ fi
 #=================================================
 ynh_script_progression --message="Integrating service in YunoHost..."
 
-yunohost service add $service_name --description "Creates a Wi-Fi access point"
+yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd"
 
 #=================================================
 # START SYSTEMD SERVICE
