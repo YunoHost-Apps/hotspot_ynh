@@ -58,7 +58,7 @@ function before($route) {
   setlocale(LC_ALL, $lang);
   setlocale(LC_CTYPE, $lang);
 
-  $locales_dir = dirname(__FILE__).'/i18n';
+  $locales_dir = '__FINAL_PATH__/i18n';
 
   bindtextdomain($textdomain, $locales_dir);
   bind_textdomain_codeset($textdomain, 'UTF-8');
