@@ -215,9 +215,10 @@ ynh_app_setting_set --app=$app --key=final_path --value=$final_path
 mkdir -pm 0755 ${final_path}/
 cp -a ../sources/* ${final_path}/
 
-chown -R $app: ${final_path}/
+chown -R $app:$app ${final_path}/
 chmod -R 0644 ${final_path}/*
 find ${final_path}/ -type d -exec chmod +x {} \;
+chmod o-rwx ${final_path}
 
 #=================================================
 # NGINX CONFIGURATION
@@ -249,6 +250,7 @@ echo "DAEMON_CONF=/etc/hostapd/hostapd.conf" > /etc/default/hostapd
 
 # Apply configuration
 ynh_add_config --template="config.php.tpl" --destination="$final_path/config.php"
+chown $app:$app "$final_path/config.php"
 
 # Set default inits
 # The boot order of these services are important, so they are disabled by default
