@@ -163,6 +163,7 @@ ynh_replace_string --match_string="__PHPVERSION__" --replace_string="${phpversio
 ynh_script_progression --message="Modifying a config file..."
 
 ynh_add_config --template="config.php.tpl" --destination="$final_path/config.php"
+chown $app:$app "$final_path/config.php"
 
 #=================================================
 # SETUP SYSTEMD
@@ -180,9 +181,10 @@ ynh_add_systemd_config --service=$service_name
 ynh_script_progression --message="Securing files and directories..."
 
 # Set permissions on app files
-chown -R $app: ${final_path}/
+chown -R $app:$app ${final_path}/
 chmod -R 0644 ${final_path}/*
 find ${final_path}/ -type d -exec chmod +x {} \;
+chmod o-rwx "${final_path}"
 
 #=================================================
 # INTEGRATE SERVICE IN YUNOHOST
