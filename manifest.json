@@ -7,7 +7,7 @@
     "fr": "Créer et configurer des réseaux wifi, partager l'accès a Internet et utiliser les applications Yunohost via wifi"
   },
   "url": "https://github.com/labriqueinternet/hotspot_ynh",
-  "version": "1.2.0~ynh3",
+  "version": "1.2.0~ynh4",
   "license": "AGPL-3.0",
   "maintainer": {
     "name": "Julien Vaubourg",
