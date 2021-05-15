@@ -30,6 +30,9 @@ source /usr/share/yunohost/helpers
 # MANAGE SCRIPT FAILURE
 #=================================================
 
+ynh_clean_setup () {
+	ynh_clean_check_starting
+}
 # Exit if an error occurs during the execution of the script
 ynh_abort_if_errors
 
@@ -60,25 +63,25 @@ test ! -e "$final_path" || ynh_die --message="This path already contains a folde
 ynh_webpath_register --app=$app --domain=$domain --path_url=$path_url
 
 if [ $firmware_nonfree = "no" ]; then
-  firmware_nonfree=0
+	firmware_nonfree=0
 elif [ $firmware_nonfree = "yes" ]; then
-  firmware_nonfree=1
+	firmware_nonfree=1
 fi
 
 # Check arguments
 if [[ -z $wifi_ssid || -z $wifi_passphrase ]]; then
-  ynh_die --message="Your Wifi Hotspot needs a name and a password"
+	ynh_die --message="Your Wifi Hotspot needs a name and a password"
 fi
 
 # Check passphrase length
 wifi_passphrase_length="$(echo -n "${wifi_passphrase}" | wc -c)"
 if [[ $wifi_passphrase_length -lt 8 || $wifi_passphrase_length -gt 63 ]]; then
-  ynh_die --message="Your password must from 8 to 63 characters (WPA2 passphrase)"
+	ynh_die --message="Your password must from 8 to 63 characters (WPA2 passphrase)"
 fi
 
 # Check no special characters are present in the passphrase
 if [[ $wifi_passphrase =~ [^[:print:]] ]]; then
-  ynh_die --message="Only printable ASCII characters are permitted in your password (WPA2 passphrase)"
+	ynh_die --message="Only printable ASCII characters are permitted in your password (WPA2 passphrase)"
 fi
 
 #=================================================
@@ -86,7 +89,7 @@ fi
 #=================================================
 ynh_script_progression --message="Storing installation settings..."
 
-ynh_app_setting_set --app=$app --key=domain --value="$domain"
+ynh_app_setting_set --app=$app --key=domain --value=$domain
 ynh_app_setting_set --app=$app --key=wifi_ssid --value="$wifi_ssid"
 ynh_app_setting_set --app=$app --key=wifi_passphrase --value="$wifi_passphrase"
 ynh_app_setting_set --app=$app --key=firmware_nonfree --value="$firmware_nonfree"
@@ -113,18 +116,18 @@ export DEBIAN_FRONTEND=noninteractive
 # Packaged USB Wireless Device firmwares
 # Based on https://wiki.debian.org/WiFi#USB_Devices
 if [[ $firmware_nonfree -eq 1 ]]; then
-  check_armbian_nonfree_conflict
-  ynh_install_extra_app_dependencies --repo="deb http://deb.debian.org/debian $(ynh_get_debian_release) non-free" --package="$nonfree_firmware_packages"
+	check_armbian_nonfree_conflict
+	ynh_install_extra_app_dependencies --repo="deb http://deb.debian.org/debian $(ynh_get_debian_release) non-free" --package="$nonfree_firmware_packages"
 else
-  pkg_dependencies="$pkg_dependencies $free_firmware_packages"
+	pkg_dependencies="$pkg_dependencies $free_firmware_packages"
 fi
 
 #=================================================
 # INSTALL DEPENDENCIES
 #=================================================
-ynh_script_progression --message="Installing dependencies"
+ynh_script_progression --message="Installing dependencies..."
 
-ynh_install_app_dependencies "$pkg_dependencies"
+ynh_install_app_dependencies $pkg_dependencies
 
 #=================================================
 # CREATE DEDICATED USER
@@ -150,18 +153,18 @@ install -o root -g root -m 0755 ../conf/ipv6_expanded /usr/local/bin/
 install -o root -g root -m 0755 ../conf/ipv6_compressed /usr/local/bin/
 
 if [[ ! -v ip6_net ]]; then # if ip6_net not set
-  ip6_net=none
-  ip6_addr=none
+	ip6_net=none
+	ip6_addr=none
 
-  if [[ -e /tmp/.ynh-vpnclient-started ]]; then
-    vpnclient_ip6_net=$(ynh_app_setting_get vpnclient ip6_net 2>&1)
-    vpnclient_ip6_addr=$(ynh_app_setting_get vpnclient ip6_addr 2>&1)
+	if [[ -e /tmp/.ynh-vpnclient-started ]]; then
+		vpnclient_ip6_net=$(ynh_app_setting_get vpnclient ip6_net 2>&1)
+		vpnclient_ip6_addr=$(ynh_app_setting_get vpnclient ip6_addr 2>&1)
 
-    if [[ $vpnclient_ip6_net =~ :: && $vpnclient_ip6_addr =~ :: ]]; then
-      ip6_net=${vpnclient_ip6_net}
-      ip6_addr=${vpnclient_ip6_addr}
-    fi
-  fi
+		if [[ $vpnclient_ip6_net =~ :: && $vpnclient_ip6_addr =~ :: ]]; then
+			ip6_net=${vpnclient_ip6_net}
+			ip6_addr=${vpnclient_ip6_addr}
+		fi
+	fi
 fi
 
 hot_reload_usb_wifi_cards
@@ -184,10 +187,10 @@ ynh_app_setting_set --app=$app --key=ip4_nat_prefix --value=10.0.242
 ynh_app_setting_set --app=$app --key=vpnclient --value=no
 
 if [[ -z $wifi_device ]]; then
-  ynh_app_setting_set --app=$app --key=service_enabled --value=0
-  wifi_device=none
+	ynh_app_setting_set --app=$app --key=service_enabled --value=0
+	wifi_device=none
 else
-  ynh_app_setting_set --app=$app --key=service_enabled --value=1
+	ynh_app_setting_set --app=$app --key=service_enabled --value=1
 fi
 
 #=================================================
@@ -212,28 +215,30 @@ ynh_replace_string --match_string="__PHPVERSION__" --replace_string="${YNH_PHP_V
 ynh_script_progression --message="Setting up source files..."
 
 ynh_app_setting_set --app=$app --key=final_path --value=$final_path
-mkdir -pm 0755 ${final_path}/
+mkdir -pm 0755 $final_path
 cp -a ../sources/* ${final_path}/
 
-chown -R $app:$app ${final_path}/
+
 chmod -R 0644 ${final_path}/*
+chmod 750 "$final_path"
+chmod -R o-rwx "$final_path"
+chown -R $app:$app ${final_path}
 find ${final_path}/ -type d -exec chmod +x {} \;
-chmod o-rwx ${final_path}
 
 #=================================================
 # NGINX CONFIGURATION
 #=================================================
-ynh_script_progression --message="Configuring nginx web server..."
+ynh_script_progression --message="Configuring NGINX web server..."
 
-# Create a dedicated nginx config
+# Create a dedicated NGINX config
 ynh_add_nginx_config
 
 #=================================================
 # PHP-FPM CONFIGURATION
 #=================================================
-ynh_script_progression --message="Configuring php-fpm..."
+ynh_script_progression --message="Configuring PHP-FPM..."
 
-# Create a dedicated php-fpm config
+# Create a dedicated PHP-FPM config
 ynh_add_fpm_config
 
 #=================================================
@@ -277,9 +282,9 @@ ynh_add_systemd_config --service=$service_name
 
 # Remove IPv6 address set if there is a VPN installed
 if [[ $ip6_addr != none ]]; then
-  if ip -6 address show dev tun0 2> /dev/null | grep -q "${ip6_addr}/"; then
-    ip address delete "${ip6_addr}/128" dev tun0 &> /dev/null
-  fi
+	if ip -6 address show dev tun0 2> /dev/null | grep -q "${ip6_addr}/"; then
+		ip address delete "${ip6_addr}/128" dev tun0 &> /dev/null
+	fi
 fi
 
 #=================================================
@@ -287,7 +292,7 @@ fi
 #=================================================
 ynh_script_progression --message="Integrating service in YunoHost..."
 
-yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd"
+yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd" --needs_exposed_ports 67 547
 
 #=================================================
 # START SYSTEMD SERVICE
@@ -296,9 +301,9 @@ ynh_script_progression --message="Starting a systemd service..."
 
 # Start a systemd service if device is present
 if [[ $wifi_device == none ]]; then
-  echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
+	echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
 else
-  ynh_systemd_action --service_name=$service_name --action="start" --log_path=systemd #--line_match="Started YunoHost Wifi Hotspot"
+	ynh_systemd_action --service_name=$service_name --action="start" --log_path=systemd #--line_match="Started YunoHost Wifi Hotspot"
 fi
 
 #=================================================
