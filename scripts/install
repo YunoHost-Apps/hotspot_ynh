@@ -221,7 +221,7 @@ cp -a ../sources/* ${final_path}/
 chmod -R 0644 ${final_path}/*
 chmod 750 "$final_path"
 chmod -R o-rwx "$final_path"
-chown -R $app:$app "$final_path"
+chown -R $app:www-data "$final_path"
 
 #=================================================
 # NGINX CONFIGURATION
