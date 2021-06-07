@@ -68,6 +68,12 @@ ynh_script_progression --message="Restoring the app main directory..."
 
 ynh_restore_file --origin_path="$final_path"
 
+# Restore permissions on app files
+chmod 750 "$final_path"
+chmod o-rwx "$final_path"
+chown -R $app:www-data "$final_path"
+
+
 if [[ $firmware_nonfree -eq 1 ]]; then
 	check_armbian_nonfree_conflict
 	ynh_install_extra_app_dependencies --repo="deb http://deb.debian.org/debian $(ynh_get_debian_release) non-free" --package="$nonfree_firmware_packages"
@@ -93,17 +99,6 @@ ynh_restore_file --origin_path="/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl"
 ynh_restore_file --origin_path="/usr/local/bin/$service_name"
 
 ynh_restore_file --origin_path="/etc/init.d/hostapd"
-
-#=================================================
-# RESTORE USER RIGHTS
-#=================================================
-ynh_script_progression --message="Restoring user rights..."
-
-# Restore permissions on app files
-chmod -R 0644 ${final_path}/*
-chmod 750 "$final_path"
-chmod -R o-rwx "$final_path"
-chown -R $app:www-data "$final_path"
 
 #=================================================
 # RESTORE THE PHP-FPM CONFIGURATION

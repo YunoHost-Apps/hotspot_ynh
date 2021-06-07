@@ -218,9 +218,8 @@ ynh_app_setting_set --app=$app --key=final_path --value=$final_path
 mkdir -pm 0755 $final_path
 cp -a ../sources/* ${final_path}/
 
-chmod -R 0644 ${final_path}/*
 chmod 750 "$final_path"
-chmod -R o-rwx "$final_path"
+chmod o-rwx "$final_path"
 chown -R $app:www-data "$final_path"
 
 #=================================================

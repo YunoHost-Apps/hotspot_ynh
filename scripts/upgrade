@@ -110,9 +110,8 @@ then
 fi
 
 # Restore permissions on app files
-chmod -R 0644 ${final_path}/*
 chmod 750 "$final_path"
-chmod -R o-rwx "$final_path"
+chmod o-rwx "$final_path"
 chown -R $app:www-data "$final_path"
 
 #=================================================
