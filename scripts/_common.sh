@@ -4,7 +4,7 @@
 # COMMON VARIABLES
 #=================================================
 
-pkg_dependencies="sipcalc hostapd iptables iw dnsmasq"
+pkg_dependencies="sipcalc hostapd iptables iw dnsmasq kmod"
 nonfree_firmware_packages="firmware-atheros firmware-realtek firmware-ralink firmware-libertas atmel-firmware firmware-zd1211"
 free_firmware_packages="firmware-ath9k-htc"
 
