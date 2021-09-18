@@ -1,0 +1,199 @@
+version = "1.0"
+
+[main]
+name = "Auto-configuration"
+
+    [main.service]
+    name = "Service"
+    optional = false
+        
+        [main.service.status]
+        ask = "The status of your VPN is unknown."
+        type = "alert"
+        style = "info"
+        
+        [main.service.service_enabled]
+        ask = "Enable Hotspot"
+        type = "boolean"
+        
+        [main.service.doc]
+        ask = "You need to select a wifi antenna interface. If you use a wifi USB dongle and that this one is not listed here, try to unplug and replug it, then reload this page."
+        type = "alert"
+        style = "warning"
+
+        [main.service.wifi_device]
+        ask = "Device"
+        type = "select"
+        choices.wlan0 = "wlan0"
+        
+        [main.service.wifi_channel]
+        ask = "Channel"
+        type = "select"
+        choices.1 = "1"
+        choices.2 = "2"
+        choices.3 = "3"
+        choices.4 = "4"
+        choices.5 = "5"
+        choices.6 = "6"
+        choices.7 = "7"
+        choices.8 = "8"
+        choices.9 = "9"
+        choices.10 = "10"
+        choices.11 = "11"
+        
+        [main.service.ssid_nb]
+        ask = "Hotspot number"
+        type = "number"
+        min = 1
+        max = 3
+        
+    [main.hotspot1]
+    name = "Hotspot 1"
+    optional = false
+
+        [main.hotspot1.wifi_ssid__1]
+        ask = "Name (SSID)"
+        type = "string"
+        pattern.regexp = '^[\w \-]{1,32}$"
+        pattern.error = 'SSID in this app are limited to letter, number space, dash and underscores."
+        
+        [main.hotspot1.wifi_secure__1]
+        ask = "Secure"
+        type = "boolean"
+
+        [main.hotspot1.wifi_passphrase__1]
+        ask = "Password (WPA2)"
+        type = "string"
+        redact = true
+        visible = "wifi_secure__1" 
+        
+        [main.hotspot1.advanced__1]
+        ask = "Advanced settings"
+        type = "boolean"
+        
+        [main.hotspot1.ip4_nat_prefix__1]
+        ask = "IPv4 NAT prefix (/24)"
+        type = "string"
+        visible = "advanced__1"
+        pattern.regexp = "^[0-9.]{7,15}$"
+        pattern.error = "Please provide a valid IP"
+        
+        [main.hotspot1.ip6_net__1]
+        ask = "IPv6 delegated prefix"
+        type = "string"
+        visible = "advanced__1"
+        pattern.regexp = "^[0-9a-fA-F:]+$"
+        pattern.error = "Please provide a valid IPv6 Prefix"
+        
+        [main.hotspot1.ip6_firewall__1]
+        ask = "IPv6 firewall"
+        type = "boolean"
+        visible = "advanced__1"
+        
+        [main.hotspot1.dns__1]
+        ask = "DNS resolvers"
+        type = "tags"
+        visible = "advanced__1"
+        pattern.regexp = "^([0-9.]{7,15}|[0-9a-fA-F:]+)$"
+        pattern.error = "Not an ip"
+    
+    [main.hotspot2]
+    name = "Hotspot 2"
+    visible = "ssid_nb >= 2"
+
+        [main.hotspot2.wifi_ssid__2]
+        ask = "Name (SSID)"
+        type = "string"
+        pattern.regexp = '^[\w \-]{1,32}$"
+        pattern.error = 'SSID in this app are limited to letter, number space, dash and underscores."
+        
+        [main.hotspot2.wifi_secure__2]
+        ask = "Secure"
+        type = "boolean"
+
+        [main.hotspot2.wifi_passphrase__2]
+        ask = "Password (WPA2)"
+        type = "string"
+        redact = true
+        visible = "wifi_secure__2" 
+        
+        [main.hotspot2.advanced__2]
+        ask = "Advanced settings"
+        type = "boolean"
+        
+        [main.hotspot2.ip4_nat_prefix__2]
+        ask = "IPv4 NAT prefix (/24)"
+        type = "string"
+        visible = "advanced__2"
+        pattern.regexp = "^[0-9.]{7,15}$"
+        pattern.error = "Please provide a valid IP"
+        
+        [main.hotspot2.ip6_net__2]
+        ask = "IPv6 delegated prefix"
+        type = "string"
+        visible = "advanced__2"
+        pattern.regexp = "^[0-9a-fA-F:]+$"
+        pattern.error = "Please provide a valid IPv6 Prefix"
+        
+        [main.hotspot2.ip6_firewall__2]
+        ask = "IPv6 firewall"
+        type = "boolean"
+        visible = "advanced__2"
+        
+        [main.hotspot2.dns__2]
+        ask = "DNS resolvers"
+        type = "tags"
+        visible = "advanced__2"
+        pattern.regexp = "^([0-9.]{7,15}|[0-9a-fA-F:]+)$"
+        pattern.error = "Not an ip"
+    
+    [main.hotspot3]
+    name = "Hotspot 3"
+    visible = "ssid_nb >= 3"
+
+        [main.hotspot3.wifi_ssid__3]
+        ask = "Name (SSID)"
+        type = "string"
+        pattern.regexp = '^[\w \-]{1,32}$"
+        pattern.error = 'SSID in this app are limited to letter, number space, dash and underscores."
+        
+        [main.hotspot3.wifi_secure__3]
+        ask = "Secure"
+        type = "boolean"
+
+        [main.hotspot3.wifi_passphrase__3]
+        ask = "Password (WPA2)"
+        type = "string"
+        redact = true
+        visible = "wifi_secure__3" 
+        
+        [main.hotspot3.advanced__3]
+        ask = "Advanced settings"
+        type = "boolean"
+        
+        [main.hotspot3.ip4_nat_prefix__3]
+        ask = "IPv4 NAT prefix (/24)"
+        type = "string"
+        visible = "advanced__3"
+        pattern.regexp = "^[0-9.]{7,15}$"
+        pattern.error = "Please provide a valid IP"
+        
+        [main.hotspot3.ip6_net__3]
+        ask = "IPv6 delegated prefix"
+        type = "string"
+        visible = "advanced__3"
+        pattern.regexp = "^[0-9a-fA-F:]+$"
+        pattern.error = "Please provide a valid IPv6 Prefix"
+        
+        [main.hotspot3.ip6_firewall__3]
+        ask = "IPv6 firewall"
+        type = "boolean"
+        visible = "advanced__3"
+        
+        [main.hotspot3.dns__3]
+        ask = "DNS resolvers"
+        type = "tags"
+        visible = "advanced__3"
+        pattern.regexp = "^([0-9.]{7,15}|[0-9a-fA-F:]+)$"
+        pattern.error = "Not an ip"
+    
