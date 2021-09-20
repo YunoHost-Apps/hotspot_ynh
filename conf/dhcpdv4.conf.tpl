@@ -19,7 +19,7 @@
 dhcp-range=interface:<TPL:WIFI_DEVICE>,<TPL:IP4_NAT_PREFIX>.2,<TPL:IP4_NAT_PREFIX>.254,4h
 
 # Send DHCPv4 option.
-dhcp-option=option:dns-server,<TPL:IP4_DNS0>,<TPL:IP4_DNS1>
+dhcp-option=option:dns-server,<TPL:IP4_DNS>
 
 # Set the DHCP server to authoritative mode. In this mode it will barge in
 # and take over the lease for any client which broadcasts on the network,

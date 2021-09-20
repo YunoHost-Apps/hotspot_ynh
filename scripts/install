@@ -180,10 +180,7 @@ ynh_app_setting_set --app=$app --key=wifi_channel --value=6
 ynh_app_setting_set --app=$app --key=ip6_addr --value="${ip6_addr}"
 ynh_app_setting_set --app=$app --key=ip6_firewall --value=1
 ynh_app_setting_set --app=$app --key=ip6_net --value="${ip6_net}"
-ynh_app_setting_set --app=$app --key=ip6_dns0 --value=2001:913::8
-ynh_app_setting_set --app=$app --key=ip6_dns1 --value=2001:910:800::12
-ynh_app_setting_set --app=$app --key=ip4_dns0 --value=80.67.188.188
-ynh_app_setting_set --app=$app --key=ip4_dns1 --value=80.67.169.12
+ynh_app_setting_set --app=$app --key=dns --value="2001:913::8,2001:910:800::12,80.67.188.188,80.67.169.12"
 ynh_app_setting_set --app=$app --key=ip4_nat_prefix --value=10.0.242
 ynh_app_setting_set --app=$app --key=vpnclient --value=no
 

@@ -20,4 +20,4 @@
 dhcp-range=interface:<TPL:WIFI_DEVICE>,<TPL:IP6_NET>,slaac,64,4h
 
 # Send DHCPv6 option. Note [] around IPv6 addresses.
-dhcp-option=option6:dns-server,[<TPL:IP6_DNS0>],[<TPL:IP6_DNS1>]
+dhcp-option=option6:dns-server,<TPL:IP6_DNS>

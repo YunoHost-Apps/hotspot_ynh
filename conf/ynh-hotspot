@@ -140,8 +140,7 @@ start_dhcpd6() {
 
   sed "s|<TPL:WIFI_DEVICE>|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
   sed "s|<TPL:IP6_NET>|${ynh_ip6_net[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
-  sed "s|<TPL:IP6_DNS0>|${ynh_ip6_dns0[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
-  sed "s|<TPL:IP6_DNS1>|${ynh_ip6_dns1[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
+  sed "s|<TPL:IP6_DNS>|${ynh_ip6_dns[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
 
   dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf -p0
 }
@@ -152,8 +151,7 @@ start_dhcpd4() {
 
   cp /etc/dnsmasq.dhcpd/dhcpdv4{.conf.tpl,-ssid${i}.conf}
 
-  sed "s|<TPL:IP4_DNS0>|${ynh_ip4_dns0[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
-  sed "s|<TPL:IP4_DNS1>|${ynh_ip4_dns1[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
+  sed "s|<TPL:IP4_DNS>|${ynh_ip4_dns[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
   sed "s|<TPL:WIFI_DEVICE>|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
   sed "s|<TPL:IP4_NAT_PREFIX>|${ynh_ip4_nat_prefix[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
 
@@ -253,6 +251,7 @@ ynh_setting_get() {
   setting=${2}
 
   grep "^${setting}:" "/etc/yunohost/apps/${app}/settings.yml" | sed s/^[^:]\\+:\\s*[\"\']\\?// | sed s/\\s*[\"\']\$//
+  # '"
 }
 
 ynh_setting_set() {
@@ -262,7 +261,7 @@ ynh_setting_set() {
     # performance reasons (it takes a few second to run every yunohost commands)
     # and to remove the need for the infamous '--need-lock' option/issue.
 
-    app="$1" key="$2" value="${3:-}" python2.7 - <<EOF
+    app="$1" key="$2" value="${3:-}" python3 - <<EOF
 import os, yaml, sys
 app = os.environ['app']
 key, value = os.environ['key'], os.environ.get('value', None)
@@ -304,11 +303,22 @@ if [ "$1" != restart ]; then
   IFS='|' read -a ynh_ip6_addr <<< "$(ynh_setting_get hotspot ip6_addr)"
   IFS='|' read -a ynh_ip6_firewall <<< "$(ynh_setting_get hotspot ip6_firewall)"
   IFS='|' read -a ynh_ip6_net <<< "$(ynh_setting_get hotspot ip6_net)"
-  IFS='|' read -a ynh_ip6_dns0 <<< "$(ynh_setting_get hotspot ip6_dns0)"
-  IFS='|' read -a ynh_ip6_dns1 <<< "$(ynh_setting_get hotspot ip6_dns1)"
-  IFS='|' read -a ynh_ip4_dns0 <<< "$(ynh_setting_get hotspot ip4_dns0)"
-  IFS='|' read -a ynh_ip4_dns1 <<< "$(ynh_setting_get hotspot ip4_dns1)"
+  IFS='|' read -a ynh_dns <<< "$(ynh_setting_get hotspot dns)"
   IFS='|' read -a ynh_ip4_nat_prefix <<< "$(ynh_setting_get hotspot ip4_nat_prefix)"
+  for i in $(seq 0 $((${ynh_multissid} - 1))); do
+    ynh_ip6_dns[${i}]=""
+    ynh_ip4_dns[${i}]=""
+    for ip in ; do
+      if [[ "$ip" == *":"* ]]
+      then
+        ynh_ip6_dns[${i}]+="[$ip],"
+      else
+        ynh_ip4_dns[${i}]+="$ip,"
+      fi
+    done
+    ynh_ip6_dns[${i}]="${ynh_ip6_dns[${i}]%%*,}"
+    ynh_ip4_dns[${i}]="${ynh_ip4_dns[${i}]%%*,}"
+  done
 
   old_internet_device=$(ynh_setting_get hotspot internet_device)
   new_internet_device=$(ip route | awk '/default via/ { print $NF; }')

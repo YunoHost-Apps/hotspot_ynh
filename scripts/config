@@ -22,21 +22,26 @@ ynh_abort_if_errors
 
 final_path=$(ynh_app_setting_get $app final_path)
 
-set_right() {
-    if [ -f $1 ]
-    then
-        chown $app:$app $1
-        chmod go=--- $1
-    fi
-}
-
 #=================================================
 # SPECIFIC GETTERS FOR TOML SHORT KEY
 #=================================================
 
+get__no_antenna() {
+    if [[ $(iw_devices) == "" ]]
+    then
+        echo "value: false"
+    else
+        cat << EOF
+value: false
+ask: Wifi antenna correctly detected
+style: info
+EOF
+    fi
+}
+
 get__status() {
     local service_enabled=$(ynh_app_setting_get $app service_enabled)
-    if ip route get 1.2.3.4 | grep -q tun0
+    if systemctl is-active hostapd -q
     then
         if [ $service_enabled -eq 1 ]
         then
@@ -44,16 +49,13 @@ get__status() {
 style: success
 ask:
   en: |-
-    Your VPN is running :)
-
-    **IPv4:** \`$(curl https://ip.yunohost.org --silent)\`
-    **IPv6:** \`$(curl https://ip6.yunohost.org --silent)\`
+    Your Hotspot is running :)
 EOF
         else
             cat << EOF
 style: warning
 ask:
-  en: Your VPN is running, but it shouldn't !
+  en: Your Hotspot is running, but it shouldn't !
 EOF
         fi
     elif [ $service_enabled -eq 1 ]
@@ -62,91 +64,139 @@ EOF
 style: danger
 ask:
   en: |-
-    Your VPN is down ! Here are errors logged in the last 5 minutes
+    Your Hotspot is down ! Here are errors logged in the last 5 minutes
     \`\`\`
-$(journalctl -u openvpn@client -p0..3 --since "- 20 minutes" -o cat | sed 's/^/    /g' | tail -n 15)
+$(journalctl -u hostapd -n10 -o cat | sed 's/^/    /g')
     \`\`\`
 EOF
     else
         cat << EOF
 style: info
 ask:
-  en: Your VPN is down has expected.
+  en: Your Hotspot is down has expected.
 EOF
 
     fi
 }
 
-get__login_user() {
-    if [ -s /etc/openvpn/keys/credentials ]
+get__wifi_device() {
+    if [[ $(iw_devices) == "" ]]
     then
-        echo "$(sed -n 1p /etc/openvpn/keys/credentials)" 
+        echo "choices: []"
     else
-        echo ""
+        cat << EOF
+choices:
+EOF
+        for device in $(iw_devices)
+        do
+            echo "  $device: $device"
+        done
     fi
 }
 
-get__login_passphrase() {
-    if [ -s /etc/openvpn/keys/credentials ]
-    then
-        echo "$(sed -n 2p /etc/openvpn/keys/credentials)"
-    else
-        echo ""
-    fi
+get__array_settings() {
+    local short_setting="${1%%__*}"
+    local index="${1#*__}"
+    IFS='|' read -a values <<< "$(ynh_app_setting_get $app $short_setting)"
+    echo "value: \"${values[$(($index - 1))]:-}\""
 }
-
 
 #=================================================
 # SPECIFIC VALIDATORS FOR TOML SHORT KEYS
 #=================================================
-validate__login_user() {
-
-    if grep -q '^\s*auth-user-pass' ${config_file}
+is_unique() {
+    local short_setting="$1"
+    local short_setting__1="$1__1"
+    local short_setting__2="$1__2"
+    local short_setting__3="$1__3"
+    if [[ "${!short_setting__1}" == "${!short_setting__2}" ]]
     then
-        if [[ -z "${login_user}" ]]
-        then
-            echo 'A Username is needed with this configuration file'
-        fi
+        return 1
+    elif [ "$multissid" -ge "3" ] && [[ "${!short_setting__1}" == "${!short_setting__3}" ]]
+    then
+        return 1
+    elif [ "$multissid" -ge "3" ] && [[ "${!short_setting__2}" == "${!short_setting__3}" ]]
+    then
+        return 1
+    fi
+    return 0
+}
+validate__wifi_ssid() {
+    local wifi_ssid_var="wifi_ssid__$1"
+    if [ "$multissid" -ge "$1" ] && [[ -z "${!wifi_ssid_var}" ]]
+    then
+        echo 'SSID required'
+    fi
+    if ! is_unique wifi_ssid
+    then
+        echo 'All Wifi names must be unique'
+    fi
+}
+
+validate__wifi_passphrase() {
+    local wifi_secure_var="wifi_secure__$1"
+    local wifi_passphrase_var="wifi_passphrase__$1"
+    if [ "$multissid" -ge "$1" ] && [[ "${!wifi_secure_var}" == "1" ]] && [[ -z "${!wifi_passphrase_var}" ]]
+    then
+        echo 'In WPA2 secure mode, you need to provide a passphrase'
+    fi
+}
+
+validate__ip4_nat_prefix() {
+    local ip4_nat_prefix_var="ip4_nat_prefix__$1"
+    if [ "$multissid" -ge "$1" ] && [[ -z "${!ip4_nat_prefix_var}" ]]
+    then
+        echo 'Private IPv4 nat prefix required'
+    fi
+    if ! is_unique ip4_nat_prefix
+    then
+        echo 'All IPv4 prefix must be unique'
+    fi
+}
+
+validate__dns() {
+    local dns_var="dns__$1"
+    local ip6_net_var="dns__$1"
+    if [ "$multissid" -ge "$1" ] && ! echo "${!dns_var}" | grep -q "\."
+    then
+        echo 'IPv4 DNS required'
+    fi
+    if [ "$multissid" -ge "$1" ] && [[ -n "${!ip6_net_var}" ]] && ! echo "${!dns_var}" | grep -q ":"
+    then
+        echo 'IPv6 DNS required'
+    fi
+}
+
+validate__array_settings() {
+    local short_setting="${1%%__*}"
+    local index="${1#*__}"
+    if type -t validate__$short_setting | grep -q '^function$' 2>/dev/null;
+    then
+        validate__$short_setting $index
     fi
 }
 
 #=================================================
 # SPECIFIC SETTERS FOR TOML SHORT KEYS
 #=================================================
-set__login_user() {
-    if [ -n "${login_user}" ]
+set__array_settings() {
+    local short_setting="${1%%__*}"
+    local index="${1#*__}"
+    local type="${types[$1]}"
+    local value="${!1}"
+    if [[ "$type" == "string" ]] && [ "$multissid" -lt "$index" ]
     then
-        echo "${login_user}\n${login_passphrase}" > /etc/openvpn/keys/credentials
-        set_right /etc/openvpn/keys/credentials
-    else
-        echo "" > /etc/openvpn/keys/credentials
+        value=""
     fi
+    local values="$(ynh_app_setting_get $app $short_setting | awk 'BEGIN{FS=OFS="|"} {$'$index'="'${!1}'"}'1)"
+    ynh_app_setting_set --app=$app --key=$short_setting --value="$values"
+    ynh_print_info --message="Configuration key '$short_setting' edited in app settings"
 }
 
-set__login_passphrase() {
-    :
-}
 
 #=================================================
 # OVERWRITING VALIDATE STEP 
 #=================================================
-read_cube() {
-    tmp_dir=$(dirname "$1")
-    setting_value="$(jq --raw-output ".$2" "$1")"
-    if [[ "$setting_value" == "null" ]]
-    then
-        setting_value=''
-    # Save file in tmp dir
-    elif [[ "$2" == "crt_"* ]]
-    then
-        if [ -n "${setting_value}" ]
-        then
-            echo "${setting_value}" | sed 's/|/\n/g' > $tmp_dir/$2
-            setting_value="$tmp_dir/$2"
-        fi
-    fi
-    echo $setting_value
-}
 ynh_app_config_validate() {
     _ynh_app_config_validate
 }
@@ -157,25 +207,14 @@ ynh_app_config_validate() {
 ynh_app_config_apply() {
     
     # Stop vpn client
-    ynh_print_info --message="Stopping vpnclient in order to edit files"
-    touch /tmp/.ynh-vpnclient-stopped
-    /usr/local/bin/ynh-vpnclient stop
+    ynh_print_info --message="Stopping hotspot in order to edit files"
+    /usr/local/bin/ynh-hotspot stop
 
-    chown $app:$app /etc/openvpn/keys
-    chmod go=--- /etc/openvpn/keys
-    
     _ynh_app_config_apply
     
-    set_right /etc/openvpn/client.conf
-    set_right /etc/openvpn/keys/ca-server.crt
-    set_right /etc/openvpn/keys/user.crt
-    set_right /etc/openvpn/keys/user.key
-    set_right /etc/openvpn/keys/user_ta.key
-    
     # Start vpn client
-    ynh_print_info --message="Starting vpnclient service if needed"
-    /usr/local/bin/ynh-vpnclient start
-    rm -f /tmp/.ynh-vpnclient-stopped
+    ynh_print_info --message="Starting hotspot service if needed"
+    /usr/local/bin/ynh-hotspot start
 
 }
 
