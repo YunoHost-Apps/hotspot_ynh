@@ -28,10 +28,8 @@ ynh_print_info --message="Loading installation settings..."
 app=$YNH_APP_INSTANCE_NAME
 
 final_path=$(ynh_app_setting_get --app=$app --key=final_path)
-domain=$(ynh_app_setting_get --app=$app --key=domain)
 firmware_nonfree=$(ynh_app_setting_get --app=$app --key=firmware_nonfree)
 service_name=$(ynh_app_setting_get --app=$app --key=service_name)
-phpversion=$(ynh_app_setting_get --app=$app --key=phpversion)
 
 #=================================================
 # DECLARE DATA AND CONF FILES TO BACKUP
@@ -41,8 +39,6 @@ ynh_print_info --message="Declaring files to be backed up..."
 #=================================================
 # BACKUP THE APP MAIN DIR
 #=================================================
-
-ynh_backup --src_path="$final_path"
 
 ynh_backup --src_path="/etc/sudoers.d/${app}_ynh"
 
@@ -62,18 +58,6 @@ ynh_backup --src_path="/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl"
 ynh_backup --src_path="/usr/local/bin/$service_name"
 
 ynh_backup --src_path="/etc/init.d/hostapd"
-
-#=================================================
-# BACKUP THE NGINX CONFIGURATION
-#=================================================
-
-ynh_backup --src_path="/etc/nginx/conf.d/$domain.d/$app.conf"
-
-#=================================================
-# BACKUP THE PHP-FPM CONFIGURATION
-#=================================================
-
-ynh_backup --src_path="/etc/php/$phpversion/fpm/pool.d/$app.conf"
 
 #=================================================
 # SPECIFIC BACKUP

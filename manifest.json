@@ -18,22 +18,9 @@
         "yunohost": ">= 4.3.0"
     },
     "multi_instance": false,
-    "services": [
-        "nginx",
-        "php7.0-fpm"
-    ],
+    "services": [],
     "arguments": {
         "install" : [
-            {
-                "name": "domain",
-                "type": "domain",
-                "example": "domain.org"
-            },
-            {
-                "name": "path",
-                "type": "path",
-                "default": "/wifiadmin"
-            },
             {
                 "name": "wifi_ssid",
                 "type": "string",

@@ -40,8 +40,6 @@ ynh_abort_if_errors
 # RETRIEVE ARGUMENTS FROM THE MANIFEST
 #=================================================
 
-domain=$YNH_APP_ARG_DOMAIN
-path_url=$YNH_APP_ARG_PATH
 wifi_ssid=$YNH_APP_ARG_WIFI_SSID
 wifi_passphrase=$YNH_APP_ARG_WIFI_PASSPHRASE
 firmware_nonfree=$YNH_APP_ARG_FIRMWARE_NONFREE
@@ -55,12 +53,6 @@ service_name='ynh-hotspot'
 # CHECK IF THE APP CAN BE INSTALLED WITH THESE ARGS
 #=================================================
 ynh_script_progression --message="Validating installation parameters..."
-
-final_path=/var/www/$app
-test ! -e "$final_path" || ynh_die --message="This path already contains a folder"
-
-# Register (book) web path
-ynh_webpath_register --app=$app --domain=$domain --path_url=$path_url
 
 if [ $firmware_nonfree = "no" ]; then
 	firmware_nonfree=0
@@ -186,7 +178,6 @@ ynh_app_setting_set --app=$app --key=vpnclient --value=no
 
 if [[ -z $wifi_device ]]; then
 	ynh_app_setting_set --app=$app --key=service_enabled --value=0
-	wifi_device=none
 else
 	ynh_app_setting_set --app=$app --key=service_enabled --value=1
 fi
@@ -205,36 +196,6 @@ install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq
 
 # Copy init script
 install -o root -g root -m 0755 ../conf/$service_name /usr/local/bin/
-ynh_replace_string --match_string="__PHPVERSION__" --replace_string="${YNH_PHP_VERSION}" --target_file="/usr/local/bin/$service_name"
-
-#=================================================
-# COPY WEB SOURCES
-#=================================================
-ynh_script_progression --message="Setting up source files..."
-
-ynh_app_setting_set --app=$app --key=final_path --value=$final_path
-mkdir -pm 0755 $final_path
-cp -a ../sources/* ${final_path}/
-
-chmod 750 "$final_path"
-chmod o-rwx "$final_path"
-chown -R $app:www-data "$final_path"
-
-#=================================================
-# NGINX CONFIGURATION
-#=================================================
-ynh_script_progression --message="Configuring NGINX web server..."
-
-# Create a dedicated NGINX config
-ynh_add_nginx_config
-
-#=================================================
-# PHP-FPM CONFIGURATION
-#=================================================
-ynh_script_progression --message="Configuring PHP-FPM..."
-
-# Create a dedicated PHP-FPM config
-ynh_add_fpm_config
 
 #=================================================
 # CONFIGURE HOSTAPD
@@ -247,10 +208,6 @@ ynh_replace_string --match_string="^DAEMON_CONF=$" --replace_string="&/etc/hosta
 # like RPi, the version of hostapd is different and /etc/init.d/hostapd
 # isnt used ... instead the service is "pure systemd" ...
 echo "DAEMON_CONF=/etc/hostapd/hostapd.conf" > /etc/default/hostapd
-
-# Apply configuration
-ynh_add_config --template="config.php.tpl" --destination="$final_path/config.php"
-chown $app:$app "$final_path/config.php"
 
 # Set default inits
 # The boot order of these services are important, so they are disabled by default
@@ -276,7 +233,7 @@ ynh_script_progression --message="Configuring a systemd service..."
 ynh_add_systemd_config --service=$service_name
 
 # Remove IPv6 address set if there is a VPN installed
-if [[ $ip6_addr != none ]]; then
+if [[ $ip6_addr != "" ]]; then
 	if ip -6 address show dev tun0 2> /dev/null | grep -q "${ip6_addr}/"; then
 		ip address delete "${ip6_addr}/128" dev tun0 &> /dev/null
 	fi
@@ -295,7 +252,7 @@ yunohost service add $service_name --description "Creates a Wi-Fi access point" 
 ynh_script_progression --message="Starting a systemd service..."
 
 # Start a systemd service if device is present
-if [[ $wifi_device == none ]]; then
+if [[ $wifi_device == "" ]]; then
 	echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
 else
 	ynh_systemd_action --service_name=$service_name --action="start" --log_path=systemd #--line_match="Started YunoHost Wifi Hotspot"

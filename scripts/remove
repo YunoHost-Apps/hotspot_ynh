@@ -33,10 +33,8 @@ ynh_script_progression --message="Loading installation settings..."
 
 app=$YNH_APP_INSTANCE_NAME
 
-domain=$(ynh_app_setting_get --app=$app --key=domain)
 firmware_nonfree=$(ynh_app_setting_get --app=$app --key=firmware_nonfree)
 service_name=$(ynh_app_setting_get --app=$app --key=service_name)
-final_path=$(ynh_app_setting_get --app=$app --key=final_path)
 
 #=================================================
 # STANDARD REMOVE
@@ -74,8 +72,6 @@ ynh_remove_app_dependencies
 ynh_script_progression --message="Removing app main directory..."
 
 # Remove the app directory securely
-ynh_secure_remove --file="$final_path"
-
 ynh_secure_remove --file="/usr/local/bin/$service_name"
 
 ynh_secure_remove --file="/usr/local/bin/iw_multissid"
@@ -100,22 +96,6 @@ do
 done
 
 #=================================================
-# REMOVE NGINX CONFIGURATION
-#=================================================
-ynh_script_progression --message="Removing NGINX web server configuration..."
-
-# Remove the dedicated NGINX config
-ynh_remove_nginx_config
-
-#=================================================
-# REMOVE PHP-FPM CONFIGURATION
-#=================================================
-ynh_script_progression --message="Removing PHP-FPM configuration..."
-
-# Remove the dedicated PHP-FPM config
-ynh_remove_fpm_config
-
-#=================================================
 # CLOSE A PORT
 #=================================================
 
@@ -130,6 +110,19 @@ if yunohost firewall list | grep -q "\- 67$"
 then
 	ynh_script_progression --message="Closing port 67"
 	ynh_exec_warn_less yunohost firewall disallow TCP 67
+fi
+
+#=================================================
+# REMOVE LEGACY INTERFACES
+#=================================================
+if [ -d /etc/nginx/conf.d/*.d/$app.conf ]; then
+	ynh_secure_remove /etc/nginx/conf.d/*.d/$app.conf
+fi
+if [ -d /etc/php/*/fpm/pool.d/$app.conf ]; then
+	ynh_secure_remove /etc/php/*/fpm/pool.d/$app.conf
+fi
+if [ -d /var/www/$app ]; then
+	ynh_secure_remove /var/www/$app
 fi
 
 #=================================================

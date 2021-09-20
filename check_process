@@ -1,16 +1,14 @@
 ;; Test complet
 	; Manifest
-		domain="domain.tld"	(DOMAIN)
-		path="/path"	(PATH)
 		wifi_ssid="myNeutralNetwork"
 		wifi_passphrase="VhegT8oev0jZI"	(PASSWORD)
 		firmware_nonfree="no"
 	; Checks
 		pkg_linter=1
-		setup_sub_dir=1
-		setup_root=1
-		setup_nourl=0
-		setup_private=1
+		setup_sub_dir=0
+		setup_root=0
+		setup_nourl=1
+		setup_private=0
 		setup_public=0
 		upgrade=1
 		upgrade=1	from_commit=546fd17712c7a9df428a4f26e7f8e4394884aaaf

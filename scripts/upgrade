@@ -16,12 +16,8 @@ ynh_script_progression --message="Loading installation settings..."
 
 app=$YNH_APP_INSTANCE_NAME
 
-domain=$(ynh_app_setting_get --app=$app --key=domain)
-path_url=$(ynh_app_setting_get --app=$app --key=path)
-final_path=$(ynh_app_setting_get --app=$app --key=final_path)
 firmware_nonfree=$(ynh_app_setting_get --app=$app --key=firmware_nonfree)
 service_name=$(ynh_app_setting_get --app=$app --key=service_name)
-phpversion=$(ynh_app_setting_get --app=$app --key=phpversion)
 
 #=================================================
 # CHECK VERSION
@@ -58,22 +54,18 @@ ynh_systemd_action --service_name=$service_name --action="stop" --log_path=syste
 #=================================================
 ynh_script_progression --message="Ensuring downward compatibility..."
 
-if [ -z $phpversion ]; then
-	phpversion=$YNH_PHP_VERSION
-	ynh_app_setting_set --app=$app --key=phpversion --value=$phpversion
+if [ -d /etc/nginx/conf.d/*.d/$app.conf ]; then
+	ynh_secure_remove /etc/nginx/conf.d/*.d/$app.conf
 fi
-
-# If final_path doesn't exist, create it
-if [ -z "$final_path" ]; then
-	final_path=/var/www/$app
-	ynh_app_setting_set --app=$app --key=final_path --value=$final_path
+if [ -d /etc/php/*/fpm/pool.d/$app.conf ]; then
+	ynh_secure_remove /etc/php/*/fpm/pool.d/$app.conf
+fi
+if [ -d /var/www/$app ]; then
+	ynh_secure_remove /var/www/$app
 fi
 
 if [ -d /var/www/wifiadmin/ ]; then
-	mv /var/www/wifiadmin $final_path
-	mv /etc/php/7.0/fpm/pool.d/wifiadmin.conf /etc/php/$phpversion/fpm/pool.d/$app.conf
-	ynh_replace_string --match_string="wifiadmin" --replace_string="$app" --target_file=/etc/php/$phpversion/fpm/pool.d/$app.conf
-	ynh_systemd_action --service_name=php$phpversion-fpm --action=reload
+    ynh_secure_remove /var/www/wifiadmin/
 fi
 
 if [ $firmware_nonfree = "yes" ]; then
@@ -95,32 +87,7 @@ fi
 ynh_script_progression --message="Making sure dedicated system user exists..."
 
 # Create a dedicated user (if not existing)
-ynh_system_user_create --username=$app --home_dir=$final_path
-
-#=================================================
-# DOWNLOAD, CHECK AND UNPACK SOURCE
-#=================================================
-
-if [ "$upgrade_type" == "UPGRADE_APP" ]
-then
-	ynh_script_progression --message="Upgrading source files..."
-
-	# Download, check integrity, uncompress and patch the source from app.src
-	cp -a ../sources/* ${final_path}/
-fi
-
-# Restore permissions on app files
-chmod 750 "$final_path"
-chmod o-rwx "$final_path"
-chown -R $app:www-data "$final_path"
-
-#=================================================
-# NGINX CONFIGURATION
-#=================================================
-ynh_script_progression --message="Upgrading NGINX web server configuration..."
-
-# Create a dedicated NGINX config
-ynh_add_nginx_config
+ynh_system_user_create --username=$app
 
 #=================================================
 # UPGRADE DEPENDENCIES
@@ -135,14 +102,6 @@ else
 fi
 
 ynh_install_app_dependencies $pkg_dependencies
-
-#=================================================
-# PHP-FPM CONFIGURATION
-#=================================================
-ynh_script_progression --message="Upgrading PHP-FPM configuration..."
-
-# Create a dedicated PHP-FPM config
-ynh_add_fpm_config
 
 #=================================================
 # SPECIFIC UPGRADE
@@ -161,16 +120,6 @@ install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq
 # Copy init script
 install -o root -g root -m 0755 ../conf/$service_name /usr/local/bin/
 ynh_replace_string --match_string="__PHPVERSION__" --replace_string="${phpversion}" --target_file="/usr/local/bin/$service_name"
-
-#=================================================
-# UPDATE A CONFIG FILE
-#=================================================
-ynh_script_progression --message="Updating a configuration file..."
-
-ynh_add_config --template="config.php.tpl" --destination="$final_path/config.php"
-
-chmod 400 "$final_path/config.php"
-chown $app:$app "$final_path/config.php"
 
 #=================================================
 # SETUP SYSTEMD
@@ -199,24 +148,17 @@ wifi_device=$(bash ../conf/iw_devices | awk -F\| '{ print $1 }')
 
 if [[ -z $wifi_device ]]; then
 	ynh_app_setting_set --app=$app --key=service_enabled --value=0
-	wifi_device=none
+	wifi_device=""
 else
 	ynh_app_setting_set --app=$app --key=service_enabled --value=1
 fi
 
 # Start a systemd service if device is present
-if [[ $wifi_device == none ]]; then
+if [[ $wifi_device == "" ]]; then
 	echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
 else
 	ynh_systemd_action --service_name=$service_name --action="start" --log_path=systemd #--line_match="Started YunoHost Wifi Hotspot"
 fi
-
-#=================================================
-# RELOAD NGINX
-#=================================================
-ynh_script_progression --message="Reloading NGINX web server..."
-
-ynh_systemd_action --service_name=nginx --action=reload
 
 #=================================================
 # END OF SCRIPT
