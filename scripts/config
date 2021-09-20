@@ -73,7 +73,7 @@ EOF
         cat << EOF
 style: info
 ask:
-  en: Your Hotspot is down has expected.
+  en: Your Hotspot is down as expected.
 EOF
 
     fi

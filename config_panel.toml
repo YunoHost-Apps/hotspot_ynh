@@ -1,10 +1,10 @@
 version = "1.0"
 
 [main]
-name = "Auto-configuration"
+name = "Configuration"
 
     [main.service]
-    name = "Service"
+    name = ""
     optional = false
         
         [main.service.no_antenna]
