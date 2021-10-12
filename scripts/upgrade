@@ -54,16 +54,6 @@ ynh_systemd_action --service_name=$service_name --action="stop" --log_path=syste
 #=================================================
 ynh_script_progression --message="Ensuring downward compatibility..."
 
-if [ -d /etc/nginx/conf.d/*.d/$app.conf ]; then
-	ynh_secure_remove /etc/nginx/conf.d/*.d/$app.conf
-fi
-if [ -d /etc/php/*/fpm/pool.d/$app.conf ]; then
-	ynh_secure_remove /etc/php/*/fpm/pool.d/$app.conf
-fi
-if [ -d /var/www/$app ]; then
-	ynh_secure_remove /var/www/$app
-fi
-
 if [ -d /var/www/wifiadmin/ ]; then
     ynh_secure_remove /var/www/wifiadmin/
 fi
@@ -79,6 +69,29 @@ fi
 if [ -z $service_name ]; then
 	service_name="ynh-hotspot"
 	ynh_app_setting_set --app=$app --key=service_name --value=$service_name
+fi
+
+# Old stuff prior to 2.x
+
+if [ -f /etc/nginx/conf.d/*.d/$app.conf ]; then
+	ynh_secure_remove /etc/nginx/conf.d/*.d/$app.conf
+    ynh_systemd_action --service_name=nginx --action=reload
+fi
+if [ -f /etc/php/*/fpm/pool.d/$app.conf ]; then
+	ynh_secure_remove /etc/php/*/fpm/pool.d/$app.conf
+    ynh_systemd_action --service_name=php$YNH_DEFAULT_PHP_VERSION-fpm --action=reload
+fi
+
+if [ -d /var/www/$app ]; then
+	ynh_secure_remove /var/www/$app
+fi
+
+[ -z "$(ynh_app_setting_get $app domain)" ] || ynh_app_setting_delete $app domain
+[ -z "$(ynh_app_setting_get $app path)" ] || ynh_app_setting_delete $app path
+[ -z "$(ynh_app_setting_get $app final_path)" ] || ynh_app_setting_delete $app final_path
+
+if [ -e "/etc/sudoers.d/${app}_ynh" ]; then
+  ynh_secure_remove "/etc/sudoers.d/${app}_ynh"
 fi
 
 #=================================================
@@ -119,7 +132,6 @@ install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq
 
 # Copy init script
 install -o root -g root -m 0755 ../conf/$service_name /usr/local/bin/
-ynh_replace_string --match_string="__PHPVERSION__" --replace_string="${phpversion}" --target_file="/usr/local/bin/$service_name"
 
 #=================================================
 # SETUP SYSTEMD
@@ -144,7 +156,7 @@ yunohost service add $service_name --description "Creates a Wi-Fi access point" 
 ynh_script_progression --message="Starting a systemd service..."
 
 hot_reload_usb_wifi_cards
-wifi_device=$(bash ../conf/iw_devices | awk -F\| '{ print $1 }')
+wifi_device=$(iw_devices | awk -F\| '{ print $1 }')
 
 if [[ -z $wifi_device ]]; then
 	ynh_app_setting_set --app=$app --key=service_enabled --value=0

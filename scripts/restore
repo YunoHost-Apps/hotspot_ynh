@@ -55,14 +55,6 @@ else
 	pkg_dependencies="$pkg_dependencies $free_firmware_packages"
 fi
 
-ynh_restore_file --origin_path="/etc/sudoers.d/${app}_ynh"
-
-ynh_restore_file --origin_path="/usr/local/bin/iw_multissid"
-ynh_restore_file --origin_path="/usr/local/bin/iw_devices"
-ynh_restore_file --origin_path="/usr/local/bin/iw_ssids"
-ynh_restore_file --origin_path="/usr/local/bin/ipv6_expanded"
-ynh_restore_file --origin_path="/usr/local/bin/ipv6_compressed"
-
 for FILE in $(ls /etc/hostapd/hostapd.conf{.tpl?,} 2>/dev/null)
 do
     ynh_restore_file --origin_path="$FILE"
@@ -105,7 +97,7 @@ yunohost service add $service_name --description "Creates a Wi-Fi access point" 
 ynh_script_progression --message="Starting a systemd service..."
 
 hot_reload_usb_wifi_cards
-wifi_device=$(bash ../settings/conf/iw_devices | awk -F\| '{ print $1 }')
+wifi_device=$(iw_devices | awk -F\| '{ print $1 }')
 
 if [[ -z $wifi_device ]]; then
 	ynh_app_setting_set --app=$app --key=service_enabled --value=0

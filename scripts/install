@@ -1,22 +1,5 @@
 #!/bin/bash
 
-# Wifi Hotspot app for YunoHost
-# Copyright (C) 2015 Julien Vaubourg <julien@vaubourg.com>
-# Contribute at https://github.com/labriqueinternet/hotspot_ynh
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 #=================================================
 # GENERIC START
 #=================================================
@@ -54,20 +37,14 @@ service_name='ynh-hotspot'
 #=================================================
 ynh_script_progression --message="Validating installation parameters..."
 
-if [ $firmware_nonfree = "no" ]; then
-	firmware_nonfree=0
-elif [ $firmware_nonfree = "yes" ]; then
-	firmware_nonfree=1
-fi
-
 # Check arguments
-if [[ -z $wifi_ssid || -z $wifi_passphrase ]]; then
+if [[ -z $wifi_ssid ]] || [[ -z $wifi_passphrase ]]; then
 	ynh_die --message="Your Wifi Hotspot needs a name and a password"
 fi
 
 # Check passphrase length
-wifi_passphrase_length="$(echo -n "${wifi_passphrase}" | wc -c)"
-if [[ $wifi_passphrase_length -lt 8 || $wifi_passphrase_length -gt 63 ]]; then
+wifi_passphrase_length="$(wc -c <<< "${wifi_passphrase}")"
+if [[ $wifi_passphrase_length -lt 8 ]] || [[ $wifi_passphrase_length -gt 63 ]]; then
 	ynh_die --message="Your password must from 8 to 63 characters (WPA2 passphrase)"
 fi
 
@@ -81,7 +58,6 @@ fi
 #=================================================
 ynh_script_progression --message="Storing installation settings..."
 
-ynh_app_setting_set --app=$app --key=domain --value=$domain
 ynh_app_setting_set --app=$app --key=wifi_ssid --value="$wifi_ssid"
 ynh_app_setting_set --app=$app --key=wifi_passphrase --value="$wifi_passphrase"
 ynh_app_setting_set --app=$app --key=firmware_nonfree --value="$firmware_nonfree"
@@ -129,20 +105,10 @@ ynh_script_progression --message="Configuring system user..."
 # Create a system user
 ynh_system_user_create --username=$app
 
-# Ensure the system user has enough sudo permissions
-install -b -o root -g root -m 0440 ../conf/sudoers.conf /etc/sudoers.d/${app}_ynh
-ynh_replace_string --match_string="__HOTSPOT_SYSUSER__" --replace_string="${app}" --target_file="/etc/sudoers.d/${app}_ynh"
-
 #=================================================
-# INSTALL CUSTOM SCRIPTS
+# SPECIFIC SETTINGS
 #=================================================
-ynh_script_progression --message="Installing custom script..."
-
-install -o root -g root -m 0755 ../conf/iw_multissid /usr/local/bin/
-install -o root -g root -m 0755 ../conf/iw_devices /usr/local/bin/
-install -o root -g root -m 0755 ../conf/iw_ssids /usr/local/bin/
-install -o root -g root -m 0755 ../conf/ipv6_expanded /usr/local/bin/
-install -o root -g root -m 0755 ../conf/ipv6_compressed /usr/local/bin/
+ynh_script_progression --message="Configuring hotspot..."
 
 if [[ ! -v ip6_net ]]; then # if ip6_net not set
 	ip6_net=none
@@ -160,7 +126,7 @@ if [[ ! -v ip6_net ]]; then # if ip6_net not set
 fi
 
 hot_reload_usb_wifi_cards
-wifi_device=$(bash ../conf/iw_devices | awk -F\| '{ print $1 }')
+wifi_device=$(iw_devices | awk -F\| '{ print $1 }')
 
 ynh_app_setting_set --app=$app --key=multissid --value=1
 ynh_app_setting_set --app=$app --key=ssid_nb --value=1
@@ -185,7 +151,7 @@ fi
 #=================================================
 # COPY CONFIGS
 #=================================================
-ynh_script_progression --message="Copying configuration..."
+ynh_script_progression --message="Copying configuration files..."
 
 mkdir -pm 0755 /etc/dnsmasq.dhcpd/
 chown root: /etc/dnsmasq.dhcpd/
@@ -204,6 +170,8 @@ ynh_script_progression --message="Configuring hostapd..."
 
 ## hostapd
 ynh_replace_string --match_string="^DAEMON_CONF=$" --replace_string="&/etc/hostapd/hostapd.conf" --target_file=/etc/init.d/hostapd
+ynh_store_file_checksum --file="/etc/init.d/hostapd"
+
 # We also need to put this in /etc/default/hostapd because on some setup
 # like RPi, the version of hostapd is different and /etc/init.d/hostapd
 # isnt used ... instead the service is "pure systemd" ...
@@ -217,14 +185,6 @@ systemctl stop hostapd
 systemctl unmask hostapd # On some system e.g. RPi, for some reason hostapd is masked after install ...
 
 #=================================================
-# STORE THE CONFIG FILE CHECKSUM
-#=================================================
-ynh_script_progression --message="Storing the config file checksum..."
-
-# Calculate and store the config file checksum into the app settings
-ynh_store_file_checksum --file="/etc/init.d/hostapd"
-
-#=================================================
 # SETUP SYSTEMD
 #=================================================
 ynh_script_progression --message="Configuring a systemd service..."
@@ -233,6 +193,7 @@ ynh_script_progression --message="Configuring a systemd service..."
 ynh_add_systemd_config --service=$service_name
 
 # Remove IPv6 address set if there is a VPN installed
+# ... but why ? ...
 if [[ $ip6_addr != "" ]]; then
 	if ip -6 address show dev tun0 2> /dev/null | grep -q "${ip6_addr}/"; then
 		ip address delete "${ip6_addr}/128" dev tun0 &> /dev/null

@@ -40,14 +40,6 @@ ynh_print_info --message="Declaring files to be backed up..."
 # BACKUP THE APP MAIN DIR
 #=================================================
 
-ynh_backup --src_path="/etc/sudoers.d/${app}_ynh"
-
-ynh_backup --src_path="/usr/local/bin/iw_multissid"
-ynh_backup --src_path="/usr/local/bin/iw_devices"
-ynh_backup --src_path="/usr/local/bin/iw_ssids"
-ynh_backup --src_path="/usr/local/bin/ipv6_expanded"
-ynh_backup --src_path="/usr/local/bin/ipv6_compressed"
-
 for FILE in $(ls /etc/hostapd/hostapd.conf{.tpl?,} 2>/dev/null)
 do
 	ynh_backup --src_path="$FILE"

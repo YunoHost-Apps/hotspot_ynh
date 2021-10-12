@@ -37,18 +37,16 @@
                 "ask": {
                     "en": "Choose a wifi password (at least 8 characters for WPA2)",
                     "fr": "Choisissez un mot de passe wifi (au minimum 8 caractères pour le WPA2)"
-                },
-                "example": "VhegT8oev0jZI"
+                }
             },
             {
                 "name": "firmware_nonfree",
-                "type": "string",
+                "type": "boolean",
                 "ask": {
-                    "en": "Install non-free firmwares - in addition to the free ones - for the wifi dongle (yes/no)",
-                    "fr": "Installer des firmwares non-libres (en plus des libres) pour la clé USB wifi (yes/no)"
+                    "en": "Install non-free firmwares - in addition to the free ones - for the wifi dongle",
+                    "fr": "Installer des firmwares non-libres (en plus des libres) pour la clé USB wifi"
                 },
-                "choice": [ "yes", "no" ],
-                "default": "no"
+                "default": false
             }
         ]
     }

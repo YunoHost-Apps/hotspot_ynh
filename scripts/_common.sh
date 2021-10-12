@@ -4,13 +4,18 @@
 # COMMON VARIABLES
 #=================================================
 
-pkg_dependencies="sipcalc hostapd iptables iw dnsmasq kmod"
+pkg_dependencies="sipcalc hostapd iw kmod"
 nonfree_firmware_packages="firmware-atheros firmware-realtek firmware-ralink firmware-libertas atmel-firmware firmware-zd1211"
 free_firmware_packages="firmware-ath9k-htc"
 
 #=================================================
 # PERSONAL HELPERS
 #=================================================
+
+function iw_devices()
+{
+  echo -n $(/sbin/iw dev | grep Interface | grep -v 'mon\.' | grep -v hotspot | awk '{ print $NF }') | tr ' ' '|'
+}
 
 function check_armbian_nonfree_conflict()
 {
