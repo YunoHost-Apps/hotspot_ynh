@@ -15,7 +15,7 @@
         "url": "http://julien.vaubourg.com"
     },
     "requirements": {
-        "yunohost": ">= 4.3.0"
+        "yunohost": ">= 4.2.8"
     },
     "multi_instance": false,
     "services": [],
