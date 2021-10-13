@@ -45,9 +45,10 @@ name = "Configuration"
         choices.10 = "10"
         choices.11 = "11"
         visible = "! no_antenna"
+        help = "Changing the channel may help with signal strength depending on neighbour WiFis"
         
         [main.service.multissid]
-        ask = "Hotspot number"
+        ask = "Number of hotspots to broadcast"
         type = "select"
         choices.1 = "1"
         choices.2 = "2"
