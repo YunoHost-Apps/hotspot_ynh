@@ -308,7 +308,7 @@ if [ "$1" != restart ]; then
   for i in $(seq 0 $((${ynh_multissid} - 1))); do
     ynh_ip6_dns[${i}]=""
     ynh_ip4_dns[${i}]=""
-    for ip in ; do
+    for ip in $(echo "${ynh_dns[${i}]}" | tr ',' ' '); do
       if [[ "$ip" == *":"* ]]
       then
         ynh_ip6_dns[${i}]+="[$ip],"
@@ -316,8 +316,9 @@ if [ "$1" != restart ]; then
         ynh_ip4_dns[${i}]+="$ip,"
       fi
     done
-    ynh_ip6_dns[${i}]="${ynh_ip6_dns[${i}]%%*,}"
-    ynh_ip4_dns[${i}]="${ynh_ip4_dns[${i}]%%*,}"
+    # Remove trailing ,
+    ynh_ip6_dns[${i}]="${ynh_ip6_dns[${i}]%%,}"
+    ynh_ip4_dns[${i}]="${ynh_ip4_dns[${i}]%%,}"
   done
 
   old_internet_device=$(ynh_setting_get hotspot internet_device)
