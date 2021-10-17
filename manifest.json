@@ -26,6 +26,15 @@
     "arguments": {
         "install" : [
             {
+                "name": "disclaimer",
+                "type": "display_text",
+                "style": "info",
+                "ask": {
+                    "en": "After installation, you will be able to configure the application from YunoHost's webadmin in Applications > Hotspot > Configuration.",
+                    "fr": "Après l'application, vous pourrez configurer l'application depuis la webadmin de YunoHost dans Applications > Hotspot > Configuration."
+                }
+            },
+            {
                 "name": "wifi_ssid",
                 "type": "string",
                 "ask": {
