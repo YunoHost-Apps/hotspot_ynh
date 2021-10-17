@@ -119,15 +119,12 @@ ynh_script_progression --message="Configuring hotspot..."
 
 if [[ ! -v ip6_net ]]; then # if ip6_net not set
 	ip6_net=""
-	ip6_addr=""
 
 	if [[ -e /tmp/.ynh-vpnclient-started ]]; then
 		vpnclient_ip6_net=$(ynh_app_setting_get vpnclient ip6_net 2>&1)
-		vpnclient_ip6_addr=$(ynh_app_setting_get vpnclient ip6_addr 2>&1)
 
-		if [[ $vpnclient_ip6_net =~ :: && $vpnclient_ip6_addr =~ :: ]]; then
+		if [[ $vpnclient_ip6_net =~ :: ]]; then
 			ip6_net=${vpnclient_ip6_net}
-			ip6_addr=${vpnclient_ip6_addr}
 		fi
 	fi
 fi
@@ -142,7 +139,6 @@ ynh_app_setting_set --app=$app --key=wifi_secure --value=1
 ynh_app_setting_set --app=$app --key=wifi_passphrase --value="${wifi_passphrase}"
 ynh_app_setting_set --app=$app --key=wifi_device --value="${wifi_device}"
 ynh_app_setting_set --app=$app --key=wifi_channel --value=6
-ynh_app_setting_set --app=$app --key=ip6_addr --value="${ip6_addr}"
 ynh_app_setting_set --app=$app --key=ip6_firewall --value=1
 ynh_app_setting_set --app=$app --key=ip6_net --value="${ip6_net}"
 ynh_app_setting_set --app=$app --key=dns --value="2001:913::8,2001:910:800::12,80.67.188.188,80.67.169.12"
@@ -198,14 +194,6 @@ ynh_script_progression --message="Configuring a systemd service..."
 
 # Create a dedicated systemd config
 ynh_add_systemd_config --service=$service_name
-
-# Remove IPv6 address set if there is a VPN installed
-# ... but why ? ...
-if [[ $ip6_addr != "" ]]; then
-	if ip -6 address show dev tun0 2> /dev/null | grep -q "${ip6_addr}/"; then
-		ip address delete "${ip6_addr}/128" dev tun0 &> /dev/null
-	fi
-fi
 
 #=================================================
 # INTEGRATE SERVICE IN YUNOHOST

@@ -30,6 +30,12 @@ has_ip6delegatedprefix() {
   [[ -n "${ynh_ip6_net[${i}]}" ]] && [[ "${ynh_ip6_net[${i}]}" != "none" ]]
 }
 
+ip6addrfromdelegatedprefix() {
+  i=${1}
+
+  echo "${ynh_ip6_net[${i}]}${i}001"
+}
+
 is_nat_set() {
   internet_device=${1}
 
@@ -47,7 +53,7 @@ is_ip6addr_set() {
   i=${1}
   dev=$(devfromid "${i}")
 
-  ip address show dev "${dev}" 2> /dev/null | grep -q "${ynh_ip6_addr[${i}]}/64"
+  ip address show dev "${dev}" 2> /dev/null | grep -q "$(ip6addrfromdelegatedprefix $i)/64"
 }
 
 is_ip6firewall_set() {
@@ -114,8 +120,8 @@ set_ip6addr() {
   i=${1}
   dev=$(devfromid "${i}")
 
-  ip address delete "${ynh_ip6_addr[${i}]}/64" dev tun0 &> /dev/null
-  ip address add "${ynh_ip6_addr[${i}]}/64" dev "${dev}"
+  ip address delete "$(ip6addrfromdelegatedprefix $i)/64" dev tun0 &> /dev/null
+  ip address add "$(ip6addrfromdelegatedprefix $i)/64" dev "${dev}"
 }
 
 set_ip6firewall() {
@@ -213,7 +219,7 @@ unset_ip6addr() {
   i=${1}
   dev=$(devfromid "${i}")
 
-  ip address delete "${ynh_ip6_addr[${i}]}/64" dev "${dev}"
+  ip address delete "$(ip6addrfromdelegatedprefix $i)/64" dev "${dev}"
 }
 
 unset_ip6firewall() {
@@ -300,7 +306,6 @@ if [ "$1" != restart ]; then
   IFS='|' read -a ynh_wifi_ssid <<< "$(ynh_setting_get hotspot wifi_ssid)"
   IFS='|' read -a ynh_wifi_secure <<< "$(ynh_setting_get hotspot wifi_secure)"
   IFS='|' read -a ynh_wifi_passphrase <<< "$(ynh_setting_get hotspot wifi_passphrase)"
-  IFS='|' read -a ynh_ip6_addr <<< "$(ynh_setting_get hotspot ip6_addr)"
   IFS='|' read -a ynh_ip6_firewall <<< "$(ynh_setting_get hotspot ip6_firewall)"
   IFS='|' read -a ynh_ip6_net <<< "$(ynh_setting_get hotspot ip6_net)"
   IFS='|' read -a ynh_dns <<< "$(ynh_setting_get hotspot dns)"
@@ -534,7 +539,7 @@ case "$1" in
     for i in $(seq 0 $((${ynh_multissid} - 1))); do
       if has_ip6delegatedprefix ${i}; then
         echo "[INFO] hotspot${i}: IPv6 delegated prefix found"
-        echo "[INFO] hotspot${i}: IPv6 address computed from the delegated prefix: ${ynh_ip6_addr}"
+        echo "[INFO] hotspot${i}: IPv6 address computed from the delegated prefix: $(ip6addrfromdelegatedprefix $i)"
 
         if is_ip6addr_set ${i}; then
           echo "[OK] hotspot${i}: IPv6 address set"
