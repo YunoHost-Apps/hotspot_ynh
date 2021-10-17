@@ -47,8 +47,8 @@
                 "name": "firmware_nonfree",
                 "type": "boolean",
                 "ask": {
-                    "en": "Install non-free firmwares - in addition to the free ones - for the wifi dongle",
-                    "fr": "Installer des firmwares non-libres (en plus des libres) pour la clé USB wifi"
+                    "en": "Install non-free WiFi firmwares ? (Only needed if you're using a proprietary WiFi antenna/dongle)",
+                    "fr": "Installer des firmwares WiFi non-libres ? (Nécessaire seulement si vous utilisez une antenne/clé WiFi propriétaire)"
                 },
                 "default": false
             }
