@@ -73,6 +73,20 @@ fi
 
 # Old stuff prior to 2.x
 
+ip6_net=$(ynh_app_setting_get --app=$app --key=ip6_net)
+if [ "$ip6_net" == "none" ]
+then
+    ip6_net=""
+	ynh_app_setting_set --app=$app --key=ip6_net --value="$ip6_net"
+fi
+
+ip6_addr=$(ynh_app_setting_get --app=$app --key=ip6_addr)
+if [ "$ip6_addr" == "none" ]
+then
+    ip6_addr=""
+	ynh_app_setting_set --app=$app --key=ip6_addr --value="$ip6_addr"
+fi
+
 if [ -f /etc/nginx/conf.d/*.d/$app.conf ]; then
 	ynh_secure_remove /etc/nginx/conf.d/*.d/$app.conf
     ynh_systemd_action --service_name=nginx --action=reload

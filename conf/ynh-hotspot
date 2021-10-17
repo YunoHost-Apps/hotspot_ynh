@@ -27,7 +27,7 @@ has_vpnclient_app() {
 has_ip6delegatedprefix() {
   i=${1}
 
-  [ "${ynh_ip6_net[${i}]}" != none ]
+  [[ -n "${ynh_ip6_net[${i}]}" ]] && [[ "${ynh_ip6_net[${i}]}" != "none" ]]
 }
 
 is_nat_set() {
