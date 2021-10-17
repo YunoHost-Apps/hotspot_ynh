@@ -74,6 +74,13 @@ ynh_script_progression --message="Configuring firewall..."
 ynh_exec_warn_less yunohost firewall allow --no-upnp --ipv6 UDP 547
 ynh_exec_warn_less yunohost firewall allow --no-upnp UDP 67
 
+# Meh idk where to put this ... On RPi, by default wlan is blocked
+if test -e /usr/sbin/rfkill && rfkill | grep wlan | grep -q -w 'blocked'
+then
+    ynh_print_info "Unblocking wlan interface..."
+    /usr/sbin/rfkill unblock wlan
+fi
+
 #=================================================
 # INSTALL NONFREE FIRWARE IF REQUESTED
 #=================================================

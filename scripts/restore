@@ -35,6 +35,12 @@ service_name=$(ynh_app_setting_get --app=$app --key=service_name)
 #=================================================
 ynh_script_progression --message="Validating restoration parameters..."
 
+# Meh idk where to put this ... On RPi, by default wlan is blocked
+if test -e /usr/sbin/rfkill && rfkill | grep wlan | grep -q -w 'blocked'
+then
+    ynh_print_info "Unblocking wlan interface..."
+    /usr/sbin/rfkill unblock wlan
+fi
 
 #=================================================
 # STANDARD RESTORATION STEPS
