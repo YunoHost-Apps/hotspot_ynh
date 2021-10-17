@@ -29,9 +29,9 @@ final_path=$(ynh_app_setting_get $app final_path)
 get__no_antenna() {
     if [[ $(iw_devices) == "" ]]
     then
-        echo "value: false"
-    else
         echo "value: true"
+    else
+        echo "value: false"
     fi
 }
 
