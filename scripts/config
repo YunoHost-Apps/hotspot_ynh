@@ -31,11 +31,7 @@ get__no_antenna() {
     then
         echo "value: false"
     else
-        cat << EOF
-value: false
-ask: Wifi antenna correctly detected
-style: info
-EOF
+        echo "value: true"
     fi
 }
 
@@ -92,6 +88,8 @@ EOF
             echo "  $device: $device"
         done
     fi
+
+    echo "value: '$(ynh_app_setting_get $app wifi_device)'"
 }
 
 get__array_settings() {

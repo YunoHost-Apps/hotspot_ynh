@@ -45,7 +45,7 @@ ynh_abort_if_errors
 #=================================================
 # STOP SYSTEMD SERVICE
 #=================================================
-ynh_script_progression --message="Stopping a systemd service..."
+ynh_script_progression --message="Stopping the hotspot service ... (this may take some time)"
 
 ynh_systemd_action --service_name=$service_name --action="stop" --log_path=systemd #--line_match="Started YunoHost Wifi Hotspot"
 
@@ -160,7 +160,7 @@ yunohost service add $service_name --description "Creates a Wi-Fi access point" 
 #=================================================
 # START SYSTEMD SERVICE
 #=================================================
-ynh_script_progression --message="Starting a systemd service..."
+ynh_script_progression --message="Starting the hotspot service..."
 
 hot_reload_usb_wifi_cards
 wifi_device=$(iw_devices | awk -F\| '{ print $1 }')
