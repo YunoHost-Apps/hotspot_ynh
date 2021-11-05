@@ -1,22 +1,5 @@
 #!/bin/bash
 
-# Wifi Hotspot app for YunoHost
-# Copyright (C) 2015 Julien Vaubourg <julien@vaubourg.com>
-# Contribute at https://github.com/labriqueinternet/hotspot_ynh
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 #=================================================
 # GENERIC START
 #=================================================
@@ -33,10 +16,8 @@ ynh_script_progression --message="Loading installation settings..."
 
 app=$YNH_APP_INSTANCE_NAME
 
-domain=$(ynh_app_setting_get --app=$app --key=domain)
 firmware_nonfree=$(ynh_app_setting_get --app=$app --key=firmware_nonfree)
 service_name=$(ynh_app_setting_get --app=$app --key=service_name)
-final_path=$(ynh_app_setting_get --app=$app --key=final_path)
 
 #=================================================
 # STANDARD REMOVE
@@ -74,17 +55,7 @@ ynh_remove_app_dependencies
 ynh_script_progression --message="Removing app main directory..."
 
 # Remove the app directory securely
-ynh_secure_remove --file="$final_path"
-
 ynh_secure_remove --file="/usr/local/bin/$service_name"
-
-ynh_secure_remove --file="/usr/local/bin/iw_multissid"
-ynh_secure_remove --file="/usr/local/bin/iw_devices"
-ynh_secure_remove --file="/usr/local/bin/iw_ssids"
-ynh_secure_remove --file="/usr/local/bin/ipv6_expanded"
-ynh_secure_remove --file="/usr/local/bin/ipv6_compressed"
-
-ynh_secure_remove --file="/etc/sudoers.d/${app}_ynh"
 
 for FILE in $(ls /tmp/.ynh-hotspot-* 2>/dev/null)
 do
@@ -98,22 +69,6 @@ for FILE in $(ls /etc/hostapd/hostapd.conf{.tpl?,} 2>/dev/null)
 do
     ynh_secure_remove --file="$FILE"
 done
-
-#=================================================
-# REMOVE NGINX CONFIGURATION
-#=================================================
-ynh_script_progression --message="Removing NGINX web server configuration..."
-
-# Remove the dedicated NGINX config
-ynh_remove_nginx_config
-
-#=================================================
-# REMOVE PHP-FPM CONFIGURATION
-#=================================================
-ynh_script_progression --message="Removing PHP-FPM configuration..."
-
-# Remove the dedicated PHP-FPM config
-ynh_remove_fpm_config
 
 #=================================================
 # CLOSE A PORT

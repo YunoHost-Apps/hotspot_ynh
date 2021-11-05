@@ -27,7 +27,13 @@ has_vpnclient_app() {
 has_ip6delegatedprefix() {
   i=${1}
 
-  [ "${ynh_ip6_net[${i}]}" != none ]
+  [[ -n "${ynh_ip6_net[${i}]}" ]] && [[ "${ynh_ip6_net[${i}]}" != "none" ]]
+}
+
+ip6addrfromdelegatedprefix() {
+  i=${1}
+
+  echo "${ynh_ip6_net[${i}]}${i}001"
 }
 
 is_nat_set() {
@@ -47,7 +53,7 @@ is_ip6addr_set() {
   i=${1}
   dev=$(devfromid "${i}")
 
-  ip address show dev "${dev}" 2> /dev/null | grep -q "${ynh_ip6_addr[${i}]}/64"
+  ip address show dev "${dev}" 2> /dev/null | grep -q "$(ip6addrfromdelegatedprefix $i)/64"
 }
 
 is_ip6firewall_set() {
@@ -114,8 +120,8 @@ set_ip6addr() {
   i=${1}
   dev=$(devfromid "${i}")
 
-  ip address delete "${ynh_ip6_addr[${i}]}/64" dev tun0 &> /dev/null
-  ip address add "${ynh_ip6_addr[${i}]}/64" dev "${dev}"
+  ip address delete "$(ip6addrfromdelegatedprefix $i)/64" dev tun0 &> /dev/null
+  ip address add "$(ip6addrfromdelegatedprefix $i)/64" dev "${dev}"
 }
 
 set_ip6firewall() {
@@ -140,8 +146,7 @@ start_dhcpd6() {
 
   sed "s|<TPL:WIFI_DEVICE>|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
   sed "s|<TPL:IP6_NET>|${ynh_ip6_net[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
-  sed "s|<TPL:IP6_DNS0>|${ynh_ip6_dns0[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
-  sed "s|<TPL:IP6_DNS1>|${ynh_ip6_dns1[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
+  sed "s|<TPL:IP6_DNS>|${ynh_ip6_dns[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
 
   dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf -p0
 }
@@ -152,8 +157,7 @@ start_dhcpd4() {
 
   cp /etc/dnsmasq.dhcpd/dhcpdv4{.conf.tpl,-ssid${i}.conf}
 
-  sed "s|<TPL:IP4_DNS0>|${ynh_ip4_dns0[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
-  sed "s|<TPL:IP4_DNS1>|${ynh_ip4_dns1[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
+  sed "s|<TPL:IP4_DNS>|${ynh_ip4_dns[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
   sed "s|<TPL:WIFI_DEVICE>|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
   sed "s|<TPL:IP4_NAT_PREFIX>|${ynh_ip4_nat_prefix[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
 
@@ -215,7 +219,7 @@ unset_ip6addr() {
   i=${1}
   dev=$(devfromid "${i}")
 
-  ip address delete "${ynh_ip6_addr[${i}]}/64" dev "${dev}"
+  ip address delete "$(ip6addrfromdelegatedprefix $i)/64" dev "${dev}"
 }
 
 unset_ip6firewall() {
@@ -253,6 +257,7 @@ ynh_setting_get() {
   setting=${2}
 
   grep "^${setting}:" "/etc/yunohost/apps/${app}/settings.yml" | sed s/^[^:]\\+:\\s*[\"\']\\?// | sed s/\\s*[\"\']\$//
+  # '"
 }
 
 ynh_setting_set() {
@@ -301,14 +306,25 @@ if [ "$1" != restart ]; then
   IFS='|' read -a ynh_wifi_ssid <<< "$(ynh_setting_get hotspot wifi_ssid)"
   IFS='|' read -a ynh_wifi_secure <<< "$(ynh_setting_get hotspot wifi_secure)"
   IFS='|' read -a ynh_wifi_passphrase <<< "$(ynh_setting_get hotspot wifi_passphrase)"
-  IFS='|' read -a ynh_ip6_addr <<< "$(ynh_setting_get hotspot ip6_addr)"
   IFS='|' read -a ynh_ip6_firewall <<< "$(ynh_setting_get hotspot ip6_firewall)"
   IFS='|' read -a ynh_ip6_net <<< "$(ynh_setting_get hotspot ip6_net)"
-  IFS='|' read -a ynh_ip6_dns0 <<< "$(ynh_setting_get hotspot ip6_dns0)"
-  IFS='|' read -a ynh_ip6_dns1 <<< "$(ynh_setting_get hotspot ip6_dns1)"
-  IFS='|' read -a ynh_ip4_dns0 <<< "$(ynh_setting_get hotspot ip4_dns0)"
-  IFS='|' read -a ynh_ip4_dns1 <<< "$(ynh_setting_get hotspot ip4_dns1)"
+  IFS='|' read -a ynh_dns <<< "$(ynh_setting_get hotspot dns)"
   IFS='|' read -a ynh_ip4_nat_prefix <<< "$(ynh_setting_get hotspot ip4_nat_prefix)"
+  for i in $(seq 0 $((${ynh_multissid} - 1))); do
+    ynh_ip6_dns[${i}]=""
+    ynh_ip4_dns[${i}]=""
+    for ip in $(echo "${ynh_dns[${i}]}" | tr ',' ' '); do
+      if [[ "$ip" == *":"* ]]
+      then
+        ynh_ip6_dns[${i}]+="[$ip],"
+      else
+        ynh_ip4_dns[${i}]+="$ip,"
+      fi
+    done
+    # Remove trailing ,
+    ynh_ip6_dns[${i}]="${ynh_ip6_dns[${i}]%%,}"
+    ynh_ip4_dns[${i}]="${ynh_ip4_dns[${i}]%%,}"
+  done
 
   old_internet_device=$(ynh_setting_get hotspot internet_device)
   new_internet_device=$(ip route | awk '/default via/ { print $NF; }')
@@ -523,7 +539,7 @@ case "$1" in
     for i in $(seq 0 $((${ynh_multissid} - 1))); do
       if has_ip6delegatedprefix ${i}; then
         echo "[INFO] hotspot${i}: IPv6 delegated prefix found"
-        echo "[INFO] hotspot${i}: IPv6 address computed from the delegated prefix: ${ynh_ip6_addr}"
+        echo "[INFO] hotspot${i}: IPv6 address computed from the delegated prefix: $(ip6addrfromdelegatedprefix $i)"
 
         if is_ip6addr_set ${i}; then
           echo "[OK] hotspot${i}: IPv6 address set"

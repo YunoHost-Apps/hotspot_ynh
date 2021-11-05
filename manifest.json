@@ -14,25 +14,25 @@
         "email": "julien@vaubourg.com",
         "url": "http://julien.vaubourg.com"
     },
+    "upstream": {
+        "license": "AGPL-3.0",
+        "website": "https://internetcu.be/"
+    },
     "requirements": {
-        "yunohost": ">= 4.1.0"
+        "yunohost": ">= 4.3.2"
     },
     "multi_instance": false,
-    "services": [
-        "nginx",
-        "php7.0-fpm"
-    ],
+    "services": [],
     "arguments": {
         "install" : [
             {
-                "name": "domain",
-                "type": "domain",
-                "example": "domain.org"
-            },
-            {
-                "name": "path",
-                "type": "path",
-                "default": "/wifiadmin"
+                "name": "disclaimer",
+                "type": "display_text",
+                "style": "info",
+                "ask": {
+                    "en": "After installation, you will be able to configure the application from YunoHost's webadmin in Applications > Hotspot > Configuration.",
+                    "fr": "Après l'application, vous pourrez configurer l'application depuis la webadmin de YunoHost dans Applications > Hotspot > Configuration."
+                }
             },
             {
                 "name": "wifi_ssid",
@@ -50,18 +50,16 @@
                 "ask": {
                     "en": "Choose a wifi password (at least 8 characters for WPA2)",
                     "fr": "Choisissez un mot de passe wifi (au minimum 8 caractères pour le WPA2)"
-                },
-                "example": "VhegT8oev0jZI"
+                }
             },
             {
                 "name": "firmware_nonfree",
-                "type": "string",
+                "type": "boolean",
                 "ask": {
-                    "en": "Install non-free firmwares - in addition to the free ones - for the wifi dongle (yes/no)",
-                    "fr": "Installer des firmwares non-libres (en plus des libres) pour la clé USB wifi (yes/no)"
+                    "en": "Install non-free WiFi firmwares ? (Only needed if you're using a proprietary WiFi antenna/dongle)",
+                    "fr": "Installer des firmwares WiFi non-libres ? (Nécessaire seulement si vous utilisez une antenne/clé WiFi propriétaire)"
                 },
-                "choice": [ "yes", "no" ],
-                "default": "no"
+                "default": false
             }
         ]
     }
