@@ -19,7 +19,7 @@
         "website": "https://internetcu.be/"
     },
     "requirements": {
-        "yunohost": ">= 4.2.8"
+        "yunohost": ">= 4.3.2"
     },
     "multi_instance": false,
     "services": [],
