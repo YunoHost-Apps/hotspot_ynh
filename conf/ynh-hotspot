@@ -327,7 +327,7 @@ if [ "$1" != restart ]; then
   done
 
   old_internet_device=$(ynh_setting_get hotspot internet_device)
-  new_internet_device=$(ip route | awk '/default via/ { print $NF; }')
+  new_internet_device=$(ip --json route | jq -r '.[] | select(.dst == "default") | .dev')
 
   # Switch the NAT interface if there is a VPN
   ip link show dev tun0 &> /dev/null
