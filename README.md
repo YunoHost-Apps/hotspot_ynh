@@ -19,7 +19,7 @@ If you don't have YunoHost, please consult [the guide](https://yunohost.org/#/in
 * Combine with the [VPN Client app](https://github.com/labriqueinternet/vpnclient_ynh) to obtain a VPN-protected WiFi
 
 
-**Shipped version:** 2.0~ynh1
+**Shipped version:** 2.0~ynh2
 
 
 
