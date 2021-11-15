@@ -358,13 +358,13 @@ start)
     touch /tmp/.ynh-hotspot-started
 
     # Check old state of the ipv4 NAT settings
-    if [ ! -z "${old_gateway_interface}" -a "${new_gateway_interface}" != "${old_gateway_interface}" ] && is_nat_set "${old_gateway_interface}"; then
+    if [ -n "${old_gateway_interface}" ] && [ "${new_gateway_interface}" != "${old_gateway_interface}" ] && is_nat_set "${old_gateway_interface}"; then
 
         unset_nat "${old_gateway_interface}"
     fi
 
     # Set ipv4 NAT
-    if [ ! -z "${new_gateway_interface}" ] && ! is_nat_set "${new_gateway_interface}"; then
+    if [ -n "${new_gateway_interface}" ] && ! is_nat_set "${new_gateway_interface}"; then
         echo "Set NAT"
         set_nat "${new_gateway_interface}"
     fi
@@ -442,7 +442,7 @@ stop)
     echo "[hotspot] Stopping..."
     rm -f /tmp/.ynh-hotspot-started
 
-    if [ ! -z "${old_gateway_interface}" ] && is_nat_set "${old_gateway_interface}"; then
+    if [ -n "${old_gateway_interface}" ] && is_nat_set "${old_gateway_interface}"; then
         echo "Unset NAT"
         unset_nat "${old_gateway_interface}"
     fi
