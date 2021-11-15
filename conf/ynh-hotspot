@@ -44,21 +44,21 @@ is_nat_set() {
 
 is_ip4nataddr_set() {
     local i=${1}
-    dev=$(devfromid "${i}")
+    local dev=$(devfromid "${i}")
 
     ip address show dev "${dev}" 2>/dev/null | grep -q "${ip4_nat_prefix[${i}]}.1/24"
 }
 
 is_ip6addr_set() {
     local i=${1}
-    dev=$(devfromid "${i}")
+    local dev=$(devfromid "${i}")
 
     ip address show dev "${dev}" 2>/dev/null | grep -q "$(ip6addrfromdelegatedprefix $i)/64"
 }
 
 is_ip6firewall_set() {
     local i=${1}
-    dev=$(devfromid "${i}")
+    local dev=$(devfromid "${i}")
 
     ip6tables -w -nvL FORWARD | grep DROP | grep -q "${dev}"
 }
@@ -109,28 +109,34 @@ set_nat() {
     iptables -w -t nat -A POSTROUTING -o "${gateway_interface}" -j MASQUERADE
 }
 
-set_ip4nataddr() {
+set_ipaddr() {
     local i=${1}
     local dev=$(devfromid "${i}")
 
-    ip address add "${ip4_nat_prefix[${i}]}.1/24" dev "${dev}"
+    if ! is_ip4nataddr_set ${i}; then
+        echo "hotspot${i}: Set IPv4 NAT address"
+        ip address add "${ip4_nat_prefix[${i}]}.1/24" dev "${dev}"
+    fi
+
+    if has_ip6delegatedprefix ${i} && ! is_ip6addr_set ${i}; then
+        echo "hotspot${i}: Set IPv6 address"
+        ip address delete "$(ip6addrfromdelegatedprefix $i)/64" dev tun0 &>/dev/null
+        ip address add "$(ip6addrfromdelegatedprefix $i)/64" dev "${dev}"
+    fi
 }
 
-set_ip6addr() {
+set_ipfirewall() {
     local i=${1}
     local dev=$(devfromid "${i}")
 
-    ip address delete "$(ip6addrfromdelegatedprefix $i)/64" dev tun0 &>/dev/null
-    ip address add "$(ip6addrfromdelegatedprefix $i)/64" dev "${dev}"
-}
+    # Set ipv6 firewalling
+    if has_ip6delegatedprefix ${i} && [ "${ip6_firewall[${i}]}" -eq 1 ] && ! is_ip6firewall_set ${i}; then
+        echo "hotspot${i}: Set IPv6 firewalling"
+        ip6tables -w -A FORWARD -i "${dev}" -j ACCEPT
+        ip6tables -w -A FORWARD -o "${dev}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+        ip6tables -w -A FORWARD -o "${dev}" -j DROP
+    fi
 
-set_ip6firewall() {
-    local i=${1}
-    local dev=$(devfromid "${i}")
-
-    ip6tables -w -A FORWARD -i "${dev}" -j ACCEPT
-    ip6tables -w -A FORWARD -o "${dev}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-    ip6tables -w -A FORWARD -o "${dev}" -j DROP
 }
 
 set_forwarding() {
@@ -138,30 +144,35 @@ set_forwarding() {
     sysctl -w net.ipv4.conf.all.forwarding=1 >/dev/null
 }
 
-start_dhcpd6() {
+start_dhcpd() {
     local i=${1}
     local dev=$(devfromid "${i}")
 
-    cp /etc/dnsmasq.dhcpd/dhcpdv6{.conf.tpl,-ssid${i}.conf}
+    # Run DHCPv4 server
+    if ! is_dhcpd4_running ${i}; then
+        echo "hotspot${i}: Start the DHCPv4 server (dnsmasq)"
 
-    sed "s|__WIFI_DEVICE__|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
-    sed "s|__IP6_DNS__|${ip6_dns[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
-    sed "s|__IP6_NET__|${ip6_net[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
+        cp /etc/dnsmasq.dhcpd/dhcpdv4{.conf.tpl,-ssid${i}.conf}
 
-    dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf -p0
-}
+        sed "s|__WIFI_DEVICE__|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
+        sed "s|__IP4_DNS__|${ip4_dns[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
+        sed "s|__IP4_NAT_PREFIX__|${ip4_nat_prefix[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
 
-start_dhcpd4() {
-    local i=${1}
-    local dev=$(devfromid "${i}")
+        dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf -p0
+    fi
 
-    cp /etc/dnsmasq.dhcpd/dhcpdv4{.conf.tpl,-ssid${i}.conf}
+    # Run DHCPv6 server
+    if has_ip6delegatedprefix ${i} && ! is_dhcpd6_running ${i}; then
+        echo "hotspot${i}: Start the NDP and DHCPv6 server (dnsmasq)"
 
-    sed "s|__WIFI_DEVICE__|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
-    sed "s|__IP4_DNS__|${ip4_dns[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
-    sed "s|__IP4_NAT_PREFIX__|${ip4_nat_prefix[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
+        cp /etc/dnsmasq.dhcpd/dhcpdv6{.conf.tpl,-ssid${i}.conf}
 
-    dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf -p0
+        sed "s|__WIFI_DEVICE__|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
+        sed "s|__IP6_DNS__|${ip6_dns[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
+        sed "s|__IP6_NET__|${ip6_net[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
+
+        dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf -p0
+    fi
 }
 
 configure_hostapd() {
@@ -200,27 +211,31 @@ unset_nat() {
     iptables -w -t nat -D POSTROUTING -o "${gateway_interface}" -j MASQUERADE
 }
 
-unset_ip4nataddr() {
+unset_ipaddr() {
     local i=${1}
     local dev=$(devfromid "${i}")
 
-    ip address delete "${ip4_nat_prefix[${i}]}.1/24" dev "${dev}"
+    if is_ip4nataddr_set ${i}; then
+        echo "hotspot${i}: Unset IPv4 NAT address"
+        ip address delete "${ip4_nat_prefix[${i}]}.1/24" dev "${dev}"
+    fi
+
+    if has_ip6delegatedprefix ${i} && is_ip6addr_set ${i}; then
+        echo "hotspot${i}: Unset IPv6 address"
+        ip address delete "$(ip6addrfromdelegatedprefix $i)/64" dev "${dev}"
+    fi
 }
 
-unset_ip6addr() {
+unset_ipfirewall() {
     local i=${1}
     local dev=$(devfromid "${i}")
 
-    ip address delete "$(ip6addrfromdelegatedprefix $i)/64" dev "${dev}"
-}
-
-unset_ip6firewall() {
-    local i=${1}
-    local dev=$(devfromid "${i}")
-
-    ip6tables -w -D FORWARD -i "${dev}" -j ACCEPT
-    ip6tables -w -D FORWARD -o "${dev}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-    ip6tables -w -D FORWARD -o "${dev}" -j DROP
+    if has_ip6delegatedprefix ${i} && [ "${ip6_firewall[${i}]}" -eq 1 ] && is_ip6firewall_set ${i}; then
+        echo "hotspot${i}: Unset IPv6 firewalling"
+        ip6tables -w -D FORWARD -i "${dev}" -j ACCEPT
+        ip6tables -w -D FORWARD -o "${dev}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+        ip6tables -w -D FORWARD -o "${dev}" -j DROP
+    fi
 }
 
 unset_forwarding() {
@@ -228,14 +243,23 @@ unset_forwarding() {
     sysctl -w net.ipv4.conf.all.forwarding=0 >/dev/null
 }
 
-stop_dhcpd6() {
-    kill $(ps aux | grep 'dhcpdv6-ssid' | grep -v grep | awk '{ print $2 }')
-    rm -f /etc/dnsmasq.d/dhcpdv6-ssid*.conf
+stop_dhcpd() {
+    local i=${1}
+
+    if is_dhcpd6_running ${i}; then
+        echo "hotspot${i}: Stop the NDP and DHCPv6 server (dnsmasq)"
+        kill $(ps aux | grep 'dhcpdv6-ssid' | grep -v grep | awk '{ print $2 }')
+        rm -f /etc/dnsmasq.d/dhcpdv6-ssid*.conf
+    fi
+
+    if is_dhcpd4_running ${i}; then
+        echo "hotspot${i}: Stop the DHCPv4 server (dnsmasq)"
+        kill $(ps aux | grep 'dhcpdv4-ssid' | grep -v grep | awk '{ print $2 }')
+        rm -f /etc/dnsmasq.d/dhcpdv4-ssid*.conf
+    fi
 }
 
 stop_dhcpd4() {
-    kill $(ps aux | grep 'dhcpdv4-ssid' | grep -v grep | awk '{ print $2 }')
-    rm -f /etc/dnsmasq.d/dhcpdv4-ssid*.conf
 }
 
 stop_hostapd() {
@@ -370,10 +394,8 @@ start)
     fi
 
     # Set forwarding for ipv6 and ipv4
-    if ! is_forwarding_set; then
-        echo "Set forwarding"
-        set_forwarding
-    fi
+    echo "Set forwarding"
+    set_forwarding
 
     # Run hostapd
     if ! is_hostapd_running; then
@@ -402,37 +424,9 @@ start)
 
     # For each registred ssid
     for i in $(seq 0 $((${multissid} - 1))); do
-
-        # Set ipv4 NAT address
-        if ! is_ip4nataddr_set ${i}; then
-            echo "hotspot${i}: Set IPv4 NAT address"
-            set_ip4nataddr ${i}
-        fi
-
-        # Set the ipv6 address
-        if has_ip6delegatedprefix ${i} && ! is_ip6addr_set ${i}; then
-            echo "hotspot${i}: Set IPv6 address"
-            set_ip6addr ${i}
-        fi
-
-        # Set ipv6 firewalling
-        if has_ip6delegatedprefix ${i} && [ "${ip6_firewall[${i}]}" -eq 1 ] && ! is_ip6firewall_set ${i}; then
-            echo "hotspot${i}: Set IPv6 firewalling"
-            set_ip6firewall ${i}
-        fi
-
-        # Run DHCPv6 server
-        if has_ip6delegatedprefix ${i} && ! is_dhcpd6_running ${i}; then
-            echo "hotspot${i}: Start the NDP and DHCPv6 server (dnsmasq)"
-            start_dhcpd6 ${i}
-        fi
-
-        # Run DHCPv4 server
-        if ! is_dhcpd4_running ${i}; then
-            echo "hotspot${i}: Start the DHCPv4 server (dnsmasq)"
-            start_dhcpd4 ${i}
-        fi
-
+        set_ipaddr ${i}
+        set_ipfirewall ${i}
+        start_dhcpd ${i}
     done
 
     # Update dynamic settings
@@ -447,36 +441,13 @@ stop)
         unset_nat "${old_gateway_interface}"
     fi
 
-    if is_forwarding_set; then
-        echo "Unset forwarding"
-        unset_forwarding
-    fi
+    echo "Unset forwarding"
+    unset_forwarding
 
     for i in $(seq 0 $((${multissid} - 1))); do
-        if is_ip4nataddr_set ${i}; then
-            echo "hotspot${i}: Unset IPv4 NAT address"
-            unset_ip4nataddr ${i}
-        fi
-
-        if has_ip6delegatedprefix ${i} && is_ip6addr_set ${i}; then
-            echo "hotspot${i}: Unset IPv6 address"
-            unset_ip6addr ${i}
-        fi
-
-        if has_ip6delegatedprefix ${i} && [ "${ip6_firewall[${i}]}" -eq 1 ] && is_ip6firewall_set ${i}; then
-            echo "hotspot${i}: Unset IPv6 firewalling"
-            unset_ip6firewall ${i}
-        fi
-
-        if is_dhcpd6_running ${i}; then
-            echo "hotspot${i}: Stop the NDP and DHCPv6 server (dnsmasq)"
-            stop_dhcpd6 ${i}
-        fi
-
-        if is_dhcpd4_running ${i}; then
-            echo "hotspot${i}: Stop the DHCPv4 server (dnsmasq)"
-            stop_dhcpd4 ${i}
-        fi
+        unset_ipaddr ${i}
+        unset_ipfirewall ${i}
+        stop_dhcpd ${i}
     done
 
     if is_hostapd_running; then
