@@ -364,12 +364,6 @@ case "$1" in
       echo "[hotspot] Starting..."
       touch /tmp/.ynh-hotspot-started
 
-      if [ "${new_internet_device}" == tun0 ]; then
-        ynh_setting_set hotspot vpnclient yes
-      else
-        ynh_setting_set hotspot vpnclient no
-      fi
-
       # Check old state of the ipv4 NAT settings
       if [ ! -z "${old_internet_device}" -a "${new_internet_device}" != "${old_internet_device}" ]\
          && is_nat_set "${old_internet_device}"; then
