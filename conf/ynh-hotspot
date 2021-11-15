@@ -387,6 +387,7 @@ case "$1" in
         start_hostapd ${i}
 
         if [ ! $? -eq 0 ]; then
+          journalctl -u hostapd -n 100 --no-hostname --no-pager
           exit 1
         fi
 
