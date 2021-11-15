@@ -144,9 +144,9 @@ start_dhcpd6() {
 
   cp /etc/dnsmasq.dhcpd/dhcpdv6{.conf.tpl,-ssid${i}.conf}
 
-  sed "s|<TPL:WIFI_DEVICE>|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
-  sed "s|<TPL:IP6_NET>|${ynh_ip6_net[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
-  sed "s|<TPL:IP6_DNS>|${ynh_ip6_dns[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
+  sed "s|__WIFI_DEVICE__|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
+  sed "s|__IP6_NET__|${ynh_ip6_net[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
+  sed "s|__IP6_DNS__|${ynh_ip6_dns[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
 
   dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf -p0
 }
@@ -157,9 +157,9 @@ start_dhcpd4() {
 
   cp /etc/dnsmasq.dhcpd/dhcpdv4{.conf.tpl,-ssid${i}.conf}
 
-  sed "s|<TPL:IP4_DNS>|${ynh_ip4_dns[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
-  sed "s|<TPL:WIFI_DEVICE>|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
-  sed "s|<TPL:IP4_NAT_PREFIX>|${ynh_ip4_nat_prefix[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
+  sed "s|__IP4_DNS__|${ynh_ip4_dns[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
+  sed "s|__WIFI_DEVICE__|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
+  sed "s|__IP4_NAT_PREFIX__|${ynh_ip4_nat_prefix[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
 
   dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf -p0
 }
@@ -170,27 +170,27 @@ start_hostapd() {
   ethaddr=$(ip link show dev "${ynh_wifi_device}" | grep link/ether | awk -F: '{ printf "02:%s:%s:%s:%s:00", $2, $3, $4, $5 }')
   ip link set addr "${ethaddr}" dev "${ynh_wifi_device}"
 
-  sed "s|<TPL:WIFI_DEVICE>|${ynh_wifi_device}|g" -i /etc/hostapd/hostapd.conf
-  sed "s|<TPL:WIFI_CHANNEL>|${ynh_wifi_channel}|g" -i /etc/hostapd/hostapd.conf
-  sed "s|<TPL:N_COMMENT>||g" -i /etc/hostapd/hostapd.conf
+  sed "s|__WIFI_DEVICE__|${ynh_wifi_device}|g" -i /etc/hostapd/hostapd.conf
+  sed "s|__WIFI_CHANNEL__|${ynh_wifi_channel}|g" -i /etc/hostapd/hostapd.conf
+  sed "s|__N_COMMENT__||g" -i /etc/hostapd/hostapd.conf
 
   for i in $(seq 0 $((${ynh_multissid} - 1))); do
     cp /etc/hostapd/hostapd.conf{.tpl2,.tmp}
 
-    sed "s|<TPL:WIFI_INTERFACE>|hotspot${i}|g" -i /etc/hostapd/hostapd.conf.tmp
-    sed "s|<TPL:WIFI_SSID>|${ynh_wifi_ssid[${i}]}|g" -i /etc/hostapd/hostapd.conf.tmp
-    sed "s|<TPL:WIFI_PASSPHRASE>|${ynh_wifi_passphrase[${i}]}|g" -i /etc/hostapd/hostapd.conf.tmp
+    sed "s|__WIFI_INTERFACE__|hotspot${i}|g" -i /etc/hostapd/hostapd.conf.tmp
+    sed "s|__WIFI_SSID__|${ynh_wifi_ssid[${i}]}|g" -i /etc/hostapd/hostapd.conf.tmp
+    sed "s|__WIFI_PASSPHRASE__|${ynh_wifi_passphrase[${i}]}|g" -i /etc/hostapd/hostapd.conf.tmp
 
     if [ "${ynh_wifi_secure[${i}]}" -eq 1 ]; then
-      sed "s|<TPL:SEC_COMMENT>||g" -i /etc/hostapd/hostapd.conf.tmp
+      sed "s|__SEC_COMMENT__||g" -i /etc/hostapd/hostapd.conf.tmp
     else
-      sed "s|<TPL:SEC_COMMENT>|#|g" -i /etc/hostapd/hostapd.conf.tmp
+      sed "s|__SEC_COMMENT__|#|g" -i /etc/hostapd/hostapd.conf.tmp
     fi
 
     if [ "${i}" -eq 0 ]; then
-      sed "s|<TPL:BSS_COMMENT>|#|g" -i /etc/hostapd/hostapd.conf.tmp
+      sed "s|__BSS_COMMENT__|#|g" -i /etc/hostapd/hostapd.conf.tmp
     else
-      sed "s|<TPL:BSS_COMMENT>||g" -i /etc/hostapd/hostapd.conf.tmp
+      sed "s|__BSS_COMMENT__||g" -i /etc/hostapd/hostapd.conf.tmp
     fi
 
     cat /etc/hostapd/hostapd.conf.tmp >> /etc/hostapd/hostapd.conf

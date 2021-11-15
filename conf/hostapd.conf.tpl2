@@ -1,8 +1,7 @@
-<TPL:BSS_COMMENT>bss=<TPL:WIFI_INTERFACE>
-ssid=<TPL:WIFI_SSID>
-<TPL:SEC_COMMENT>wpa=2
-<TPL:SEC_COMMENT>wpa_passphrase=<TPL:WIFI_PASSPHRASE>
-<TPL:SEC_COMMENT>wpa_key_mgmt=WPA-PSK
-<TPL:SEC_COMMENT>wpa_pairwise=TKIP
-<TPL:SEC_COMMENT>rsn_pairwise=CCMP
-
+__BSS_COMMENT__bss=__WIFI_INTERFACE__
+ssid=__WIFI_SSID__
+__SEC_COMMENT__wpa=2
+__SEC_COMMENT__wpa_passphrase=__WIFI_PASSPHRASE__
+__SEC_COMMENT__wpa_key_mgmt=WPA-PSK
+__SEC_COMMENT__wpa_pairwise=TKIP
+__SEC_COMMENT__rsn_pairwise=CCMP

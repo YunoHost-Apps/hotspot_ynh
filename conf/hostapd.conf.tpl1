@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-interface=<TPL:WIFI_DEVICE>
+interface=__WIFI_DEVICE__
 hw_mode=g
-<TPL:N_COMMENT>ieee80211n=1
-<TPL:N_COMMENT>wmm_enabled=1
+__N_COMMENT__ieee80211n=1
+__N_COMMENT__wmm_enabled=1
 macaddr_acl=0
 auth_algs=1
 ignore_broadcast_ssid=0
-channel=<TPL:WIFI_CHANNEL>
+channel=__WIFI_CHANNEL__
 
