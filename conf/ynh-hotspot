@@ -67,19 +67,19 @@ is_forwarding_set() {
     local ip6=$(sysctl net.ipv6.conf.all.forwarding | awk '{ print $NF; }')
     local ip4=$(sysctl net.ipv4.conf.all.forwarding | awk '{ print $NF; }')
 
-    [ "${ip6}" -eq 1 -a "${ip4}" -eq 1 ]
+    [ "${ip6}" -eq 1 ] && [ "${ip4}" -eq 1 ]
 }
 
 is_dhcpd6_running() {
     local i=${1}
 
-    $(ps aux | grep "dhcpdv6-ssid${i}" | grep -qv grep)
+    ps aux | grep "dhcpdv6-ssid${i}" | grep -qv grep
 }
 
 is_dhcpd4_running() {
     local i=${1}
 
-    $(ps aux | grep "dhcpdv4-ssid${i}" | grep -qv grep)
+    ps aux | grep "dhcpdv4-ssid${i}" | grep -qv grep
 }
 
 is_hostapd_running() {
@@ -145,8 +145,8 @@ start_dhcpd6() {
     cp /etc/dnsmasq.dhcpd/dhcpdv6{.conf.tpl,-ssid${i}.conf}
 
     sed "s|__WIFI_DEVICE__|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
-    sed "s|__IP6_NET__|${ip6_net[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
     sed "s|__IP6_DNS__|${ip6_dns[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
+    sed "s|__IP6_NET__|${ip6_net[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
 
     dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf -p0
 }
@@ -157,8 +157,8 @@ start_dhcpd4() {
 
     cp /etc/dnsmasq.dhcpd/dhcpdv4{.conf.tpl,-ssid${i}.conf}
 
-    sed "s|__IP4_DNS__|${ip4_dns[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
     sed "s|__WIFI_DEVICE__|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
+    sed "s|__IP4_DNS__|${ip4_dns[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
     sed "s|__IP4_NAT_PREFIX__|${ip4_nat_prefix[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
 
     dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf -p0
