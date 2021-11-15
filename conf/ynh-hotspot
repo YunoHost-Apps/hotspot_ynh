@@ -253,11 +253,19 @@ stop_hostapd() {
 ## Tools
 
 ynh_setting_get() {
-  app=${1}
-  setting=${2}
 
-  grep "^${setting}:" "/etc/yunohost/apps/${app}/settings.yml" | sed s/^[^:]\\+:\\s*[\"\']\\?// | sed s/\\s*[\"\']\$//
-  # '"
+  APP="$1" KEY="$2" python3 - <<EOF
+import os, yaml, sys
+app = os.environ['APP']
+key = os.environ['KEY']
+setting_file = "/etc/yunohost/apps/%s/settings.yml" % app
+assert os.path.exists(setting_file), "Setting file %s does not exists ?" % setting_file
+with open(setting_file) as f:
+    settings = yaml.safe_load(f)
+    if key in settings:
+        print(settings[key])
+EOF
+
 }
 
 ynh_setting_set() {
@@ -267,10 +275,10 @@ ynh_setting_set() {
     # performance reasons (it takes a few second to run every yunohost commands)
     # and to remove the need for the infamous '--need-lock' option/issue.
 
-    app="$1" key="$2" value="${3:-}" python3 - <<EOF
+    APP="$1" KEY="$2" VALUE="${3:-}" python3 - <<EOF
 import os, yaml, sys
-app = os.environ['app']
-key, value = os.environ['key'], os.environ.get('value', None)
+app = os.environ['APP']
+key, value = os.environ['KEY'], os.environ.get('VALUE', None)
 setting_file = "/etc/yunohost/apps/%s/settings.yml" % app
 assert os.path.exists(setting_file), "Setting file %s does not exists ?" % setting_file
 with open(setting_file) as f:
