@@ -65,7 +65,7 @@ done
 # Remove confs
 ynh_secure_remove --file="/etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl"
 ynh_secure_remove --file="/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl"
-for FILE in $(ls /etc/hostapd/hostapd.conf{.tpl?,} 2>/dev/null)
+for FILE in $(ls /etc/hostapd/hostapd.*.conf 2>/dev/null)
 do
     ynh_secure_remove --file="$FILE"
 done
