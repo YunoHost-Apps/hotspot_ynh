@@ -412,7 +412,7 @@ start)
         sleep 1
 
         i=0
-        while ! ip link show dev hotspot1 &>/dev/null; do
+        while ! ip link show dev "${new_gateway_interface}" &>/dev/null; do
             sleep 1
             if [ ${i} -gt 20 ]; then
                 echo "Failed to see hotspot interface showing up in 'ip a'"
