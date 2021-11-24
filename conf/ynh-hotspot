@@ -260,6 +260,7 @@ stop_dhcpd() {
 }
 
 stop_dhcpd4() {
+    :
 }
 
 stop_hostapd() {
