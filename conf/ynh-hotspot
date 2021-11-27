@@ -411,16 +411,20 @@ start)
 
         sleep 1
 
-        i=0
-        while ! ip link show dev "${new_gateway_interface}" &>/dev/null; do
-            sleep 1
-            if [ ${i} -gt 20 ]; then
-                echo "Failed to see hotspot interface showing up in 'ip a'"
-                stop_hostapd
-                exit 1
-            fi
-            i=$(($i + 1))
-        done
+        # On single SSID, the hotspot interface will be wlan0 (or similar)
+        # in multissid, we additionally want to make sure that at least hotspot1 started
+        if [ "${multissid}" -gt 1 ]; then
+            i=0
+            while ! ip link show dev "hotspot1" &>/dev/null; do
+                sleep 1
+                if [ ${i} -gt 20 ]; then
+                    echo "Failed to see hotspot interface showing up in 'ip a'"
+                    stop_hostapd
+                    exit 1
+                fi
+                i=$(($i + 1))
+            done
+        fi
     fi
 
     # For each registred ssid
