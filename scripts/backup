@@ -40,10 +40,11 @@ ynh_print_info --message="Declaring files to be backed up..."
 # BACKUP THE APP MAIN DIR
 #=================================================
 
-for FILE in $(ls /etc/hostapd/hostapd.conf{.tpl?,} 2>/dev/null)
+for FILE in $(ls /etc/hostapd/hostapd.*.conf 2>/dev/null)
 do
 	ynh_backup --src_path="$FILE"
 done
+
 ynh_backup --src_path="/etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl"
 ynh_backup --src_path="/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl"
 

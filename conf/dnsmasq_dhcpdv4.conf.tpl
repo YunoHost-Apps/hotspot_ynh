@@ -1,25 +1,10 @@
 # Wifi Hotspot app for YunoHost 
-# Copyright (C) 2015 Julien Vaubourg <julien@vaubourg.com>
-# Contribute at https://github.com/labriqueinternet/hotspot_ynh
-# 
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-# 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Affero General Public License for more details.
-# 
-# You should have received a copy of the GNU Affero General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Do DHCP for this subnet.
-dhcp-range=interface:<TPL:WIFI_DEVICE>,<TPL:IP4_NAT_PREFIX>.2,<TPL:IP4_NAT_PREFIX>.254,4h
+dhcp-range=interface:__WIFI_DEVICE__,__IP4_NAT_PREFIX__.2,__IP4_NAT_PREFIX__.254,4h
 
 # Send DHCPv4 option.
-dhcp-option=option:dns-server,<TPL:IP4_DNS>
+dhcp-option=option:dns-server,__IP4_DNS__
 
 # Set the DHCP server to authoritative mode. In this mode it will barge in
 # and take over the lease for any client which broadcasts on the network,
