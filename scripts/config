@@ -83,7 +83,7 @@ get__wifi_device() {
         cat << EOF
 choices:
 EOF
-        for device in $(iw_devices)
+        for device in $(iw_devices | sed "s/,/ /g")
         do
             echo "  $device: $device"
         done
