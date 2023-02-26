@@ -5,7 +5,8 @@ It shall NOT be edited by hand.
 
 # Wifi Hotspot for YunoHost
 
-[![Integration level](https://dash.yunohost.org/integration/hotspot.svg)](https://dash.yunohost.org/appci/app/hotspot) ![Working status](https://ci-apps.yunohost.org/ci/badges/hotspot.status.svg) ![Maintenance status](https://ci-apps.yunohost.org/ci/badges/hotspot.maintain.svg)  
+[![Integration level](https://dash.yunohost.org/integration/hotspot.svg)](https://dash.yunohost.org/appci/app/hotspot) ![Working status](https://ci-apps.yunohost.org/ci/badges/hotspot.status.svg) ![Maintenance status](https://ci-apps.yunohost.org/ci/badges/hotspot.maintain.svg)
+
 [![Install Wifi Hotspot with YunoHost](https://install-app.yunohost.org/install-with-yunohost.svg)](https://install-app.yunohost.org/?app=hotspot)
 
 *[Lire ce readme en français.](./README_fr.md)*
