@@ -197,14 +197,14 @@ name = "Configuration"
         pattern.regexp = '^([0-9.]{7,15}|[0-9a-fA-F:]+)$'
         pattern.error = "Not an ip"
 
-        [main.hotspot1.captive_portal__2]
+        [main.hotspot2.captive_portal__2]
         ask = "Captive portal"
         type = "boolean"
         bind = "array_settings()"
         visible = "advanced__2"
 	help = "Activate the captive portal mode"
 
-        [main.hotspot1.captive_portal_url__2]
+        [main.hotspot2.captive_portal_url__2]
         ask = "Local captive portal URL"
         type = "string"
         bind = "array_settings()"
@@ -271,14 +271,14 @@ name = "Configuration"
         pattern.regexp = '^([0-9.]{7,15}|[0-9a-fA-F:]+)$'
         pattern.error = "Not an ip"
 
-        [main.hotspot1.captive_portal__3]
+        [main.hotspot3.captive_portal__3]
         ask = "Captive portal"
         type = "boolean"
         bind = "array_settings()"
         visible = "advanced__3"
 	help = "Activate the captive portal mode"
 
-        [main.hotspot1.captive_portal_url__3]
+        [main.hotspot3.captive_portal_url__3]
         ask = "Local captive portal URL"
         type = "string"
         bind = "array_settings()"
