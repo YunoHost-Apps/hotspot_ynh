@@ -32,6 +32,12 @@ then
 	yunohost service stop $service_name
 	yunohost service remove $service_name
 fi
+if yunohost service status captiveportal_fakedns >/dev/null 2>&1
+then
+	ynh_script_progression --message="Removing $app captiveportal_fakedns service"
+	yunohost service stop captiveportal_fakedns
+	yunohost service remove captiveportal_fakedns
+fi
 
 #=================================================
 # STOP AND REMOVE SERVICE
@@ -40,6 +46,7 @@ ynh_script_progression --message="Stopping and removing the systemd service..."
 
 # Remove the dedicated systemd config
 ynh_remove_systemd_config --service=$service_name
+ynh_remove_systemd_config --service=captiveportal_fakedns
 
 #=================================================
 # REMOVE DEPENDENCIES
@@ -56,6 +63,9 @@ ynh_script_progression --message="Removing app main directory..."
 
 # Remove the app directory securely
 ynh_secure_remove --file="/usr/local/bin/$service_name"
+ynh_secure_remove --file="/usr/local/bin/captiveportal_fakedns"
+ynh_secure_remove --file="/usr/local/bin/captiveportal_allow"
+ynh_secure_remove --file="/etc/hotspot"
 
 for FILE in $(ls /tmp/.ynh-hotspot-* 2>/dev/null)
 do

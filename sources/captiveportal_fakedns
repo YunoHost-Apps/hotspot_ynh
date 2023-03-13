@@ -1,0 +1,35 @@
+#!/usr/bin/perl
+ 
+use strict;
+use warnings;
+use Net::DNS::Nameserver;
+
+my $ip4_addr = shift @ARGV;
+ 
+sub reply_handler {
+  my ($qname, $qclass, $qtype, $peerhost,$query,$conn) = @_;
+  my ($rcode, @ans, @auth, @add);
+ 
+  if($qtype eq "A") {
+      my ($ttl, $rdata) = (1, $ip4_addr);
+      my $rr = new Net::DNS::RR("$qname $ttl $qclass $qtype $rdata");
+      push @ans, $rr;
+      $rcode = "NOERROR";
+
+  } else {
+      $rcode = "NXDOMAIN";
+  }
+ 
+  return ($rcode, \@ans, \@auth, \@add, { aa => 1 });
+}
+ 
+my $ns = new Net::DNS::Nameserver(
+  LocalPort    => 4253,
+  LocalAddr    => $ip4_addr,
+  ReplyHandler => \&reply_handler,
+  Verbose      => 0
+  ) || die "Couldn't create fake nameserver object.\n";
+ 
+$ns->main_loop;
+
+exit 0;

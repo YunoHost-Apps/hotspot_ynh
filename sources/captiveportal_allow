@@ -1,0 +1,11 @@
+#!/bin/bash
+
+date=$(date +"%Y-%m-%d %T")
+ip=$1
+mac=$(arp -a $ip | cut -d" " -f4 | head -n1)
+interface=$(grep wifi_device /etc/yunohost/apps/hotspot/settings.yml | cut -d: -f2 | sed "s/[ ']//g")
+if ! grep $mac /etc/hotspot/allowed.csv ; then
+    echo "$date,$ip,$mac" >> /etc/hotspot/allowed.csv
+    iptables -w -I hotspot_fwd 1 -s $ip -m mac --mac-source $mac -j ACCEPT
+    iptables -t nat -w -I PREROUTING 1 -i $interface -s $ip -m mac --mac-source $mac -j ACCEPT
+fi
