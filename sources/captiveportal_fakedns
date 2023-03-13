@@ -3,8 +3,24 @@
 use strict;
 use warnings;
 use Net::DNS::Nameserver;
+use IO::Socket::INET;
 
-my $ip4_addr = shift @ARGV;
+# This idea was stolen from Net::Address::IP::Local::connected_to()
+sub get_local_ip_address {
+    my $socket = IO::Socket::INET->new(
+        Proto       => 'udp',
+        PeerAddr    => '198.41.0.4', # a.root-servers.net
+        PeerPort    => '53', # DNS
+    );
+
+    # A side-effect of making a socket connection is that our IP address
+    # is available from the 'sockhost' method
+    my $local_ip_address = $socket->sockhost;
+
+    return $local_ip_address;
+}
+
+my $ip4_addr      = get_local_ip_address();
  
 sub reply_handler {
   my ($qname, $qclass, $qtype, $peerhost,$query,$conn) = @_;
@@ -25,7 +41,7 @@ sub reply_handler {
  
 my $ns = new Net::DNS::Nameserver(
   LocalPort    => 4253,
-  LocalAddr    => $ip4_addr,
+  LocalAddr    => '0.0.0.0',
   ReplyHandler => \&reply_handler,
   Verbose      => 0
   ) || die "Couldn't create fake nameserver object.\n";
