@@ -214,6 +214,34 @@ ynh_app_config_apply() {
     captive_portal=$(ynh_app_setting_get --app=$app --key=captive_portal)
     if [[ "$captive_portal" =~ 1 ]]
     then
+        echo "location / {" > /etc/nginx/conf.d/default.d/redirect_to_admin.conf
+        if [[ "$captive_portal__1" == "1" ]]
+        then
+            echo "    if (\$remote_addr ~ "^$ip4_nat_prefix__1.\d+$") {" > /etc/nginx/conf.d/default.d/redirect_to_admin.conf
+
+            echo "      return 302 $captive_portal_url__1;" > /etc/nginx/conf.d/default.d/redirect_to_admin.conf
+
+            echo "    }" > /etc/nginx/conf.d/default.d/redirect_to_admin.conf
+        fi
+        if [[ "$captive_portal__2" == "1" ]]
+        then
+            echo "    if (\$remote_addr ~ "^$ip4_nat_prefix__2.\d+$") {" > /etc/nginx/conf.d/default.d/redirect_to_admin.conf
+
+            echo "      return 302 $captive_portal_url__2;" > /etc/nginx/conf.d/default.d/redirect_to_admin.conf
+
+            echo "    }" > /etc/nginx/conf.d/default.d/redirect_to_admin.conf
+        fi
+        if [[ "$captive_portal__3" == "1" ]]
+        then
+            echo "    if (\$remote_addr ~ "^$ip4_nat_prefix__3.\d+$") {" > /etc/nginx/conf.d/default.d/redirect_to_admin.conf
+
+            echo "      return 302 $captive_portal_url__3;" > /etc/nginx/conf.d/default.d/redirect_to_admin.conf
+
+            echo "    }" > /etc/nginx/conf.d/default.d/redirect_to_admin.conf
+        fi
+        echo "    return 302 https://\$http_host/yunohost/admin;" >> /etc/nginx/conf.d/default.d/redirect_to_admin.conf
+        echo "}" >> /etc/nginx/conf.d/default.d/redirect_to_admin.conf
+
 	    ynh_systemd_action --service_name=captiveportal_fakedns --action="start" --log_path=systemd
     else
 	    ynh_systemd_action --service_name=captiveportal_fakedns --action="stop" --log_path=systemd
