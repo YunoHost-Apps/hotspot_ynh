@@ -241,7 +241,7 @@ ynh_app_config_apply() {
         fi
         echo "    return 302 https://\$http_host/yunohost/admin;" >> /etc/nginx/conf.d/default.d/redirect_to_admin.conf
         echo "}" >> /etc/nginx/conf.d/default.d/redirect_to_admin.conf
-
+        systemctl reload nginx
 	    ynh_systemd_action --service_name=captiveportal_fakedns --action="start" --log_path=systemd
     else
 	    ynh_systemd_action --service_name=captiveportal_fakedns --action="stop" --log_path=systemd
