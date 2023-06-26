@@ -3,8 +3,8 @@
     "id": "hotspot",
     "packaging_format": 1,
     "description": {
-        "en": "Create and manager wifi networks, share Internet access and use Yunohost apps accross wifi",
-        "fr": "Créer et configurer des réseaux wifi, partager l'accès a Internet et utiliser les applications Yunohost via wifi"
+        "en": "Create and manager wifi networks, share Internet access and use YunoHost apps accross wifi",
+        "fr": "Créer et configurer des réseaux wifi, partager l'accès a Internet et utiliser les applications YunoHost via wifi"
     },
     "version": "2.0~ynh3",
     "url": "https://github.com/labriqueinternet/hotspot_ynh",
@@ -56,7 +56,7 @@
                 "name": "firmware_nonfree",
                 "type": "boolean",
                 "ask": {
-                    "en": "Install non-free WiFi firmwares ? (Only needed if you're using a proprietary WiFi antenna/dongle)",
+                    "en": "Install non-free WiFi firmwares? (Only needed if you're using a proprietary WiFi antenna/dongle)",
                     "fr": "Installer des firmwares WiFi non-libres ? (Nécessaire seulement si vous utilisez une antenne/clé WiFi propriétaire)"
                 },
                 "default": false
