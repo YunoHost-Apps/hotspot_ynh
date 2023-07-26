@@ -20,7 +20,7 @@ Si vous n’avez pas YunoHost, regardez [ici](https://yunohost.org/#/install) po
 * À combiner avec l'[app VPN Client](https://github.com/labriqueinternet/vpnclient_ynh) pour obtenir un accès internet aumatiquement protégé par votre VPN
 
 
-**Version incluse :** 2.0~ynh3
+**Version incluse :** 2.0~ynh4
 
 ## Captures d’écran
 
