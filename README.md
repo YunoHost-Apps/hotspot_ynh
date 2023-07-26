@@ -5,7 +5,8 @@ It shall NOT be edited by hand.
 
 # Wifi Hotspot for YunoHost
 
-[![Integration level](https://dash.yunohost.org/integration/hotspot.svg)](https://dash.yunohost.org/appci/app/hotspot) ![](https://ci-apps.yunohost.org/ci/badges/hotspot.status.svg) ![](https://ci-apps.yunohost.org/ci/badges/hotspot.maintain.svg)  
+[![Integration level](https://dash.yunohost.org/integration/hotspot.svg)](https://dash.yunohost.org/appci/app/hotspot) ![Working status](https://ci-apps.yunohost.org/ci/badges/hotspot.status.svg) ![Maintenance status](https://ci-apps.yunohost.org/ci/badges/hotspot.maintain.svg)
+
 [![Install Wifi Hotspot with YunoHost](https://install-app.yunohost.org/install-with-yunohost.svg)](https://install-app.yunohost.org/?app=hotspot)
 
 *[Lire ce readme en français.](./README_fr.md)*
@@ -19,29 +20,28 @@ If you don't have YunoHost, please consult [the guide](https://yunohost.org/#/in
 * Combine with the [VPN Client app](https://github.com/labriqueinternet/vpnclient_ynh) to obtain a VPN-protected WiFi
 
 
-**Shipped version:** 2.0~ynh3
-
-
+**Shipped version:** 2.0~ynh4
 
 ## Screenshots
 
-![](./doc/screenshots/hotspot.png)
+![Screenshot of Wifi Hotspot](./doc/screenshots/hotspot.png)
 
 ## Documentation and resources
 
-* Official app website: https://internetcu.be/
-* YunoHost documentation for this app: https://yunohost.org/app_hotspot
-* Report a bug: https://github.com/YunoHost-Apps/hotspot_ynh/issues
+* Official app website: <https://internetcu.be/>
+* YunoHost documentation for this app: <https://yunohost.org/app_hotspot>
+* Report a bug: <https://github.com/YunoHost-Apps/hotspot_ynh/issues>
 
 ## Developer info
 
 Please send your pull request to the [testing branch](https://github.com/YunoHost-Apps/hotspot_ynh/tree/testing).
 
 To try the testing branch, please proceed like that.
-```
+
+``` bash
 sudo yunohost app install https://github.com/YunoHost-Apps/hotspot_ynh/tree/testing --debug
 or
 sudo yunohost app upgrade hotspot -u https://github.com/YunoHost-Apps/hotspot_ynh/tree/testing --debug
 ```
 
-**More info regarding app packaging:** https://yunohost.org/packaging_apps
+**More info regarding app packaging:** <https://yunohost.org/packaging_apps>
