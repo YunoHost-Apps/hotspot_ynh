@@ -186,7 +186,7 @@ set__array_settings() {
     then
         value=""
     fi
-    local values="$(ynh_app_setting_get $app $short_setting | awk 'BEGIN{FS=OFS="|"} {$'$index'="'${!1}'"}'1)"
+    local values="$(ynh_app_setting_get $app $short_setting | awk "BEGIN{FS=OFS=\"|\"} {\$${index}=\"${value}\"}"1)"
     ynh_app_setting_set --app=$app --key=$short_setting --value="$values"
     ynh_print_info --message="Configuration key '$short_setting' edited in app settings"
 }
