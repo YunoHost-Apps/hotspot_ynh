@@ -70,6 +70,9 @@ ynh_restore_file --origin_path="/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl"
 
 ynh_restore_file --origin_path="/usr/local/bin/$service_name"
 
+ynh_restore_file --origin_path="/etc/openvpn/scripts/route-up.d/90-hotspot"
+ynh_restore_file --origin_path="/etc/openvpn/scripts/route-down.d/90-hotspot"
+
 ynh_restore_file --origin_path="/etc/init.d/hostapd"
 
 #=================================================
