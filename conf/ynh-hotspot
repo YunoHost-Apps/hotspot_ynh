@@ -73,13 +73,13 @@ is_forwarding_set() {
 is_dhcpd6_running() {
     local i=${1}
 
-    [[ -e "/run/dnsmasq/dnsmasq-dhcpdv6-ssid${i}.pid" ]]
+    [[ -e "/run/dnsmasq/dnsmasq-dhcpdv6-ssid${i}.pid" ]] && ps -p $(cat "/run/dnsmasq/dnsmasq-dhcpdv6-ssid${i}.pid") > /dev/null
 }
 
 is_dhcpd4_running() {
     local i=${1}
 
-    [[ -e "/run/dnsmasq/dnsmasq-dhcpdv4-ssid${i}.pid" ]]
+    [[ -e "/run/dnsmasq/dnsmasq-dhcpdv4-ssid${i}.pid" ]] && ps -p $(cat "/run/dnsmasq/dnsmasq-dhcpdv4-ssid${i}.pid") > /dev/null
 }
 
 is_hostapd_running() {
@@ -249,12 +249,14 @@ stop_dhcpd() {
     if is_dhcpd6_running ${i}; then
         echo "hotspot${i}: Stop the NDP and DHCPv6 server (dnsmasq)"
         kill $(cat /run/dnsmasq/dnsmasq-dhcpdv6-ssid${i}.pid)
+        rm -f /run/dnsmasq/dnsmasq-dhcpdv6-ssid${1}.pid
         rm -f /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
     fi
 
     if is_dhcpd4_running ${i}; then
         echo "hotspot${i}: Stop the DHCPv4 server (dnsmasq)"
         kill $(cat /run/dnsmasq/dnsmasq-dhcpdv4-ssid${i}.pid)
+        rm -f /run/dnsmasq/dnsmasq-dhcpdv4-ssid${1}.pid
         rm -f /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
     fi
 }
