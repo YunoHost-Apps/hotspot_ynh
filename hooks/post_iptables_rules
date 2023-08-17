@@ -1,0 +1,68 @@
+#!/bin/bash
+
+multissid=$(grep multissid /etc/yunohost/apps/hotspot/settings.yml | cut -d: -f2 | sed "s/[ ']//g")
+interface=$(grep wifi_device /etc/yunohost/apps/hotspot/settings.yml | cut -d: -f2 | sed "s/[ ']//g")
+IFS='|' read -a captive_portal <<< "$(grep captive_portal /etc/yunohost/apps/hotspot/settings.yml | grep -v captive_portal_url | cut -d: -f2 | sed "s/[ ']//g")"
+IFS='|' read -a ipv4 <<< "$(grep ip4_nat_prefix /etc/yunohost/apps/hotspot/settings.yml | cut -d: -f2 | sed "s/[ ']//g")"
+IFS='|' read -a ipv6 <<< "$(grep ip6_net /etc/yunohost/apps/hotspot/settings.yml | cut -d: -f2 | sed "s/[ ']//g")"
+
+iptables -w -N hotspot_fwd
+ip6tables -w -N hotspot_fwd
+for (( j=0; j<multissid; j++ ));
+do
+    if [[ "${captive_portal[$j]}" != "1" ]]
+    then
+        continue
+    fi
+
+    for iptables_cmd in iptables ip6tables;
+    do
+        if [[ "${iptables_cmd}" == "iptables" ]]; then
+            ipv4=${ipv4[$j]}
+            if [[ "${ipv4}" == "" ]]
+            then
+                continue
+            fi
+            ip=$ipv4.1
+            subnet=$ipv4.0/24
+            mac_adresses=$(grep "$ipv4" /etc/hotspot/allowed.csv | cut -d, -f3)
+        else
+            ipv6=${ipv6[$j]}
+            if [[ "${ipv6}" == "" ]]
+            then
+                continue
+            fi
+            ip=$ipv6::1
+            subnet=$ipv6::1
+            mac_adresses=$(grep "$ipv6" /etc/hotspot/allowed.csv | cut -d, -f3)
+        fi
+
+        # Allow to request 4253 port
+        $iptables_cmd -w -A INPUT -i $interface -m udp -p udp --dport 4253 -j ACCEPT
+
+        # Drop all packets going on external internet
+        $iptables_cmd -w -A hotspot_fwd -s $subnet -j DROP
+
+        # Force to use the fakeDNS
+        $iptables_cmd -w -A PREROUTING -i $interface -s $subnet -p udp --dport 53 -j DNAT --to-destination $ip:4253
+
+        # Make things working with DoH 
+        # Warning: this rules to ssupport DoH let info in nginx logs on which website the user try to access...
+        # Only activating 80 and not 443 reduces a bit the issues.
+        # A better approach could be to list all ips used by domains dedicated to captive portal detection.
+        $iptables_cmd -w -A PREROUTING -i $interface -s $subnet -p tcp --dport 80 -j DNAT --to-destination $ip:80
+        #$iptables_cmd -w -A PREROUTING -i $interface -s $subnet -p tcp --dport 443 -j DNAT --to-destination $ip:443
+
+        # Maybe needed, maybe not (i din't need this when vpn is activated)
+        #$iptables_cmd -t nat -A POSTROUTING -o $interface -j MASQUERADE
+
+        # Allow specific mac adress to use external internet
+        for mac in ${mac_adresses}; do
+          $iptables_cmd -w -I hotspot_fwd 1 -s $subnet -m mac --mac-source $mac -j ACCEPT
+          $iptables_cmd -t nat -w -I PREROUTING 1 -i $interface -s $subnet -m mac --mac-source $mac -j ACCEPT
+        done
+
+        $iptables_cmd -w -I FORWARD 1 -i $interface -j hotspot_fwd
+    done
+done
+exit 0

@@ -49,6 +49,8 @@ ynh_backup --src_path="/etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl"
 ynh_backup --src_path="/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl"
 
 ynh_backup --src_path="/usr/local/bin/$service_name"
+ynh_backup --src_path="/usr/local/bin/captiveportal_fakedns"
+ynh_backup --src_path="/usr/local/bin/captiveportal_allow"
 
 ynh_backup --src_path="/etc/init.d/hostapd"
 
@@ -59,6 +61,7 @@ ynh_backup --src_path="/etc/init.d/hostapd"
 #=================================================
 
 ynh_backup --src_path="/etc/systemd/system/$service_name.service"
+ynh_backup --src_path="/etc/systemd/system/captiveportal_fakedns.service"
 
 #=================================================
 # END OF SCRIPT

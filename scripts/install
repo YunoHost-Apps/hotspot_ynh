@@ -143,6 +143,8 @@ ynh_app_setting_set --app=$app --key=ip6_firewall --value=1
 ynh_app_setting_set --app=$app --key=ip6_net --value="${ip6_net}"
 ynh_app_setting_set --app=$app --key=dns --value="10.0.242.1"
 ynh_app_setting_set --app=$app --key=ip4_nat_prefix --value=10.0.242
+ynh_app_setting_set --app=$app --key=captive_portal --value=0
+ynh_app_setting_set --app=$app --key=captive_portal_url --value=""
 
 if [[ -z $wifi_device ]]; then
 	ynh_app_setting_set --app=$app --key=service_enabled --value=0
@@ -157,6 +159,9 @@ ynh_script_progression --message="Copying configuration files..."
 
 mkdir -pm 0755 /etc/dnsmasq.dhcpd/
 chown root: /etc/dnsmasq.dhcpd/
+mkdir -pm 0755 /etc/hotspot/
+touch /etc/hotspot/allowed.csv
+chown -R root: /etc/hotspot/
 
 install -b -o root -g root -m 0644 ../conf/hostapd.*.conf /etc/hostapd/
 install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl
@@ -164,6 +169,8 @@ install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq
 
 # Copy init script
 install -o root -g root -m 0755 ../conf/$service_name /usr/local/bin/
+install -o root -g root -m 0755 ../conf/captiveportal_fakedns /usr/local/bin/
+install -o root -g root -m 0755 ../conf/captiveportal_allow /usr/local/bin/
 
 #=================================================
 # CONFIGURE HOSTAPD
@@ -193,6 +200,7 @@ ynh_script_progression --message="Configuring a systemd service..."
 
 # Create a dedicated systemd config
 ynh_add_systemd_config --service=$service_name
+ynh_add_systemd_config --service=captiveportal_fakedns --template=captiveportal_fakedns
 
 #=================================================
 # INTEGRATE SERVICE IN YUNOHOST
@@ -200,6 +208,7 @@ ynh_add_systemd_config --service=$service_name
 ynh_script_progression --message="Integrating service in YunoHost..."
 
 yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd"
+yunohost service add captiveportal_fakedns --description "Captive portal dns service" --test_status "systemctl is-active captiveportal_fakedns"
 
 #=================================================
 # START SYSTEMD SERVICE

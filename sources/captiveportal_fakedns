@@ -1,0 +1,51 @@
+#!/usr/bin/perl
+ 
+use strict;
+use warnings;
+use Net::DNS::Nameserver;
+use IO::Socket::INET;
+
+# This idea was stolen from Net::Address::IP::Local::connected_to()
+sub get_local_ip_address {
+    my $socket = IO::Socket::INET->new(
+        Proto       => 'udp',
+        PeerAddr    => '198.41.0.4', # a.root-servers.net
+        PeerPort    => '53', # DNS
+    );
+
+    # A side-effect of making a socket connection is that our IP address
+    # is available from the 'sockhost' method
+    my $local_ip_address = $socket->sockhost;
+
+    return $local_ip_address;
+}
+
+my $ip4_addr      = get_local_ip_address();
+ 
+sub reply_handler {
+  my ($qname, $qclass, $qtype, $peerhost,$query,$conn) = @_;
+  my ($rcode, @ans, @auth, @add);
+ 
+  if($qtype eq "A") {
+      my ($ttl, $rdata) = (1, $ip4_addr);
+      my $rr = new Net::DNS::RR("$qname $ttl $qclass $qtype $rdata");
+      push @ans, $rr;
+      $rcode = "NOERROR";
+
+  } else {
+      $rcode = "NXDOMAIN";
+  }
+ 
+  return ($rcode, \@ans, \@auth, \@add, { aa => 1 });
+}
+ 
+my $ns = new Net::DNS::Nameserver(
+  LocalPort    => 4253,
+  LocalAddr    => '0.0.0.0',
+  ReplyHandler => \&reply_handler,
+  Verbose      => 0
+  ) || die "Couldn't create fake nameserver object.\n";
+ 
+$ns->main_loop;
+
+exit 0;

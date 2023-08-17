@@ -1,0 +1,13 @@
+[Unit]
+Description=YunoHost Wifi Captive Portal
+Requires=network.target
+After=network.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/local/bin/captiveportal_fakedns 
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
