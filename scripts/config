@@ -180,10 +180,10 @@ ynh_app_config_apply() {
     fi
 
     ynh_add_config --template="/etc/hostapd/hostapd.base.conf" --destination="/etc/hostapd/hostapd-${wifi_device}.conf"
-    ynh_add_config --template="/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl" --destination="/etc/dnsmasq.dhcpdv4-ssid-${wifi_device}.conf"
+    ynh_add_config --template="/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl" --destination="/etc/dnsmasq.dhcpd/dhcpdv4-ssid-${wifi_device}.conf"
     
     if [[ -n "${ip6_net}" ]] && [[ "${ip6_net}" != "none" ]]; then
-        ynh_add_config --template="/etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl" --destination="/etc/dnsmasq.dhcpdv6-ssid-${wifi_device}.conf"
+        ynh_add_config --template="/etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl" --destination="/etc/dnsmasq.dhcpd/dhcpdv6-ssid-${wifi_device}.conf"
     fi  
 
     # Start vpn client
