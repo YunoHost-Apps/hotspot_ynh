@@ -17,65 +17,49 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+source /usr/share/yunohost/helpers
+
 # Functions
 ## State functions
 
 has_ip6delegatedprefix() {
-    local i=${1}
-
-    [[ -n "${ip6_net[${i}]}" ]] && [[ "${ip6_net[${i}]}" != "none" ]]
+    [[ -n "${ip6_net}" ]] && [[ "${ip6_net}" != "none" ]]
 }
 
 ip6addrfromdelegatedprefix() {
-    local i=${1}
-
-    echo "${ip6_net[${i}]}${i}001"
+    echo "${ip6_net}1"
 }
 
 is_nat_set() {
     local gateway_interface=${1}
-
     iptables -w -nvt nat -L POSTROUTING | grep MASQUERADE | grep -q "${gateway_interface}"
 }
 
 is_ip4nataddr_set() {
-    local i=${1}
-    local dev=$(devfromid "${i}")
-
-    ip address show dev "${dev}" 2>/dev/null | grep -q "${ip4_nat_prefix[${i}]}.1/24"
+    ip address show dev "${wifi_device}" 2>/dev/null | grep -q "${ip4_nat_prefix}.1/24"
 }
 
 is_ip6addr_set() {
-    local i=${1}
-    local dev=$(devfromid "${i}")
-
-    ip address show dev "${dev}" 2>/dev/null | grep -q "$(ip6addrfromdelegatedprefix $i)/64"
+    ip address show dev "${wifi_device}" 2>/dev/null | grep -q "$(ip6addrfromdelegatedprefix)/64"
 }
 
 is_ip6firewall_set() {
-    local i=${1}
-    local dev=$(devfromid "${i}")
-
-    ip6tables -w -nvL FORWARD | grep DROP | grep -q "${dev}"
+    ip6tables -w -nvL FORWARD | grep DROP | grep -q "${wifi_device}"
 }
 
 is_forwarding_set() {
     local ip6=$(sysctl net.ipv6.conf.all.forwarding | awk '{ print $NF; }')
     local ip4=$(sysctl net.ipv4.conf.all.forwarding | awk '{ print $NF; }')
 
-    [ "${ip6}" -eq 1 ] && [ "${ip4}" -eq 1 ]
+    [[ "${ip6}" -eq 1 ]] && [[ "${ip4}" -eq 1 ]]
 }
 
 is_dhcpd6_running() {
-    local i=${1}
-
-    [[ -e "/run/dnsmasq/dnsmasq-dhcpdv6-ssid${i}.pid" ]] && ps -p $(cat "/run/dnsmasq/dnsmasq-dhcpdv6-ssid${i}.pid") > /dev/null
+    [[ -e "/run/dnsmasq/dnsmasq-dhcpdv6-ssid-${wifi_device}.pid" ]] && ps -p $(cat "/run/dnsmasq/dnsmasq-dhcpdv6-ssid-${wifi_device}.pid") > /dev/null
 }
 
 is_dhcpd4_running() {
-    local i=${1}
-
-    [[ -e "/run/dnsmasq/dnsmasq-dhcpdv4-ssid${i}.pid" ]] && ps -p $(cat "/run/dnsmasq/dnsmasq-dhcpdv4-ssid${i}.pid") > /dev/null
+    [[ -e "/run/dnsmasq/dnsmasq-dhcpdv4-ssid-${wifi_device}.pid" ]] && ps -p $(cat "/run/dnsmasq/dnsmasq-dhcpdv4-ssid-${wifi_device}.pid") > /dev/null
 }
 
 is_hostapd_running() {
@@ -83,18 +67,39 @@ is_hostapd_running() {
 }
 
 is_running() {
-    for i in $(seq 0 $((${multissid} - 1))); do
-        (has_ip6delegatedprefix ${i} && is_ip6addr_set ${i} \
-            && ([ "${ip6_firewall[${i}]}" -eq 1 ] && is_ip6firewall_set ${i} || [ "${ip6_firewall[${i}]}" -eq 0 ]) \
-            && is_dhcpd6_running ${i} || ! has_ip6delegatedprefix ${i}) \
-            && is_ip4nataddr_set ${i} && is_dhcpd4_running ${i}
-
-        if [ ! $? -eq 0 ]; then
+    if has_ip6delegatedprefix; then
+        if ! is_ip6addr_set; then
             return 1
         fi
-    done
+        if [[ "${ip6_firewall}" -eq 1 ]] && ! is_ip6firewall_set; then
+            return 1
+        fi
+        if ! is_dhcpd6_running; then
+            return 1
+        fi
+    fi
 
-    is_hostapd_running && is_forwarding_set && ([ -z "${new_gateway_interface}" ] || is_nat_set "${new_gateway_interface}")
+    if ! is_ip4nataddr_set; then
+        return 1
+    fi
+
+    if ! is_dhcpd4_running; then
+        return 1
+    fi
+
+    if ! is_hostapd_running; then
+        return 1
+    fi
+
+    if ! is_forwarding_set; then
+        return 1
+    fi
+
+    if [[ -n ${new_gateway_interface} ]] && ! is_nat_set "${new_gateway_interface}"; then
+        return 1
+    fi
+
+    return 0
 }
 
 ## Setters
@@ -106,33 +111,26 @@ set_nat() {
 }
 
 set_ipaddr() {
-    local i=${1}
-    local dev=$(devfromid "${i}")
-
-    if ! is_ip4nataddr_set ${i}; then
-        echo "hotspot${i}: Set IPv4 NAT address"
-        ip address add "${ip4_nat_prefix[${i}]}.1/24" dev "${dev}"
+    if ! is_ip4nataddr_set; then
+        echo "hotspot ${wifi_device}: Set IPv4 NAT address"
+        ip address add "${ip4_nat_prefix}.1/24" dev "${wifi_device}"
     fi
 
-    if has_ip6delegatedprefix ${i} && ! is_ip6addr_set ${i}; then
-        echo "hotspot${i}: Set IPv6 address"
-        ip address delete "$(ip6addrfromdelegatedprefix $i)/64" dev tun0 &>/dev/null
-        ip address add "$(ip6addrfromdelegatedprefix $i)/64" dev "${dev}"
+    if has_ip6delegatedprefix && ! is_ip6addr_set; then
+        echo "hotspot ${wifi_device}: Set IPv6 address"
+        ip address delete "$(ip6addrfromdelegatedprefix)/64" dev tun0 &>/dev/null
+        ip address add "$(ip6addrfromdelegatedprefix)/64" dev "${wifi_device}"
     fi
 }
 
 set_ipfirewall() {
-    local i=${1}
-    local dev=$(devfromid "${i}")
-
     # Set ipv6 firewalling
-    if has_ip6delegatedprefix ${i} && [ "${ip6_firewall[${i}]}" -eq 1 ] && ! is_ip6firewall_set ${i}; then
-        echo "hotspot${i}: Set IPv6 firewalling"
-        ip6tables -w -A FORWARD -i "${dev}" -j ACCEPT
-        ip6tables -w -A FORWARD -o "${dev}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-        ip6tables -w -A FORWARD -o "${dev}" -j DROP
+    if has_ip6delegatedprefix && [[ "${ip6_firewall}" -eq 1 ]] && ! is_ip6firewall_set; then
+        echo "hotspot ${wifi_device}: Set IPv6 firewalling"
+        ip6tables -w -A FORWARD -i "${wifi_device}" -j ACCEPT
+        ip6tables -w -A FORWARD -o "${wifi_device}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+        ip6tables -w -A FORWARD -o "${wifi_device}" -j DROP
     fi
-
 }
 
 set_forwarding() {
@@ -141,62 +139,22 @@ set_forwarding() {
 }
 
 start_dhcpd() {
-    local i=${1}
-    local dev=$(devfromid "${i}")
-
     # Run DHCPv4 server
-    if ! is_dhcpd4_running ${i}; then
-        echo "hotspot${i}: Start the DHCPv4 server (dnsmasq)"
-
-        cp /etc/dnsmasq.dhcpd/dhcpdv4{.conf.tpl,-ssid${i}.conf}
-
-        sed "s|__WIFI_DEVICE__|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
-        sed "s|__IP4_DNS__|${ip4_dns[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
-        sed "s|__IP4_NAT_PREFIX__|${ip4_nat_prefix[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
-
-        dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf -p0 -x /run/dnsmasq/dnsmasq-dhcpv4-ssid${i}.pid
+    if ! is_dhcpd4_running; then
+        echo "hotspot ${wifi_device}: Start the DHCPv4 server (dnsmasq)"
+        dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv4-ssid-${wifi_device}.conf -p0 -x /run/dnsmasq/dnsmasq-dhcpv4-ssid-${wifi_device}.pid
     fi
 
     # Run DHCPv6 server
-    if has_ip6delegatedprefix ${i} && ! is_dhcpd6_running ${i}; then
-        echo "hotspot${i}: Start the NDP and DHCPv6 server (dnsmasq)"
-
-        cp /etc/dnsmasq.dhcpd/dhcpdv6{.conf.tpl,-ssid${i}.conf}
-
-        sed "s|__WIFI_DEVICE__|${dev}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
-        sed "s|__IP6_DNS__|${ip6_dns[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
-        sed "s|__IP6_NET__|${ip6_net[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
-
-        dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf -p0 -x /run/dnsmasq/dnsmasq-dhcpv6-ssid${i}.pid
+    if has_ip6delegatedprefix && ! is_dhcpd6_running; then
+        echo "hotspot ${wifi_device}: Start the NDP and DHCPv6 server (dnsmasq)"
+        dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv6-ssid-${wifi_device}.conf -p0 -x /run/dnsmasq/dnsmasq-dhcpv6-ssid-${wifi_device}.pid
     fi
 }
 
 configure_hostapd() {
-
     local ethaddr=$(ip link show dev "${wifi_device}" | grep link/ether | awk -F: '{ printf "02:%s:%s:%s:%s:00", $2, $3, $4, $5 }')
     ip link set addr "${ethaddr}" dev "${wifi_device}"
-
-    cp /etc/hostapd/hostapd.base.conf /etc/hostapd/hostapd.conf
-    sed "s|__WIFI_DEVICE__|${wifi_device}|g" -i /etc/hostapd/hostapd.conf
-    sed "s|__WIFI_CHANNEL__|${wifi_channel}|g" -i /etc/hostapd/hostapd.conf
-    sed "s|__N_COMMENT__||g" -i /etc/hostapd/hostapd.conf
-
-    for i in $(seq 0 $((${multissid} - 1))); do
-
-        [ "${wifi_secure[${i}]}" -eq 1 ] && local sec_comment="" || local sec_comment="#"
-        [ "${i}" -eq 0 ] && local bss_comment="#" || local bss_comment=""
-
-        cp /etc/hostapd/hostapd.accesspoint.conf /etc/hostapd/hostapd.conf.tmp
-
-        sed "s|__WIFI_INTERFACE__|hotspot${i}|g" -i /etc/hostapd/hostapd.conf.tmp
-        sed "s|__WIFI_SSID__|${wifi_ssid[${i}]}|g" -i /etc/hostapd/hostapd.conf.tmp
-        sed "s|__WIFI_PASSPHRASE__|${wifi_passphrase[${i}]}|g" -i /etc/hostapd/hostapd.conf.tmp
-        sed "s|__SEC_COMMENT__|${sec_comment}|g" -i /etc/hostapd/hostapd.conf.tmp
-        sed "s|__BSS_COMMENT__|${bss_comment}|g" -i /etc/hostapd/hostapd.conf.tmp
-
-        cat /etc/hostapd/hostapd.conf.tmp >>/etc/hostapd/hostapd.conf
-        rm /etc/hostapd/hostapd.conf.tmp
-    done
 }
 
 ## Unsetters
@@ -208,29 +166,23 @@ unset_nat() {
 }
 
 unset_ipaddr() {
-    local i=${1}
-    local dev=$(devfromid "${i}")
-
-    if is_ip4nataddr_set ${i}; then
-        echo "hotspot${i}: Unset IPv4 NAT address"
-        ip address delete "${ip4_nat_prefix[${i}]}.1/24" dev "${dev}"
+    if is_ip4nataddr_set; then
+        echo "hotspot ${wifi_device}: Unset IPv4 NAT address"
+        ip address delete "${ip4_nat_prefix}.1/24" dev "${wifi_device}"
     fi
 
-    if has_ip6delegatedprefix ${i} && is_ip6addr_set ${i}; then
-        echo "hotspot${i}: Unset IPv6 address"
-        ip address delete "$(ip6addrfromdelegatedprefix $i)/64" dev "${dev}"
+    if has_ip6delegatedprefix && is_ip6addr_set; then
+        echo "hotspot ${wifi_device}: Unset IPv6 address"
+        ip address delete "$(ip6addrfromdelegatedprefix)/64" dev "${wifi_device}"
     fi
 }
 
 unset_ipfirewall() {
-    local i=${1}
-    local dev=$(devfromid "${i}")
-
-    if has_ip6delegatedprefix ${i} && [ "${ip6_firewall[${i}]}" -eq 1 ] && is_ip6firewall_set ${i}; then
-        echo "hotspot${i}: Unset IPv6 firewalling"
-        ip6tables -w -D FORWARD -i "${dev}" -j ACCEPT
-        ip6tables -w -D FORWARD -o "${dev}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-        ip6tables -w -D FORWARD -o "${dev}" -j DROP
+    if has_ip6delegatedprefix && [[ "${ip6_firewall}" -eq 1 ]] && is_ip6firewall_set; then
+        echo "hotspot ${wifi_device}: Unset IPv6 firewalling"
+        ip6tables -w -D FORWARD -i "${wifi_device}" -j ACCEPT
+        ip6tables -w -D FORWARD -o "${wifi_device}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+        ip6tables -w -D FORWARD -o "${wifi_device}" -j DROP
     fi
 }
 
@@ -240,79 +192,21 @@ unset_forwarding() {
 }
 
 stop_dhcpd() {
-    local i=${1}
-
-    if is_dhcpd6_running ${i}; then
-        echo "hotspot${i}: Stop the NDP and DHCPv6 server (dnsmasq)"
-        kill $(cat /run/dnsmasq/dnsmasq-dhcpdv6-ssid${i}.pid)
-        rm -f /run/dnsmasq/dnsmasq-dhcpdv6-ssid${1}.pid
-        rm -f /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
+    if is_dhcpd6_running; then
+        echo "hotspot ${wifi_device}: Stop the NDP and DHCPv6 server (dnsmasq)"
+        kill $(cat /run/dnsmasq/dnsmasq-dhcpdv6-ssid-${wifi_device}.pid)
+        rm -f /run/dnsmasq/dnsmasq-dhcpdv6-ssid-${wifi_device}.pid
     fi
 
-    if is_dhcpd4_running ${i}; then
-        echo "hotspot${i}: Stop the DHCPv4 server (dnsmasq)"
-        kill $(cat /run/dnsmasq/dnsmasq-dhcpdv4-ssid${i}.pid)
-        rm -f /run/dnsmasq/dnsmasq-dhcpdv4-ssid${1}.pid
-        rm -f /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
+    if is_dhcpd4_running; then
+        echo "hotspot ${wifi_device}: Stop the DHCPv4 server (dnsmasq)"
+        kill $(cat /run/dnsmasq/dnsmasq-dhcpdv4-ssid-${wifi_device}.pid)
+        rm -f /run/dnsmasq/dnsmasq-dhcpdv4-ssid-${wifi_device}.pid
     fi
-}
-
-stop_dhcpd4() {
-    :
 }
 
 stop_hostapd() {
     systemctl stop hostapd
-}
-
-## Tools
-
-ynh_setting_get() {
-
-    APP="$1" KEY="$2" python3 - <<EOF
-import os, yaml, sys
-app = os.environ['APP']
-key = os.environ['KEY']
-setting_file = "/etc/yunohost/apps/%s/settings.yml" % app
-assert os.path.exists(setting_file), "Setting file %s does not exists ?" % setting_file
-with open(setting_file) as f:
-    settings = yaml.safe_load(f)
-    if key in settings:
-        print(settings[key])
-EOF
-
-}
-
-ynh_setting_set() {
-
-    # This is a partial copypasta of the official ynh_app_setting internal helper
-    # In particular, we do this instead of relying on 'yunohost app setting' for
-    # performance reasons (it takes a few second to run every yunohost commands)
-    # and to remove the need for the infamous '--need-lock' option/issue.
-
-    APP="$1" KEY="$2" VALUE="${3:-}" python3 - <<EOF
-import os, yaml, sys
-app = os.environ['APP']
-key, value = os.environ['KEY'], os.environ.get('VALUE', None)
-setting_file = "/etc/yunohost/apps/%s/settings.yml" % app
-assert os.path.exists(setting_file), "Setting file %s does not exists ?" % setting_file
-with open(setting_file) as f:
-    settings = yaml.load(f)
-settings[key] = value
-with open(setting_file, "w") as f:
-    yaml.safe_dump(settings, f, default_flow_style=False)
-EOF
-
-}
-
-devfromid() {
-    local i=${1}
-
-    if [ "${i}" -eq 0 ]; then
-        echo "${wifi_device}"
-    else
-        echo "hotspot${i}"
-    fi
 }
 
 if [ "$1" != restart ]; then
@@ -322,33 +216,30 @@ if [ "$1" != restart ]; then
     echo -n "Retrieving Yunohost settings... "
 
     service_enabled=$(systemctl is-enabled ynh-hotspot)
-    wifi_device=$(ynh_setting_get hotspot wifi_device)
-    wifi_channel=$(ynh_setting_get hotspot wifi_channel)
-    multissid=$(ynh_setting_get hotspot multissid)
+    wifi_device=$(ynh_app_setting_get hotspot wifi_device)
+    wifi_channel=$(ynh_app_setting_get hotspot wifi_channel)
 
-    IFS='|' read -a wifi_ssid <<<"$(ynh_setting_get hotspot wifi_ssid)"
-    IFS='|' read -a wifi_secure <<<"$(ynh_setting_get hotspot wifi_secure)"
-    IFS='|' read -a wifi_passphrase <<<"$(ynh_setting_get hotspot wifi_passphrase)"
-    IFS='|' read -a ip6_firewall <<<"$(ynh_setting_get hotspot ip6_firewall)"
-    IFS='|' read -a ip6_net <<<"$(ynh_setting_get hotspot ip6_net)"
-    IFS='|' read -a dns <<<"$(ynh_setting_get hotspot dns)"
-    IFS='|' read -a ip4_nat_prefix <<<"$(ynh_setting_get hotspot ip4_nat_prefix)"
-    for i in $(seq 0 $((${multissid} - 1))); do
-        ip6_dns[${i}]=""
-        ip4_dns[${i}]=""
-        for ip in $(echo "${dns[${i}]}" | tr ',' ' '); do
-            if [[ "$ip" == *":"* ]]; then
-                ip6_dns[${i}]+="[$ip],"
-            else
-                ip4_dns[${i}]+="$ip,"
-            fi
-        done
-        # Remove trailing ,
-        ip6_dns[${i}]="${ip6_dns[${i}]%%,}"
-        ip4_dns[${i}]="${ip4_dns[${i}]%%,}"
+    wifi_ssid=$(ynh_app_setting_get hotspot wifi_ssid)
+    wifi_secure=$(ynh_app_setting_get hotspot wifi_secure)
+    wifi_passphrase=$(ynh_app_setting_get hotspot wifi_passphrase)
+    ip6_firewall=$(ynh_app_setting_get hotspot ip6_firewall)
+    ip6_net=$(ynh_app_setting_get hotspot ip6_net)
+    dns=$(ynh_app_setting_get hotspot dns)
+    ip4_nat_prefix=$(ynh_app_setting_get hotspot ip4_nat_prefix)
+    ip6_dns=""
+    ip4_dns=""
+    for ip in $(echo "${dns}" | tr ',' ' '); do
+        if [[ "$ip" == *":"* ]]; then
+            ip6_dns+="[$ip],"
+        else
+            ip4_dns+="$ip,"
+        fi
     done
+    # Remove trailing ,
+    ip6_dns="${ip6_dns%%,}"
+    ip4_dns="${ip4_dns%%,}"
 
-    old_gateway_interface=$(ynh_setting_get hotspot gateway_interface)
+    old_gateway_interface=$(ynh_app_setting_get hotspot gateway_interface)
     new_gateway_interface=$(ip route get 1.2.3.4 | awk '{ print $5; }')
 
     echo "OK"
@@ -361,12 +252,12 @@ start)
     if is_running; then
         echo "Already started"
         exit 0
-    elif [ "${service_enabled}" != "enabled" ]; then
+    elif [[ "${service_enabled}" != "enabled" ]]; then
         echo "Not starting because hotspod service is disabled"
         exit 1
     fi
 
-    if [ -z "${wifi_device}" ]; then
+    if [[ -z "${wifi_device}" ]]; then
         echo "[FAIL] No wifi device selected. Make sure your wifi antenna is plugged-in / available and select it in the Hotspot admin"
         exit 1
     fi
@@ -375,13 +266,12 @@ start)
     touch /tmp/.ynh-hotspot-started
 
     # Check old state of the ipv4 NAT settings
-    if [ -n "${old_gateway_interface}" ] && [ "${new_gateway_interface}" != "${old_gateway_interface}" ] && is_nat_set "${old_gateway_interface}"; then
-
+    if [[ -n "${old_gateway_interface}" ]] && [[ "${new_gateway_interface}" != "${old_gateway_interface}" ]] && is_nat_set "${old_gateway_interface}"; then
         unset_nat "${old_gateway_interface}"
     fi
 
     # Set ipv4 NAT
-    if [ -n "${new_gateway_interface}" ] && ! is_nat_set "${new_gateway_interface}"; then
+    if [[ -n "${new_gateway_interface}" ]] && ! is_nat_set "${new_gateway_interface}"; then
         echo "Set NAT"
         set_nat "${new_gateway_interface}"
     fi
@@ -402,38 +292,20 @@ start)
         fi
 
         sleep 1
-
-        # On single SSID, the hotspot interface will be wlan0 (or similar)
-        # in multissid, we additionally want to make sure that at least hotspot1 started
-        if [ "${multissid}" -gt 1 ]; then
-            i=0
-            while ! ip link show dev "hotspot1" &>/dev/null; do
-                sleep 1
-                if [ ${i} -gt 20 ]; then
-                    echo "Failed to see hotspot interface showing up in 'ip a'"
-                    stop_hostapd
-                    exit 1
-                fi
-                i=$(($i + 1))
-            done
-        fi
     fi
 
-    # For each registred ssid
-    for i in $(seq 0 $((${multissid} - 1))); do
-        set_ipaddr ${i}
-        set_ipfirewall ${i}
-        start_dhcpd ${i}
-    done
+    set_ipaddr
+    set_ipfirewall
+    start_dhcpd
 
     # Update dynamic settings
-    ynh_setting_set hotspot gateway_interface "${new_gateway_interface}"
+    ynh_app_setting_set hotspot gateway_interface "${new_gateway_interface}"
     ;;
 stop)
     echo "[hotspot] Stopping..."
     rm -f /tmp/.ynh-hotspot-started
 
-    if [ -n "${old_gateway_interface}" ] && is_nat_set "${old_gateway_interface}"; then
+    if [[ -n "${old_gateway_interface}" ]] && is_nat_set "${old_gateway_interface}"; then
         echo "Unset NAT"
         unset_nat "${old_gateway_interface}"
     fi
@@ -441,11 +313,9 @@ stop)
     echo "Unset forwarding"
     unset_forwarding
 
-    for i in $(seq 0 $((${multissid} - 1))); do
-        unset_ipaddr ${i}
-        unset_ipfirewall ${i}
-        stop_dhcpd ${i}
-    done
+    unset_ipaddr
+    unset_ipfirewall
+    stop_dhcpd
 
     if is_hostapd_running; then
         echo "Stop hostapd"
@@ -459,12 +329,12 @@ restart)
 status)
     exitcode=0
 
-    if [ "${service_enabled}" != "enabled" ]; then
+    if [[ "${service_enabled}" != "enabled" ]]; then
         echo "[FAIL] Hotspot Service disabled"
         exit 1
     fi
 
-    if [ -z "${wifi_device}" ]; then
+    if [[ -z "${wifi_device}" ]]; then
         echo "[FAIL] No wifi device selected. Make sure your wifi antenna is plugged-in / available and select it in the Hotspot admin"
         exit 1
     fi
@@ -474,7 +344,7 @@ status)
     if is_nat_set "${new_gateway_interface}"; then
         echo "[ OK ] IPv4 NAT set"
     else
-        if [ -z "${new_gateway_interface}" ]; then
+        if [[ -z "${new_gateway_interface}" ]]; then
             echo "[INFO] No IPv4 NAT set (no internet interface)"
         else
             echo "[FAIL] No IPv4 NAT set"
@@ -496,53 +366,51 @@ status)
         exitcode=1
     fi
 
-    for i in $(seq 0 $((${multissid} - 1))); do
-        if has_ip6delegatedprefix ${i}; then
-            echo "[INFO] hotspot${i}: IPv6 delegated prefix found"
-            echo "[INFO] hotspot${i}: IPv6 address computed from the delegated prefix: $(ip6addrfromdelegatedprefix $i)"
+    if has_ip6delegatedprefix; then
+        echo "[INFO] hotspot ${wifi_device}: IPv6 delegated prefix found"
+        echo "[INFO] hotspot ${wifi_device}: IPv6 address computed from the delegated prefix: $(ip6addrfromdelegatedprefix)"
 
-            if is_ip6addr_set ${i}; then
-                echo "[ OK ] hotspot${i}: IPv6 address set"
-            else
-                echo "[FAIL] hotspot${i}: No IPv6 address set"
-                exitcode=1
-            fi
-
-            if is_ip6firewall_set ${i}; then
-                echo "[ OK ] hotspot${i}: IPv6 firewalling set"
-            else
-                if [ "${ip6_firewall[${i}]}" -eq 1 ]; then
-                    echo "[FAIL] hotspot${i}: No IPv6 firewalling set"
-                else
-                    echo "[INFO] hotspot${i}: No IPv6 firewalling set"
-                fi
-                exitcode=1
-            fi
-
-            if is_dhcpd6_running ${i}; then
-                echo "[ OK ] hotspot${i}: NDP and DHCPv6 server (dnsmasq) are running"
-            else
-                echo "[FAIL] hotspot${i}: NDP and DHCPv6 server (dnsmasq) are not running"
-                exitcode=1
-            fi
+        if is_ip6addr_set; then
+            echo "[ OK ] hotspot ${wifi_device}: IPv6 address set"
         else
-            echo "[INFO] hotspot${i}: No IPv6 delegated prefix found"
-        fi
-
-        if is_dhcpd4_running ${i}; then
-            echo "[ OK ] hotspot${i}: DHCPv4 server (dnsmasq) is running"
-        else
-            echo "[FAIL] hotspot${i}: DHCPv4 (dnsmasq) is not running"
+            echo "[FAIL] hotspot ${wifi_device}: No IPv6 address set"
             exitcode=1
         fi
 
-        if is_ip4nataddr_set ${i}; then
-            echo "[ OK ]  hotspot${i}: IPv4 NAT address set"
+        if is_ip6firewall_set; then
+            echo "[ OK ] hotspot ${wifi_device}: IPv6 firewalling set"
         else
-            echo "[FAIL] hotspot${i}: No IPv4 NAT address set"
+            if [[ "${ip6_firewall}" -eq 1 ]]; then
+                echo "[FAIL] hotspot ${wifi_device}: No IPv6 firewalling set"
+            else
+                echo "[INFO] hotspot ${wifi_device}: No IPv6 firewalling set"
+            fi
             exitcode=1
         fi
-    done
+
+        if is_dhcpd6_running; then
+            echo "[ OK ] hotspot ${wifi_device}: NDP and DHCPv6 server (dnsmasq) are running"
+        else
+            echo "[FAIL] hotspot ${wifi_device}: NDP and DHCPv6 server (dnsmasq) are not running"
+            exitcode=1
+        fi
+    else
+        echo "[INFO] hotspot ${wifi_device}: No IPv6 delegated prefix found"
+    fi
+
+    if is_dhcpd4_running; then
+        echo "[ OK ] hotspot ${wifi_device}: DHCPv4 server (dnsmasq) is running"
+    else
+        echo "[FAIL] hotspot ${zifi_device}: DHCPv4 (dnsmasq) is not running"
+        exitcode=1
+    fi
+
+    if is_ip4nataddr_set; then
+        echo "[ OK ]  hotspot ${wifi_device}: IPv4 NAT address set"
+    else
+        echo "[FAIL] hotspot ${wifi_device}: No IPv4 NAT address set"
+        exitcode=1
+    fi
 
     exit ${exitcode}
     ;;

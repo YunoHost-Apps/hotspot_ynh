@@ -132,7 +132,6 @@ fi
 hot_reload_usb_wifi_cards
 wifi_device=$(iw_devices | awk -F\| '{ print $1 }')
 
-ynh_app_setting_set --app=$app --key=multissid --value=1
 ynh_app_setting_set --app=$app --key=ssid_nb --value=1
 ynh_app_setting_set --app=$app --key=wifi_ssid --value="${wifi_ssid}"
 ynh_app_setting_set --app=$app --key=wifi_secure --value=1

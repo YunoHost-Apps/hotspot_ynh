@@ -92,112 +92,49 @@ EOF
     echo "value: '$(ynh_app_setting_get $app wifi_device)'"
 }
 
-get__array_settings() {
-    local short_setting="${1%%__*}"
-    local index="${1#*__}"
-    IFS='|' read -a values <<< "$(ynh_app_setting_get $app $short_setting)"
-    echo "value: \"${values[$(($index - 1))]:-}\""
-}
-
 #=================================================
 # SPECIFIC VALIDATORS FOR TOML SHORT KEYS
 #=================================================
-is_unique() {
-    local short_setting="$1"
-    local short_setting__1="$1__1"
-    local short_setting__2="$1__2"
-    local short_setting__3="$1__3"
-    if [[ "${!short_setting__1}" == "${!short_setting__2}" ]]
-    then
-        return 1
-    elif [ "$multissid" -ge "3" ] && [[ "${!short_setting__1}" == "${!short_setting__3}" ]]
-    then
-        return 1
-    elif [ "$multissid" -ge "3" ] && [[ "${!short_setting__2}" == "${!short_setting__3}" ]]
-    then
-        return 1
-    fi
-    return 0
-}
+
 validate__wifi_ssid() {
-    local wifi_ssid_var="wifi_ssid__$1"
-    if [ "$multissid" -ge "$1" ] && [[ -z "${!wifi_ssid_var}" ]]
+    if [[ -z "${wifi_ssid}" ]]
     then
         echo 'SSID required'
-    fi
-    if ! is_unique wifi_ssid
-    then
-        echo 'All Wifi names must be unique'
     fi
 }
 
 validate__wifi_passphrase() {
-    local wifi_secure_var="wifi_secure__$1"
-    local wifi_passphrase_var="wifi_passphrase__$1"
-    if [ "$multissid" -ge "$1" ] && [[ "${!wifi_secure_var}" == "1" ]] && [[ -z "${!wifi_passphrase_var}" ]]
+    if [[ "${wifi_secure}" == "1" ]] && [[ -z "${wifi_passphrase}" ]]
     then
         echo 'In WPA2 secure mode, you need to provide a passphrase'
     fi
 }
 
 validate__ip4_nat_prefix() {
-    local ip4_nat_prefix_var="ip4_nat_prefix__$1"
-    if [ "$multissid" -ge "$1" ] && [[ -z "${!ip4_nat_prefix_var}" ]]
+    if [[ -z "${ip4_nat_prefix}" ]]
     then
         echo 'Private IPv4 nat prefix required'
-    fi
-    if ! is_unique ip4_nat_prefix
-    then
-        echo 'All IPv4 prefix must be unique'
     fi
 }
 
 validate__dns() {
-    local dns_var="dns__$1"
-    local ip6_net_var="dns__$1"
-    if [ "$multissid" -ge "$1" ] && ! echo "${!dns_var}" | grep -q "\."
+    if ! echo "${dns}" | grep -q "\."
     then
         echo 'IPv4 DNS required'
     fi
-    if [ "$multissid" -ge "$1" ] && [[ -n "${!ip6_net_var}" ]] && ! echo "${!dns_var}" | grep -q ":"
+    if [[ -n "${ip6_net}" ]] && ! echo "${dns}" | grep -q ":"
     then
         echo 'IPv6 DNS required'
-    fi
-}
-
-validate__array_settings() {
-    local short_setting="${1%%__*}"
-    local index="${1#*__}"
-    if type -t validate__$short_setting | grep -q '^function$' 2>/dev/null;
-    then
-        validate__$short_setting $index
     fi
 }
 
 #=================================================
 # SPECIFIC SETTERS FOR TOML SHORT KEYS
 #=================================================
-set__array_settings() {
-    local short_setting="${1%%__*}"
-    local index="${1#*__}"
-    local type="${types[$1]}"
-    local value="${!1}"
-    if [[ "$type" == "string" ]] && [ "$multissid" -lt "$index" ]
-    then
-        value=""
-    fi
-    local values="$(ynh_app_setting_get $app $short_setting | awk "BEGIN{FS=OFS=\"|\"} {\$${index}=\"${value}\"}"1)"
-    ynh_app_setting_set --app=$app --key=$short_setting --value="$values"
-    ynh_print_info --message="Configuration key '$short_setting' edited in app settings"
-}
-
 
 #=================================================
 # OVERWRITING VALIDATE STEP 
 #=================================================
-ynh_app_config_validate() {
-    _ynh_app_config_validate
-}
 
 #=================================================
 # OVERWRITING APPLY STEP 
@@ -209,7 +146,20 @@ ynh_app_config_apply() {
     /usr/local/bin/ynh-hotspot stop
 
     _ynh_app_config_apply
+
+    if [ "${wifi_secure}" -eq 1 ]; then
+        local sec_comment=""
+    else
+        local sec_comment="#"
+    fi
+
+    ynh_add_config --template="/etc/hostapd/hostapd.base.conf" --destination="/etc/hostapd/hostapd-${wifi_device}.conf"
+    ynh_add_config --template="/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl" --destination"/etc/dnsmasq.dhcpdv4-ssid-${wifi_device}.conf"
     
+    if [[ -n "${ip6_net}" ]] && [[ "${ip6_net}" != "none" ]]; then
+        ynh_add_config --template="/etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl" --destination"/etc/dnsmasq.dhcpdv6-ssid-${wifi_device}.conf"
+    fi  
+
     # Start vpn client
     ynh_print_info --message="Starting hotspot service if needed"
     /usr/local/bin/ynh-hotspot start
