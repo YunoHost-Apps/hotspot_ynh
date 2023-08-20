@@ -165,6 +165,14 @@ install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq
 # Copy init script
 install -o root -g root -m 0755 ../conf/$service_name /usr/local/bin/
 
+# Copy openvpn scripts
+mkdir -pm 0755 /etc/openvpn/scripts
+mkdir -pm 0755 /etc/openvpn/scripts/route-up.d
+mkdir -pm 0755 /etc/openvpn/scripts/route-down.d
+install -o root -g root -m 0755 ../conf/openvpn_90-hotspot /etc/openvpn/scripts/route-up.d/90-hotspot
+install -o root -g root -m 0755 ../conf/openvpn_90-hotspot /etc/openvpn/scripts/route-down.d/90-hotspot
+
+
 #=================================================
 # CONFIGURE HOSTAPD
 #=================================================

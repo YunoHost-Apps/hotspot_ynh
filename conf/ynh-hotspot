@@ -20,10 +20,6 @@
 # Functions
 ## State functions
 
-has_vpnclient_app() {
-    [ -e /tmp/.ynh-vpnclient-started ]
-}
-
 has_ip6delegatedprefix() {
     local i=${1}
 
@@ -355,12 +351,6 @@ if [ "$1" != restart ]; then
     old_gateway_interface=$(ynh_setting_get hotspot gateway_interface)
     new_gateway_interface=$(ip route get 1.2.3.4 | awk '{ print $5; }')
 
-    # Switch the NAT interface if there is a VPN
-    ip link show dev tun0 &>/dev/null
-    if [ "$?" -eq 0 ]; then
-        new_gateway_interface=tun0
-    fi
-
     echo "OK"
 fi
 
@@ -460,11 +450,6 @@ stop)
     if is_hostapd_running; then
         echo "Stop hostapd"
         stop_hostapd
-    fi
-
-    # Fix configuration
-    if has_vpnclient_app; then
-        ynh-vpnclient start
     fi
     ;;
 restart)
