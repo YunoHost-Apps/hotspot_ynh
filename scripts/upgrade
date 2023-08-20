@@ -72,6 +72,31 @@ if [ -z $service_name ]; then
 	ynh_app_setting_set --app=$app --key=service_name --value=$service_name
 fi
 
+dns=$(ynh_app_setting_get $app dns)
+if [[ -n "${dns}" ]]; then
+    ip6_dns=""
+    ip4_dns=""
+    for ip in $(echo "${dns}" | tr ',' ' '); do
+        if [[ "$ip" == *":"* ]]; then
+            ip6_dns+="[$ip],"
+        else
+            ip4_dns+="$ip,"
+        fi
+    done
+    # Remove trailing ,
+    ip6_dns="${ip6_dns%%,}"
+    ip4_dns="${ip4_dns%%,}"
+
+	if [[ -z "$(ynh_app_setting_get --app=$app --key=ip6_dns)" ]]; then
+		ynh_app_setting_set --app=$app --key=ip6_dns --value="${ip6_dns}"
+	if
+	if [[ -z "$(ynh_app_setting_get --app=$app --key=ip4_dns)" ]]; then
+		ynh_app_setting_set --app=$app --key=ip4_dns --value="${ip4_dns}"
+	if
+
+	ynh_app_setting_delete $app dns
+fi
+
 # Old stuff prior to 2.x
 
 ip6_net=$(ynh_app_setting_get --app=$app --key=ip6_net)
