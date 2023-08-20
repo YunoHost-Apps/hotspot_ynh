@@ -132,6 +132,24 @@ validate__dns() {
 # SPECIFIC SETTERS FOR TOML SHORT KEYS
 #=================================================
 
+set__dns() {
+    ip6_dns=""
+    ip4_dns=""
+    for ip in $(echo "${dns}" | tr ',' ' '); do
+        if [[ "$ip" == *":"* ]]; then
+            ip6_dns+="[$ip],"
+        else
+            ip4_dns+="$ip,"
+        fi
+    done
+    # Remove trailing ,
+    ip6_dns="${ip6_dns%%,}"
+    ip4_dns="${ip4_dns%%,}"
+
+    ynh_app_setting_set $app ip6_dns "${ip6_dns}"
+    ynh_app_setting_set $app ip4_dns "${ip4_dns}"
+}
+
 #=================================================
 # OVERWRITING VALIDATE STEP 
 #=================================================
