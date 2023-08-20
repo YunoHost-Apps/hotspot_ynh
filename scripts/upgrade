@@ -111,7 +111,7 @@ if [[ -n "${dns}" ]]; then
 	if
 	if [[ -z "$(ynh_app_setting_get --app=$app --key=ip4_dns)" ]]; then
 		ynh_app_setting_set --app=$app --key=ip4_dns --value="${ip4_dns}"
-	if
+	fi
 
 	ynh_app_setting_delete $app dns
 fi
