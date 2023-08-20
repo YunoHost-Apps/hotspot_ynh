@@ -92,6 +92,14 @@ EOF
     echo "value: '$(ynh_app_setting_get $app wifi_device)'"
 }
 
+get__dns() {
+    ip6_dns=$(ynh_app_setting_get $app ip6_dns | tr -d '[' | tr -d ']')
+    ip4_dns=$(ynh_app_setting_get $app ip4_dns)
+    
+    echo "value: ${ip4_dns},${ip6_dns}"
+}
+
+
 #=================================================
 # SPECIFIC VALIDATORS FOR TOML SHORT KEYS
 #=================================================
