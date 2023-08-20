@@ -72,7 +72,26 @@ if [ -z $service_name ]; then
 	ynh_app_setting_set --app=$app --key=service_name --value=$service_name
 fi
 
-dns=$(ynh_app_setting_get $app dns)
+multissid=$(ynh_app_setting_get --app=$app --key=multissid)
+if [[ -n ${multissid} ]] && [[ ${multissid} -gt 1 ]]; then
+	wifi_ssid=$(ynh_app_setting_get --app=$app --key=wifi_ssid | cut -d'|' -f 1)
+	wifi_secure=$(ynh_app_setting_get --app=$app --key=wifi_secure | cut -d'|' -f 1)
+	wifi_passphrase=$(ynh_app_setting_get --app=$app --key=wifi_passphrase | cut -d'|' -f 1)
+	ip4_nat_prefix=$(ynh_app_setting_get --app=$app --key=ip4_nat_prefix | cut -d'|' -f 1)
+	ip6_net=$(ynh_app_setting_get --app=$app --key=ip6_net | cut -d'|' -f 1)
+	ip6_firewall=$(ynh_app_setting_get --app=$app --key=ip6_firewall | cut -d'|' -f 1)
+	dns=$(ynh_app_setting_get --app=$app --key=dns | cut -d'|' -f 1)
+
+	ynh_app_setting_set --app=$app --key=wifi_ssid --value="${wifi_ssid}"
+	ynh_app_setting_set --app=$app --key=wifi_secure --value="${wifi_secure}"
+	ynh_app_setting_set --app=$app --key=wifi_passphrase --value="${wifi_passphrase}"
+	ynh_app_setting_set --app=$app --key=ip4_nat_prefix --value="${ip4_nat_prefix}"
+	ynh_app_setting_set --app=$app --key=ip6_net --value="${ip6_net}"
+	ynh_app_setting_set --app=$app --key=ip6_firewall --value="${ip6_firewall}"
+else
+	dns=$(ynh_app_setting_get --app=$app --key=dns)
+fi
+
 if [[ -n "${dns}" ]]; then
     ip6_dns=""
     ip4_dns=""
@@ -95,6 +114,10 @@ if [[ -n "${dns}" ]]; then
 	if
 
 	ynh_app_setting_delete $app dns
+fi
+
+if [[ -n ${multissid} ]]; then
+    ynh_app_setting_delete --app=$app --key=multissid
 fi
 
 # Old stuff prior to 2.x
