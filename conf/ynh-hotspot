@@ -248,8 +248,8 @@ start)
     if is_running; then
         echo "Already started"
         exit 0
-    elif [[ "${service_enabled}" != "enabled" ]]; then
-        echo "Not starting because hotspod service is disabled"
+    elif [[ "${service_enabled}" -eq 0 ]]; then
+        echo "Not starting because hotspot service is disabled"
         exit 1
     fi
 
@@ -327,7 +327,7 @@ restart)
 status)
     exitcode=0
 
-    if [[ "${service_enabled}" != "enabled" ]]; then
+    if [[ "${service_enabled}" -eq 0 ]]; then
         echo "[FAIL] Hotspot Service disabled"
         exit 1
     fi
