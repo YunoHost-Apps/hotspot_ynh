@@ -93,12 +93,19 @@ EOF
 }
 
 get__dns() {
-    ip6_dns=$(ynh_app_setting_get $app ip6_dns | tr -d '[' | tr -d ']')
+    ip6_dns=$(ynh_app_setting_get $app ip6_dns | tr -d '[]')
     ip4_dns=$(ynh_app_setting_get $app ip4_dns)
-    
+
+    if [[ -n ${ip6_net} ]] && [[ -z ${ip6_dns} ]]; then
+        ip6_dns="${ip6_net}1"
+    fi
+
+    if [[ -n ${ip4_nat_prefix} ]] && [[ -z ${ip4_dns} ]]; then
+        ip4_dns="${ip4_nat_prefix}.1"
+    fi
+
     echo "value: ${ip4_dns},${ip6_dns}"
 }
-
 
 #=================================================
 # SPECIFIC VALIDATORS FOR TOML SHORT KEYS
@@ -154,6 +161,14 @@ set__dns() {
     ip6_dns="${ip6_dns%%,}"
     ip4_dns="${ip4_dns%%,}"
 
+    if [[ -n ${ip6_net} ]] && [[ -z ${ip6_dns} ]]; then
+        ip6_dns="${ip6_net}1"
+    fi
+
+    if [[ -n ${ip4_nat_prefix} ]] && [[ -z ${ip4_dns} ]]; then
+        ip4_dns="${ip4_nat_prefix}.1"
+    fi
+    
     ynh_app_setting_set $app ip6_dns "${ip6_dns}"
     ynh_app_setting_set $app ip4_dns "${ip4_dns}"
 }
