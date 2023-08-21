@@ -55,11 +55,11 @@ is_forwarding_set() {
 }
 
 is_dhcpd6_running() {
-    [[ -e "/run/dnsmasq/dnsmasq-dhcpdv6-ssid-${wifi_device}.pid" ]] && ps -p $(cat "/run/dnsmasq/dnsmasq-dhcpdv6-ssid-${wifi_device}.pid") > /dev/null
+    [[ -e "/run/dnsmasq/dnsmasq-dhcpdv6-$app.pid" ]] && ps -p $(cat "/run/dnsmasq/dnsmasq-dhcpdv6-$app.pid") > /dev/null
 }
 
 is_dhcpd4_running() {
-    [[ -e "/run/dnsmasq/dnsmasq-dhcpdv4-ssid-${wifi_device}.pid" ]] && ps -p $(cat "/run/dnsmasq/dnsmasq-dhcpdv4-ssid-${wifi_device}.pid") > /dev/null
+    [[ -e "/run/dnsmasq/dnsmasq-dhcpdv4-$app.pid" ]] && ps -p $(cat "/run/dnsmasq/dnsmasq-dhcpdv4-$app.pid") > /dev/null
 }
 
 is_hostapd_running() {
@@ -148,13 +148,13 @@ start_dhcpd() {
     # Run DHCPv4 server
     if ! is_dhcpd4_running; then
         echo "hotspot ${wifi_device}: Start the DHCPv4 server (dnsmasq)"
-        dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv4-ssid-${wifi_device}.conf -p0 -x /run/dnsmasq/dnsmasq-dhcpv4-ssid-${wifi_device}.pid
+        dnsmasq -C /etc/dnsmasq.$app/dhcpdv4.conf -p0 -x /run/dnsmasq/dnsmasq-dhcpv4-$app.pid
     fi
 
     # Run DHCPv6 server
     if has_ip6delegatedprefix && ! is_dhcpd6_running; then
         echo "hotspot ${wifi_device}: Start the NDP and DHCPv6 server (dnsmasq)"
-        dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv6-ssid-${wifi_device}.conf -p0 -x /run/dnsmasq/dnsmasq-dhcpv6-ssid-${wifi_device}.pid
+        dnsmasq -C /etc/dnsmasq.$app/dhcpdv6.conf -p0 -x /run/dnsmasq/dnsmasq-dhcpv6-$app.pid
     fi
 }
 
@@ -200,14 +200,14 @@ unset_forwarding() {
 stop_dhcpd() {
     if is_dhcpd6_running; then
         echo "hotspot ${wifi_device}: Stop the NDP and DHCPv6 server (dnsmasq)"
-        kill $(cat /run/dnsmasq/dnsmasq-dhcpdv6-ssid-${wifi_device}.pid)
-        rm -f /run/dnsmasq/dnsmasq-dhcpdv6-ssid-${wifi_device}.pid
+        kill $(cat /run/dnsmasq/dnsmasq-dhcpdv6-$app.pid)
+        rm -f /run/dnsmasq/dnsmasq-dhcpdv6-$app.pid
     fi
 
     if is_dhcpd4_running; then
         echo "hotspot ${wifi_device}: Stop the DHCPv4 server (dnsmasq)"
-        kill $(cat /run/dnsmasq/dnsmasq-dhcpdv4-ssid-${wifi_device}.pid)
-        rm -f /run/dnsmasq/dnsmasq-dhcpdv4-ssid-${wifi_device}.pid
+        kill $(cat /run/dnsmasq/dnsmasq-dhcpdv4-$app.pid)
+        rm -f /run/dnsmasq/dnsmasq-dhcpdv4-$app.pid
     fi
 }
 
