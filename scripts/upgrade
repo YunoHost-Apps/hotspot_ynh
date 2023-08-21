@@ -194,6 +194,9 @@ ynh_install_app_dependencies $pkg_dependencies
 #=================================================
 ynh_script_progression --message="Copying configuration..."
 
+hot_reload_usb_wifi_cards
+wifi_device=$(iw_devices | awk -F\| '{ print $1 }')
+
 mkdir -pm 0755 /etc/hostapd/$app/
 chown root: /etc/hostapd/$app/
 
@@ -255,9 +258,6 @@ yunohost service add $service_name --description "Creates a Wi-Fi access point" 
 # START SYSTEMD SERVICE
 #=================================================
 ynh_script_progression --message="Starting the hotspot service..."
-
-hot_reload_usb_wifi_cards
-wifi_device=$(iw_devices | awk -F\| '{ print $1 }')
 
 if [[ -z $wifi_device ]]; then
 	ynh_app_setting_set --app=$app --key=service_enabled --value=0
