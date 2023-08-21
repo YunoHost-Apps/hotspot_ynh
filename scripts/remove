@@ -64,14 +64,8 @@ do
 done
 
 # Remove confs
-ynh_secure_remove --file="/etc/dnsmasq.$app/dhcpdv6.conf.tpl"
-ynh_secure_remove --file="/etc/dnsmasq.$app/dhcpdv6.conf"
-
-ynh_secure_remove --file="/etc/dnsmasq.$app/dhcpdv4.conf.tpl"
-ynh_secure_remove --file="/etc/dnsmasq.$app/dhcpdv4.conf"
-
-ynh_secure_remove --file="/etc/hostapd/$app/hostapd.conf.tpl"
-ynh_secure_remove --file="/etc/hostapd/$app/hostapd.conf"
+ynh_secure_remove --file="/etc/dnsmasq.$app/"
+ynh_secure_remove --file="/etc/hostapd/$app/"
 
 #=================================================
 # CLOSE A PORT

@@ -123,10 +123,7 @@ fi
 ynh_secure_remove --file="/etc/hostapd/hostapd.conf"
 ynh_secure_remove --file="/etc/hostapd/hostapd.base.conf"
 ynh_secure_remove --file="/etc/hostapd/hostapd.accesspoint.conf"
-
-for FILE in $(ls /etc/dnsmasq.dhcpd/*.conf 2>/dev/null); do
-    ynh_secure_remove --file="$FILE"
-done
+ynh_secure_remove --file="/etc/dnsmasq.dhcpd/"
 
 # Old stuff prior to 2.x
 
