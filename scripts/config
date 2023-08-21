@@ -37,9 +37,9 @@ get__no_antenna() {
 
 get__status() {
     local service_enabled=$(ynh_app_setting_get $app service_enabled)
-    if systemctl is-active hostapd -q
+    if systemctl is-active hostapd@$app -q
     then
-        if [ $service_enabled -eq 1 ]
+        if [[ $service_enabled -eq 1 ]]
         then
             cat << EOF
 style: success
@@ -54,7 +54,7 @@ ask:
   en: Your Hotspot is running, but it shouldn't !
 EOF
         fi
-    elif [ $service_enabled -eq 1 ]
+    elif [[ $service_enabled -eq 1 ]]
     then
         cat << EOF
 style: danger
@@ -62,7 +62,7 @@ ask:
   en: |-
     Your Hotspot is down ! Here are errors logged in the last 5 minutes
     \`\`\`
-$(journalctl -u hostapd -n10 -o cat | sed 's/^/    /g')
+$(journalctl -u hostapd@$app -n10 -o cat | sed 's/^/    /g')
     \`\`\`
 EOF
     else
