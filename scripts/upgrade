@@ -206,9 +206,9 @@ install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq
 
 if [[ -n ${wifi_device} ]]; then 
 	if [ "${wifi_secure}" -eq 1 ]; then
-		local sec_comment=""
+		sec_comment=""
 	else
-		local sec_comment="#"
+		sec_comment="#"
 	fi
 
 	ynh_add_config --template="/etc/hostapd/$app/hostapd.conf.tpl" --destination="/etc/hostapd/$app/hostapd.conf"
