@@ -223,7 +223,8 @@ ynh_script_progression --message="Starting a systemd service..."
 if [[ $wifi_device == "" ]]; then
 	echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
 else
-	ynh_systemd_action --service_name=$service_name --action="start" --log_path=systemd #--line_match="Started YunoHost Wifi Hotspot"
+	ynh_app_config_run $1
+	# ynh_systemd_action --service_name=$service_name --action="start" --log_path=systemd #--line_match="Started YunoHost Wifi Hotspot"
 fi
 
 #=================================================
