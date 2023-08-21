@@ -93,8 +93,10 @@ EOF
 }
 
 get__dns() {
-    ip6_dns=$(ynh_app_setting_get $app ip6_dns | tr -d '[]')
-    ip4_dns=$(ynh_app_setting_get $app ip4_dns)
+    ip6_net=$(ynh_app_setting_get --app=$app --key=ip6_net)
+    ip6_dns=$(ynh_app_setting_get --app=$app --key=ip6_dns | tr -d '[]')
+    ip4_nat_prefix=$(ynh_app_setting_get --app=$app --key=ip4_nat_prefix)
+    ip4_dns=$(ynh_app_setting_get --app=$app --key=ip4_dns)
 
     if [[ -n ${ip6_net} ]] && [[ -z ${ip6_dns} ]]; then
         ip6_dns="${ip6_net}1"
