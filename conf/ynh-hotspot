@@ -63,7 +63,7 @@ is_dhcpd4_running() {
 }
 
 is_hostapd_running() {
-    systemctl is-active hostapd &>/dev/null
+    systemctl is-active "hostapd@${wifi_device}" &>/dev/null
 }
 
 is_running() {
@@ -206,7 +206,7 @@ stop_dhcpd() {
 }
 
 stop_hostapd() {
-    systemctl stop hostapd
+    systemctl stop "hostapd@${wifi_device}"
 }
 
 if [ "$1" != restart ]; then
@@ -275,7 +275,7 @@ start)
         configure_hostapd
 
         echo "Starting hostapd..."
-        if ! systemctl start hostapd; then
+        if ! systemctl start "hostapd@${wifi_device}"; then
             journalctl -u hostapd -n 100 --no-hostname --no-pager
             exit 1
         fi

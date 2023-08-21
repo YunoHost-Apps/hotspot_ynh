@@ -120,6 +120,15 @@ if [[ -n ${multissid} ]]; then
     ynh_app_setting_delete --app=$app --key=multissid
 fi
 
+ynh_secure_remove --file="/etc/hostapd/hostapd.conf"
+ynh_secure_remove --file="/etc/hostapd/hostapd.base.conf"
+ynh_secure_remove --file="/etc/hostapd/hostapd.accesspoint.conf"
+
+for FILE in $(ls /etc/dnsmasq.dhcpd/dhcpdv{4,6}-ssid{0..3}.conf 2>/dev/null); do
+    ynh_secure_remove --file="$FILE"
+    ynh_secure_remove --file="$FILE"
+done
+
 # Old stuff prior to 2.x
 
 ip6_net=$(ynh_app_setting_get --app=$app --key=ip6_net)
@@ -203,6 +212,8 @@ ynh_script_progression --message="Upgrading systemd configuration..."
 
 # Create a dedicated systemd config
 ynh_add_systemd_config --service=$service_name
+# Create custom systemd config for hostapd to handle multiple wifi devices
+ynh_add_systemd_config --service="hostapd@.service" --template="../conf/systemd_hostapd.service"
 
 #=================================================
 # GENERIC FINALIZATION

@@ -73,7 +73,7 @@ ynh_secure_remove --file="/etc/dnsmasq.dhcpd/dhcpdv6-ssid-${wifi_device}.conf"
 ynh_secure_remove --file="/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl"
 ynh_secure_remove --file="/etc/dnsmasq.dhcpd/dhcpdv4-ssid-${wifi_device}.conf"
 
-ynh_secure_remove --file="/etc/hostapd/hostapd.conf"
+ynh_secure_remove --file="/etc/hostapd/hostapd.conf.tpl"
 ynh_secure_remove --file="/etc/hostapd/hostapd-${wifi_device}.conf"
 
 #=================================================

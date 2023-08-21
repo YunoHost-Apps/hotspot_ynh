@@ -181,6 +181,7 @@ set__dns() {
 # OVERWRITING APPLY STEP 
 #=================================================
 ynh_app_config_apply() {
+    old_wifi_device=$(ynh_app_setting_get $app wifi_device)
     
     # Stop vpn client
     ynh_print_info --message="Stopping hotspot in order to edit files"
@@ -194,7 +195,11 @@ ynh_app_config_apply() {
         local sec_comment="#"
     fi
 
-    ynh_add_config --template="/etc/hostapd/hostapd.base.conf" --destination="/etc/hostapd/hostapd-${wifi_device}.conf"
+    ynh_secure_remove --file="/etc/hostapd/hostapd-${old_wifi_device}.conf"
+    ynh_secure_remove --file="/etc/dnsmasq.dhcpd/dhcpdv6-ssid-${old_wifi_device}.conf"
+    ynh_secure_remove --file="/etc/dnsmasq.dhcpd/dhcpdv4-ssid-${old_wifi_device}.conf"
+
+    ynh_add_config --template="/etc/hostapd/hostapd.conf.tpl" --destination="/etc/hostapd/hostapd-${wifi_device}.conf"
     ynh_add_config --template="/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl" --destination="/etc/dnsmasq.dhcpd/dhcpdv4-ssid-${wifi_device}.conf"
     
     if [[ -n "${ip6_net}" ]] && [[ "${ip6_net}" != "none" ]]; then

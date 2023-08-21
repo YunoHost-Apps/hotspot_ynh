@@ -158,7 +158,7 @@ ynh_script_progression --message="Copying configuration files..."
 mkdir -pm 0755 /etc/dnsmasq.dhcpd/
 chown root: /etc/dnsmasq.dhcpd/
 
-install -b -o root -g root -m 0644 ../conf/hostapd.*.conf /etc/hostapd/
+install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl /etc/hostapd/hostapd.conf.tpl
 install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl
 install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl
 
@@ -179,13 +179,7 @@ install -o root -g root -m 0755 ../conf/openvpn_90-hotspot /etc/openvpn/scripts/
 ynh_script_progression --message="Configuring hostapd..."
 
 ## hostapd
-ynh_replace_string --match_string="^DAEMON_CONF=$" --replace_string="&/etc/hostapd/hostapd.conf" --target_file=/etc/init.d/hostapd
 ynh_store_file_checksum --file="/etc/init.d/hostapd"
-
-# We also need to put this in /etc/default/hostapd because on some setup
-# like RPi, the version of hostapd is different and /etc/init.d/hostapd
-# isnt used ... instead the service is "pure systemd" ...
-echo "DAEMON_CONF=/etc/hostapd/hostapd.conf" > /etc/default/hostapd
 
 # Set default inits
 # The boot order of these services are important, so they are disabled by default
@@ -201,6 +195,8 @@ ynh_script_progression --message="Configuring a systemd service..."
 
 # Create a dedicated systemd config
 ynh_add_systemd_config --service=$service_name
+# Create custom systemd config for hostapd to handle multiple wifi devices
+ynh_add_systemd_config --service="hostapd@.service" --template="../conf/systemd_hostapd.service"
 
 #=================================================
 # INTEGRATE SERVICE IN YUNOHOST

@@ -41,7 +41,7 @@ ynh_print_info --message="Declaring files to be backed up..."
 # BACKUP THE APP MAIN DIR
 #=================================================
 
-ynh_backup --src_path="/etc/hostapd/hostapd.conf"
+ynh_backup --src_path="/etc/hostapd/hostapd.conf.tpl"
 ynh_backup --src_path="/etc/hostapd/hostapd-${wifi_device}.conf"
 
 ynh_backup --src_path="/etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl"

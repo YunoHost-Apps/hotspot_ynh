@@ -1,0 +1,21 @@
+[Unit]
+Documentation=man:systemd-sysv-generator(8)
+SourcePath=/etc/init.d/hostapd
+Description=LSB: Advanced IEEE 802.11 management daemon
+After=remote-fs.target
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+Restart=no
+TimeoutSec=5min
+IgnoreSIGPIPE=no
+KillMode=process
+GuessMainPID=no
+RemainAfterExit=yes
+SuccessExitStatus=5 6
+Environment=DAEMON_CONF=/etc/hostapd/hostapd-%i.conf
+ExecStart=/etc/init.d/hostapd start
+ExecStop=/etc/init.d/hostapd stop
+ExecReload=/etc/init.d/hostapd reload
