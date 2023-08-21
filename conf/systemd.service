@@ -6,8 +6,8 @@ After=network.target
 [Service]
 Type=oneshot
 User=root
-ExecStart=/usr/local/bin/ynh-hotspot start
-ExecStop=/usr/local/bin/ynh-hotspot stop
+ExecStart=/usr/local/bin/__SERVICE_NAME__ start
+ExecStop=/usr/local/bin/__SERVICE_NAME__ stop
 RemainAfterExit=yes
 
 [Install]

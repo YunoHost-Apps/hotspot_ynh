@@ -30,7 +30,7 @@ firmware_nonfree=$YNH_APP_ARG_FIRMWARE_NONFREE
 app=$YNH_APP_INSTANCE_NAME
 
 # the service name must match the service template files
-service_name='ynh-hotspot'
+service_name=ynh-$app
 
 #=================================================
 # CHECK IF THE APP CAN BE INSTALLED WITH THESE ARGS
@@ -130,6 +130,13 @@ if [[ ! -v ip6_net ]]; then # if ip6_net not set
 	fi
 fi
 
+ip4_nat_prefix_index=${app##*__}
+if [[ "${ip4_nat_prefix_index}" == "${app}" ]]; then
+  	ip4_nat_prefix_index=0
+fi
+ip4_nat_prefix="10.${ip4_nat_prefix_index}.242"
+ip4_dns="${ip4_nat_prefix}.1"
+
 hot_reload_usb_wifi_cards
 wifi_device=$(iw_devices | awk -F\| '{ print $1 }')
 
@@ -141,8 +148,8 @@ ynh_app_setting_set --app=$app --key=wifi_channel --value=6
 ynh_app_setting_set --app=$app --key=ip6_firewall --value=1
 ynh_app_setting_set --app=$app --key=ip6_dns --value="${ip6_dns}"
 ynh_app_setting_set --app=$app --key=ip6_net --value="${ip6_net}"
-ynh_app_setting_set --app=$app --key=ip4_dns --value="10.0.242.1"
-ynh_app_setting_set --app=$app --key=ip4_nat_prefix --value=10.0.242
+ynh_app_setting_set --app=$app --key=ip4_dns --value="${ip4_dns}"
+ynh_app_setting_set --app=$app --key=ip4_nat_prefix --value="${ip4_nat_prefix}"
 
 if [[ -z $wifi_device ]]; then
 	ynh_app_setting_set --app=$app --key=service_enabled --value=0
@@ -155,31 +162,32 @@ fi
 #=================================================
 ynh_script_progression --message="Copying configuration files..."
 
-mkdir -pm 0755 /etc/dnsmasq.dhcpd/
-chown root: /etc/dnsmasq.dhcpd/
+mkdir -pm 0755 /etc/hostapd/$app/
+chown root: /etc/hostapd/$app/
 
-install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl /etc/hostapd/hostapd.conf.tpl
-install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl
-install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl
+mkdir -pm 0755 /etc/dnsmasq.$app/
+chown root: /etc/dnsmasq.$app/
+
+install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl /etc/hostapd/$app/hostapd.conf.tpl
+install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.$app/dhcpdv6.conf.tpl
+install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.$app/dhcpdv4.conf.tpl
 
 # Copy init script
-install -o root -g root -m 0755 ../conf/$service_name /usr/local/bin/
+ynh_add_config --template="../conf/ynh-hotspot" --destination="/usr/local/bin/$service_name"
 
 # Copy openvpn scripts
 mkdir -pm 0755 /etc/openvpn/scripts
 mkdir -pm 0755 /etc/openvpn/scripts/route-up.d
 mkdir -pm 0755 /etc/openvpn/scripts/route-down.d
-install -o root -g root -m 0755 ../conf/openvpn_90-hotspot /etc/openvpn/scripts/route-up.d/90-hotspot
-install -o root -g root -m 0755 ../conf/openvpn_90-hotspot /etc/openvpn/scripts/route-down.d/90-hotspot
-
+ynh_add_config --template="../conf/openvpn_90-hotspot" --destination="/etc/openvpn/scripts/route-up.d/90-$service_name"
+ynh_add_config --template="../conf/openvpn_90-hotspot" --destination="/etc/openvpn/scripts/route-down.d/90-$service_name"
+chmod 0755 "/etc/openvpn/scripts/route-up.d/90-${service_name}"
+chmod 0755 "/etc/openvpn/scripts/route-down.d/90-${service_name}"
 
 #=================================================
 # CONFIGURE HOSTAPD
 #=================================================
 ynh_script_progression --message="Configuring hostapd..."
-
-## hostapd
-ynh_store_file_checksum --file="/etc/init.d/hostapd"
 
 # Set default inits
 # The boot order of these services are important, so they are disabled by default
@@ -196,14 +204,14 @@ ynh_script_progression --message="Configuring a systemd service..."
 # Create a dedicated systemd config
 ynh_add_systemd_config --service=$service_name
 # Create custom systemd config for hostapd to handle multiple wifi devices
-ynh_add_systemd_config --service="hostapd@.service" --template="../conf/systemd_hostapd.service"
+ynh_add_systemd_config --service="hostapd@$app.service" --template="../conf/systemd_hostapd.service"
 
 #=================================================
 # INTEGRATE SERVICE IN YUNOHOST
 #=================================================
 ynh_script_progression --message="Integrating service in YunoHost..."
 
-yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd"
+yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd@$app"
 
 #=================================================
 # START SYSTEMD SERVICE

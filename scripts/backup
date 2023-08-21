@@ -30,7 +30,6 @@ app=$YNH_APP_INSTANCE_NAME
 final_path=$(ynh_app_setting_get --app=$app --key=final_path)
 firmware_nonfree=$(ynh_app_setting_get --app=$app --key=firmware_nonfree)
 service_name=$(ynh_app_setting_get --app=$app --key=service_name)
-wifi_device=$(ynh_app_setting_get --app=$app --key=wifi_device)
 
 #=================================================
 # DECLARE DATA AND CONF FILES TO BACKUP
@@ -41,21 +40,19 @@ ynh_print_info --message="Declaring files to be backed up..."
 # BACKUP THE APP MAIN DIR
 #=================================================
 
-ynh_backup --src_path="/etc/hostapd/hostapd.conf.tpl"
-ynh_backup --src_path="/etc/hostapd/hostapd-${wifi_device}.conf"
+ynh_backup --src_path="/etc/hostapd/$app/hostapd.conf.tpl"
+ynh_backup --src_path="/etc/hostapd/$app/hostapd.conf"
 
-ynh_backup --src_path="/etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl"
-ynh_backup --src_path="/etc/dnsmasq.dhcpd/dhcpdv6-ssid-${wifi_device}.conf"
+ynh_backup --src_path="/etc/dnsmasq.$app/dhcpdv6.conf.tpl"
+ynh_backup --src_path="/etc/dnsmasq.$app/dhcpdv6.conf"
 
-ynh_backup --src_path="/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl"
-ynh_backup --src_path="/etc/dnsmasq.dhcpd/dhcpdv4-ssid-${wifi_device}.conf"
+ynh_backup --src_path="/etc/dnsmasq.$app/dhcpdv4.conf.tpl"
+ynh_backup --src_path="/etc/dnsmasq.$app/dhcpdv4.conf"
 
 ynh_backup --src_path="/usr/local/bin/$service_name"
 
-ynh_backup --src_path="/etc/openvpn/scripts/route-up.d/90-hotspot"
-ynh_backup --src_path="/etc/openvpn/scripts/route-down.d/90-hotspot"
-
-ynh_backup --src_path="/etc/init.d/hostapd"
+ynh_backup --src_path="/etc/openvpn/scripts/route-up.d/90-$service_name"
+ynh_backup --src_path="/etc/openvpn/scripts/route-down.d/90-$service_name"
 
 #=================================================
 # SPECIFIC BACKUP
@@ -64,6 +61,7 @@ ynh_backup --src_path="/etc/init.d/hostapd"
 #=================================================
 
 ynh_backup --src_path="/etc/systemd/system/$service_name.service"
+ynh_backup --src_path="/etc/systemd/system/hostapd@$app.service"
 
 #=================================================
 # END OF SCRIPT

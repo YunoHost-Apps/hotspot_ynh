@@ -181,11 +181,9 @@ set__dns() {
 # OVERWRITING APPLY STEP 
 #=================================================
 ynh_app_config_apply() {
-    old_wifi_device=$(ynh_app_setting_get $app wifi_device)
-    
     # Stop vpn client
     ynh_print_info --message="Stopping hotspot in order to edit files"
-    /usr/local/bin/ynh-hotspot stop
+    /usr/local/bin/${service_name} stop
 
     _ynh_app_config_apply
 
@@ -195,20 +193,16 @@ ynh_app_config_apply() {
         local sec_comment="#"
     fi
 
-    ynh_secure_remove --file="/etc/hostapd/hostapd-${old_wifi_device}.conf"
-    ynh_secure_remove --file="/etc/dnsmasq.dhcpd/dhcpdv6-ssid-${old_wifi_device}.conf"
-    ynh_secure_remove --file="/etc/dnsmasq.dhcpd/dhcpdv4-ssid-${old_wifi_device}.conf"
-
-    ynh_add_config --template="/etc/hostapd/hostapd.conf.tpl" --destination="/etc/hostapd/hostapd-${wifi_device}.conf"
-    ynh_add_config --template="/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl" --destination="/etc/dnsmasq.dhcpd/dhcpdv4-ssid-${wifi_device}.conf"
+    ynh_add_config --template="/etc/hostapd/$app/hostapd.conf.tpl" --destination="/etc/hostapd/$app/hostapd.conf"
+    ynh_add_config --template="/etc/dnsmasq.$app/dhcpdv4.conf.tpl" --destination="/etc/dnsmasq.$app/dhcpdv4.conf"
     
     if [[ -n "${ip6_net}" ]] && [[ "${ip6_net}" != "none" ]]; then
-        ynh_add_config --template="/etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl" --destination="/etc/dnsmasq.dhcpd/dhcpdv6-ssid-${wifi_device}.conf"
+        ynh_add_config --template="/etc/dnsmasq.$app/dhcpdv6.conf.tpl" --destination="/etc/dnsmasq.$app/dhcpdv6.conf"
     fi  
 
-    # Start vpn client
+    # Start hotspot
     ynh_print_info --message="Starting hotspot service if needed"
-    /usr/local/bin/ynh-hotspot start
+    /usr/local/bin/${service_name} start
 
 }
 

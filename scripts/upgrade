@@ -68,7 +68,7 @@ elif [ $firmware_nonfree = "no" ]; then
 fi
 
 if [ -z $service_name ]; then
-	service_name="ynh-hotspot"
+	service_name="ynh-$app"
 	ynh_app_setting_set --app=$app --key=service_name --value=$service_name
 fi
 
@@ -124,8 +124,7 @@ ynh_secure_remove --file="/etc/hostapd/hostapd.conf"
 ynh_secure_remove --file="/etc/hostapd/hostapd.base.conf"
 ynh_secure_remove --file="/etc/hostapd/hostapd.accesspoint.conf"
 
-for FILE in $(ls /etc/dnsmasq.dhcpd/dhcpdv{4,6}-ssid{0..3}.conf 2>/dev/null); do
-    ynh_secure_remove --file="$FILE"
+for FILE in $(ls /etc/dnsmasq.dhcpd/*.conf 2>/dev/null); do
     ynh_secure_remove --file="$FILE"
 done
 
@@ -188,22 +187,27 @@ ynh_install_app_dependencies $pkg_dependencies
 #=================================================
 ynh_script_progression --message="Copying configuration..."
 
-mkdir -pm 0755 /etc/dnsmasq.dhcpd/
-chown root: /etc/dnsmasq.dhcpd/
+mkdir -pm 0755 /etc/hostapd/$app/
+chown root: /etc/hostapd/$app/
 
-install -b -o root -g root -m 0644 ../conf/hostapd.*.conf /etc/hostapd/
-install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl
-install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl
+mkdir -pm 0755 /etc/dnsmasq.$app/
+chown root: /etc/dnsmasq.$app/
+
+install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl /etc/hostapd/$app/hostapd.conf.tpl
+install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.$app/dhcpdv6.conf.tpl
+install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.$app/dhcpdv4.conf.tpl
 
 # Copy init script
-install -o root -g root -m 0755 ../conf/$service_name /usr/local/bin/
+ynh_add_config --template="../conf/ynh-hotspot" --destination="/usr/local/bin/$service_name"
 
 # Copy openvpn scripts
 mkdir -pm 0755 /etc/openvpn/scripts
 mkdir -pm 0755 /etc/openvpn/scripts/route-up.d
 mkdir -pm 0755 /etc/openvpn/scripts/route-down.d
-install -o root -g root -m 0755 ../conf/openvpn_90-hotspot /etc/openvpn/scripts/route-up.d/90-hotspot
-install -o root -g root -m 0755 ../conf/openvpn_90-hotspot /etc/openvpn/scripts/route-down.d/90-hotspot
+ynh_add_config --template="../conf/openvpn_90-hotspot" --destination="/etc/openvpn/scripts/route-up.d/90-$service_name"
+ynh_add_config --template="../conf/openvpn_90-hotspot" --destination="/etc/openvpn/scripts/route-down.d/90-$service_name"
+chmod 0755 "/etc/openvpn/scripts/route-up.d/90-${service_name}"
+chmod 0755 "/etc/openvpn/scripts/route-down.d/90-${service_name}"
 
 #=================================================
 # SETUP SYSTEMD
@@ -213,7 +217,7 @@ ynh_script_progression --message="Upgrading systemd configuration..."
 # Create a dedicated systemd config
 ynh_add_systemd_config --service=$service_name
 # Create custom systemd config for hostapd to handle multiple wifi devices
-ynh_add_systemd_config --service="hostapd@.service" --template="../conf/systemd_hostapd.service"
+ynh_add_systemd_config --service="hostapd@$app.service" --template="../conf/systemd_hostapd.service"
 
 #=================================================
 # GENERIC FINALIZATION
@@ -222,7 +226,7 @@ ynh_add_systemd_config --service="hostapd@.service" --template="../conf/systemd_
 #=================================================
 ynh_script_progression --message="Integrating service in YunoHost..."
 
-yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd"
+yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd@$app"
 
 #=================================================
 # START SYSTEMD SERVICE

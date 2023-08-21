@@ -63,7 +63,13 @@ is_dhcpd4_running() {
 }
 
 is_hostapd_running() {
-    systemctl is-active "hostapd@${wifi_device}" &>/dev/null
+    systemctl is-active "hostapd@${app}" &>/dev/null
+}
+
+is_other_hostapd_running() {
+    other_hostapd_services=$(systemctl list-units --state=running hostapd@*.service | grep -v "^hostapd@$app.service")
+
+    [[ -n "${other_hostapd_service}" ]]
 }
 
 is_running() {
@@ -206,7 +212,7 @@ stop_dhcpd() {
 }
 
 stop_hostapd() {
-    systemctl stop "hostapd@${wifi_device}"
+    systemctl stop "hostapd@${app}"
 }
 
 if [ "$1" != restart ]; then
@@ -215,20 +221,21 @@ if [ "$1" != restart ]; then
 
     echo -n "Retrieving Yunohost settings... "
 
-    service_enabled=$(systemctl is-enabled ynh-hotspot)
-    wifi_device=$(ynh_app_setting_get hotspot wifi_device)
-    wifi_channel=$(ynh_app_setting_get hotspot wifi_channel)
+    app=__APP__
+    service_enabled=$(ynh_app_setting_get --app=$app --key=service_enabled)
+    wifi_device=$(ynh_app_setting_get --app=$app --key=wifi_device)
+    wifi_channel=$(ynh_app_setting_get --app=$app --key=wifi_channel)
 
-    wifi_ssid=$(ynh_app_setting_get hotspot wifi_ssid)
-    wifi_secure=$(ynh_app_setting_get hotspot wifi_secure)
-    wifi_passphrase=$(ynh_app_setting_get hotspot wifi_passphrase)
-    ip6_firewall=$(ynh_app_setting_get hotspot ip6_firewall)
-    ip6_dns=$(ynh_app_setting_get hotspot ip6_dns)
-    ip6_net=$(ynh_app_setting_get hotspot ip6_net)
-    ip4_dns=$(ynh_app_setting_get hotspot ip4_dns)
-    ip4_nat_prefix=$(ynh_app_setting_get hotspot ip4_nat_prefix)
+    wifi_ssid=$(ynh_app_setting_get --app=$app --key=wifi_ssid)
+    wifi_secure=$(ynh_app_setting_get --app=$app --key=wifi_secure)
+    wifi_passphrase=$(ynh_app_setting_get --app=$app --key=wifi_passphrase)
+    ip6_firewall=$(ynh_app_setting_get --app=$app --key=ip6_firewall)
+    ip6_dns=$(ynh_app_setting_get --app=$app --key=ip6_dns)
+    ip6_net=$(ynh_app_setting_get --app=$app --key=ip6_net)
+    ip4_dns=$(ynh_app_setting_get --app=$app --key=ip4_dns)
+    ip4_nat_prefix=$(ynh_app_setting_get --app=$app --key=ip4_nat_prefix)
 
-    old_gateway_interface=$(ynh_app_setting_get hotspot gateway_interface)
+    old_gateway_interface=$(ynh_app_setting_get --app=$app --key=gateway_interface)
     new_gateway_interface=$(ip route get 1.2.3.4 | awk '{ print $5; }')
 
     echo "OK"
@@ -252,7 +259,7 @@ start)
     fi
 
     echo "[hotspot] Starting..."
-    touch /tmp/.ynh-hotspot-started
+    touch /tmp/.${service_name}-started
 
     # Check old state of the ipv4 NAT settings
     if [[ -n "${old_gateway_interface}" ]] && [[ "${new_gateway_interface}" != "${old_gateway_interface}" ]] && is_nat_set "${old_gateway_interface}"; then
@@ -275,7 +282,7 @@ start)
         configure_hostapd
 
         echo "Starting hostapd..."
-        if ! systemctl start "hostapd@${wifi_device}"; then
+        if ! systemctl start "hostapd@${app}"; then
             journalctl -u hostapd -n 100 --no-hostname --no-pager
             exit 1
         fi
@@ -292,15 +299,17 @@ start)
     ;;
 stop)
     echo "[hotspot] Stopping..."
-    rm -f /tmp/.ynh-hotspot-started
+    rm -f /tmp/.${service_name}-started
 
-    if [[ -n "${old_gateway_interface}" ]] && is_nat_set "${old_gateway_interface}"; then
-        echo "Unset NAT"
-        unset_nat "${old_gateway_interface}"
+    if ! is_other_hostapd_running; then
+        if [[ -n "${old_gateway_interface}" ]] && is_nat_set "${old_gateway_interface}"; then
+            echo "Unset NAT"
+            unset_nat "${old_gateway_interface}"
+        fi
+        
+        echo "Unset forwarding"
+        unset_forwarding
     fi
-
-    echo "Unset forwarding"
-    unset_forwarding
 
     unset_ipaddr
     unset_ipfirewall
