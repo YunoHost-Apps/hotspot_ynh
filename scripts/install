@@ -204,7 +204,7 @@ ynh_script_progression --message="Configuring a systemd service..."
 # Create a dedicated systemd config
 ynh_add_systemd_config --service=$service_name
 # Create custom systemd config for hostapd to handle multiple wifi devices
-ynh_add_systemd_config --service="hostapd@$app.service" --template="../conf/systemd_hostapd.service"
+ynh_add_systemd_config --service="hostapd@$app" --template="../conf/systemd_hostapd.service"
 
 #=================================================
 # INTEGRATE SERVICE IN YUNOHOST
