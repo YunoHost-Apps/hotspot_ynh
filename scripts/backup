@@ -41,13 +41,13 @@ ynh_print_info --message="Declaring files to be backed up..."
 #=================================================
 
 ynh_backup --src_path="/etc/hostapd/$app/hostapd.conf.tpl"
-ynh_backup --src_path="/etc/hostapd/$app/hostapd.conf"
+ynh_backup --src_path="/etc/hostapd/$app/hostapd.conf" --not_mandatory
 
 ynh_backup --src_path="/etc/dnsmasq.$app/dhcpdv6.conf.tpl"
-ynh_backup --src_path="/etc/dnsmasq.$app/dhcpdv6.conf"
+ynh_backup --src_path="/etc/dnsmasq.$app/dhcpdv6.conf" --not_mandatory
 
 ynh_backup --src_path="/etc/dnsmasq.$app/dhcpdv4.conf.tpl"
-ynh_backup --src_path="/etc/dnsmasq.$app/dhcpdv4.conf"
+ynh_backup --src_path="/etc/dnsmasq.$app/dhcpdv4.conf" --not_mandatory
 
 ynh_backup --src_path="/usr/local/bin/$service_name"
 
