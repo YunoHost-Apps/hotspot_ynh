@@ -128,12 +128,12 @@ fi
 
 if [[ -n ${multissid} ]]; then
     ynh_app_setting_delete --app=$app --key=multissid
-fi
 
-ynh_secure_remove --file="/etc/hostapd/hostapd.conf"
-ynh_secure_remove --file="/etc/hostapd/hostapd.base.conf"
-ynh_secure_remove --file="/etc/hostapd/hostapd.accesspoint.conf"
-ynh_secure_remove --file="/etc/dnsmasq.dhcpd/"
+	ynh_secure_remove --file="/etc/hostapd/hostapd.conf"
+	ynh_secure_remove --file="/etc/hostapd/hostapd.base.conf"
+	ynh_secure_remove --file="/etc/hostapd/hostapd.accesspoint.conf"
+	ynh_secure_remove --file="/etc/dnsmasq.dhcpd/"
+fi
 
 # Old stuff prior to 2.x
 
