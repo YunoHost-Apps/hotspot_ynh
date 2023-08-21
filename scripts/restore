@@ -61,10 +61,8 @@ else
 	pkg_dependencies="$pkg_dependencies $free_firmware_packages"
 fi
 
-for FILE in $(ls /etc/hostapd/hostapd.conf{.tpl?,} 2>/dev/null)
-do
-    ynh_restore_file --origin_path="$FILE"
-done
+ynh_restore_file --origin_path="/etc/hostapd/hostapd.conf"
+
 ynh_restore_file --origin_path="/etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl"
 ynh_restore_file --origin_path="/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl"
 
