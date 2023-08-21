@@ -30,6 +30,7 @@ app=$YNH_APP_INSTANCE_NAME
 final_path=$(ynh_app_setting_get --app=$app --key=final_path)
 firmware_nonfree=$(ynh_app_setting_get --app=$app --key=firmware_nonfree)
 service_name=$(ynh_app_setting_get --app=$app --key=service_name)
+wifi_device=$(ynh_app_setting_get --app=$app --key=wifi_device)
 
 #=================================================
 # DECLARE DATA AND CONF FILES TO BACKUP
@@ -41,9 +42,13 @@ ynh_print_info --message="Declaring files to be backed up..."
 #=================================================
 
 ynh_backup --src_path="/etc/hostapd/hostapd.conf"
+ynh_backup --src_path="/etc/hostapd/hostapd-${wifi_device}.conf"
 
 ynh_backup --src_path="/etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl"
+ynh_backup --src_path="/etc/dnsmasq.dhcpd/dhcpdv6-ssid-${wifi_device}.conf"
+
 ynh_backup --src_path="/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl"
+ynh_backup --src_path="/etc/dnsmasq.dhcpd/dhcpdv4-ssid-${wifi_device}.conf"
 
 ynh_backup --src_path="/usr/local/bin/$service_name"
 
