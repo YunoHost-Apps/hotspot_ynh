@@ -72,15 +72,24 @@ if [ -z $service_name ]; then
 	ynh_app_setting_set --app=$app --key=service_name --value=$service_name
 fi
 
+wifi_ssid=$(ynh_app_setting_get --app=$app --key=wifi_ssid)
+wifi_secure=$(ynh_app_setting_get --app=$app --key=wifi_secure)
+wifi_passphrase=$(ynh_app_setting_get --app=$app --key=wifi_passphrase)
+wifi_channel=$(ynh_app_setting_get --app=$app --key=wifi_channel)
+ip4_nat_prefix=$(ynh_app_setting_get --app=$app --key=ip4_nat_prefix)
+ip6_net=$(ynh_app_setting_get --app=$app --key=ip6_net)
+ip6_firewall=$(ynh_app_setting_get --app=$app --key=ip6_firewall)
+dns=$(ynh_app_setting_get --app=$app --key=dns)
+
 multissid=$(ynh_app_setting_get --app=$app --key=multissid)
 if [[ -n ${multissid} ]] && [[ ${multissid} -gt 1 ]]; then
-	wifi_ssid=$(ynh_app_setting_get --app=$app --key=wifi_ssid | cut -d'|' -f 1)
-	wifi_secure=$(ynh_app_setting_get --app=$app --key=wifi_secure | cut -d'|' -f 1)
-	wifi_passphrase=$(ynh_app_setting_get --app=$app --key=wifi_passphrase | cut -d'|' -f 1)
-	ip4_nat_prefix=$(ynh_app_setting_get --app=$app --key=ip4_nat_prefix | cut -d'|' -f 1)
-	ip6_net=$(ynh_app_setting_get --app=$app --key=ip6_net | cut -d'|' -f 1)
-	ip6_firewall=$(ynh_app_setting_get --app=$app --key=ip6_firewall | cut -d'|' -f 1)
-	dns=$(ynh_app_setting_get --app=$app --key=dns | cut -d'|' -f 1)
+	wifi_ssid=$(cut -d'|' -f 1 <<< ${wifi_ssid})
+	wifi_secure=$(cut -d'|' -f 1 <<< ${wifi_secure})
+	wifi_passphrase=$(cut -d'|' -f 1 <<< ${wifi_passphrase})
+	ip4_nat_prefix=$(cut -d'|' -f 1 <<< ${ip4_nat_prefix})
+	ip6_net=$(cut -d'|' -f 1 <<< ${ip6_net})
+	ip6_firewall=$(cut -d'|' -f 1 <<< ${ip6_firewall})
+	dns=$(cut -d'|' -f 1 <<< ${dns})
 
 	ynh_app_setting_set --app=$app --key=wifi_ssid --value="${wifi_ssid}"
 	ynh_app_setting_set --app=$app --key=wifi_secure --value="${wifi_secure}"
@@ -88,8 +97,6 @@ if [[ -n ${multissid} ]] && [[ ${multissid} -gt 1 ]]; then
 	ynh_app_setting_set --app=$app --key=ip4_nat_prefix --value="${ip4_nat_prefix}"
 	ynh_app_setting_set --app=$app --key=ip6_net --value="${ip6_net}"
 	ynh_app_setting_set --app=$app --key=ip6_firewall --value="${ip6_firewall}"
-else
-	dns=$(ynh_app_setting_get --app=$app --key=dns)
 fi
 
 if [[ -n "${dns}" ]]; then
@@ -114,6 +121,9 @@ if [[ -n "${dns}" ]]; then
 	fi
 
 	ynh_app_setting_delete $app dns
+else
+    ip6_dns=$(ynh_app_setting_get --app=$app --key=ip6_dns)
+    ip4_dns=$(ynh_app_setting_get --app=$app --key=ip4_dns)
 fi
 
 if [[ -n ${multissid} ]]; then
@@ -193,6 +203,21 @@ chown root: /etc/dnsmasq.$app/
 install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl /etc/hostapd/$app/hostapd.conf.tpl
 install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.$app/dhcpdv6.conf.tpl
 install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.$app/dhcpdv4.conf.tpl
+
+if [[ -n ${wifi_device} ]]; then 
+	if [ "${wifi_secure}" -eq 1 ]; then
+		local sec_comment=""
+	else
+		local sec_comment="#"
+	fi
+
+	ynh_add_config --template="/etc/hostapd/$app/hostapd.conf.tpl" --destination="/etc/hostapd/$app/hostapd.conf"
+	ynh_add_config --template="/etc/dnsmasq.$app/dhcpdv4.conf.tpl" --destination="/etc/dnsmasq.$app/dhcpdv4.conf"
+
+	if [[ -n "${ip6_net}" ]] && [[ "${ip6_net}" != "none" ]]; then
+		ynh_add_config --template="/etc/dnsmasq.$app/dhcpdv6.conf.tpl" --destination="/etc/dnsmasq.$app/dhcpdv6.conf"
+	fi  
+fi
 
 # Copy init script
 ynh_add_config --template="../conf/ynh-hotspot" --destination="/usr/local/bin/$service_name"

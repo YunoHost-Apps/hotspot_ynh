@@ -139,12 +139,14 @@ ip4_dns="${ip4_nat_prefix}.1"
 
 hot_reload_usb_wifi_cards
 wifi_device=$(iw_devices | awk -F\| '{ print $1 }')
+wifi_secure=1
+wifi_channel=6
 
 ynh_app_setting_set --app=$app --key=wifi_ssid --value="${wifi_ssid}"
-ynh_app_setting_set --app=$app --key=wifi_secure --value=1
+ynh_app_setting_set --app=$app --key=wifi_secure --value="${wifi_secure}"
 ynh_app_setting_set --app=$app --key=wifi_passphrase --value="${wifi_passphrase}"
 ynh_app_setting_set --app=$app --key=wifi_device --value="${wifi_device}"
-ynh_app_setting_set --app=$app --key=wifi_channel --value=6
+ynh_app_setting_set --app=$app --key=wifi_channel --value="${wifi_channel}"
 ynh_app_setting_set --app=$app --key=ip6_firewall --value=1
 ynh_app_setting_set --app=$app --key=ip6_dns --value="${ip6_dns}"
 ynh_app_setting_set --app=$app --key=ip6_net --value="${ip6_net}"
@@ -197,6 +199,21 @@ systemctl disable hostapd --quiet 2>&1
 systemctl stop hostapd 2>&1
 systemctl unmask hostapd 2>&1 # On some system e.g. RPi, for some reason hostapd is masked after install ...
 
+if [[ -n ${wifi_device} ]]; then 
+	if [ "${wifi_secure}" -eq 1 ]; then
+		local sec_comment=""
+	else
+		local sec_comment="#"
+	fi
+
+	ynh_add_config --template="/etc/hostapd/$app/hostapd.conf.tpl" --destination="/etc/hostapd/$app/hostapd.conf"
+	ynh_add_config --template="/etc/dnsmasq.$app/dhcpdv4.conf.tpl" --destination="/etc/dnsmasq.$app/dhcpdv4.conf"
+
+	if [[ -n "${ip6_net}" ]] && [[ "${ip6_net}" != "none" ]]; then
+		ynh_add_config --template="/etc/dnsmasq.$app/dhcpdv6.conf.tpl" --destination="/etc/dnsmasq.$app/dhcpdv6.conf"
+	fi  
+fi
+
 #=================================================
 # SETUP SYSTEMD
 #=================================================
@@ -223,8 +240,7 @@ ynh_script_progression --message="Starting a systemd service..."
 if [[ $wifi_device == "" ]]; then
 	echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
 else
-	ynh_app_config_run apply
-	# ynh_systemd_action --service_name=$service_name --action="start" --log_path=systemd #--line_match="Started YunoHost Wifi Hotspot"
+	ynh_systemd_action --service_name=$service_name --action="start" --log_path=systemd #--line_match="Started YunoHost Wifi Hotspot"
 fi
 
 #=================================================
