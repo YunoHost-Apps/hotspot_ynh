@@ -147,6 +147,7 @@ ynh_app_setting_set --app=$app --key=wifi_secure --value="${wifi_secure}"
 ynh_app_setting_set --app=$app --key=wifi_passphrase --value="${wifi_passphrase}"
 ynh_app_setting_set --app=$app --key=wifi_device --value="${wifi_device}"
 ynh_app_setting_set --app=$app --key=wifi_channel --value="${wifi_channel}"
+ynh_app_setting_set --app=$app --key=advanced --value=0
 ynh_app_setting_set --app=$app --key=ip6_firewall --value=1
 ynh_app_setting_set --app=$app --key=ip6_dns --value="${ip6_dns}"
 ynh_app_setting_set --app=$app --key=ip6_net --value="${ip6_net}"

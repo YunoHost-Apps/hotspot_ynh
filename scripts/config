@@ -183,6 +183,8 @@ set__dns() {
 # OVERWRITING APPLY STEP 
 #=================================================
 ynh_app_config_apply() {
+    service_name=$(ynh_app_setting_get --app=$app --key=service_name)
+
     # Stop vpn client
     ynh_print_info --message="Stopping hotspot in order to edit files"
     /usr/local/bin/${service_name} stop
