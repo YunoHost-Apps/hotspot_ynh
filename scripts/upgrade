@@ -19,6 +19,17 @@ app=$YNH_APP_INSTANCE_NAME
 firmware_nonfree=$(ynh_app_setting_get --app=$app --key=firmware_nonfree)
 service_name=$(ynh_app_setting_get --app=$app --key=service_name)
 
+wifi_ssid=$(ynh_app_setting_get --app=$app --key=wifi_ssid)
+wifi_secure=$(ynh_app_setting_get --app=$app --key=wifi_secure)
+wifi_passphrase=$(ynh_app_setting_get --app=$app --key=wifi_passphrase)
+wifi_channel=$(ynh_app_setting_get --app=$app --key=wifi_channel)
+advanced=$(ynh_app_setting_get --app=$app --key=advanced)
+ip4_nat_prefix=$(ynh_app_setting_get --app=$app --key=ip4_nat_prefix)
+ip6_net=$(ynh_app_setting_get --app=$app --key=ip6_net)
+ip6_firewall=$(ynh_app_setting_get --app=$app --key=ip6_firewall)
+dns=$(ynh_app_setting_get --app=$app --key=dns)
+multissid=$(ynh_app_setting_get --app=$app --key=multissid)
+
 #=================================================
 # CHECK VERSION
 #=================================================
@@ -72,20 +83,11 @@ if [ -z $service_name ]; then
 	ynh_app_setting_set --app=$app --key=service_name --value=$service_name
 fi
 
-wifi_ssid=$(ynh_app_setting_get --app=$app --key=wifi_ssid)
-wifi_secure=$(ynh_app_setting_get --app=$app --key=wifi_secure)
-wifi_passphrase=$(ynh_app_setting_get --app=$app --key=wifi_passphrase)
-wifi_channel=$(ynh_app_setting_get --app=$app --key=wifi_channel)
-ip4_nat_prefix=$(ynh_app_setting_get --app=$app --key=ip4_nat_prefix)
-ip6_net=$(ynh_app_setting_get --app=$app --key=ip6_net)
-ip6_firewall=$(ynh_app_setting_get --app=$app --key=ip6_firewall)
-dns=$(ynh_app_setting_get --app=$app --key=dns)
-
-multissid=$(ynh_app_setting_get --app=$app --key=multissid)
 if [[ -n ${multissid} ]] && [[ ${multissid} -gt 1 ]]; then
 	wifi_ssid=$(cut -d'|' -f 1 <<< ${wifi_ssid})
 	wifi_secure=$(cut -d'|' -f 1 <<< ${wifi_secure})
 	wifi_passphrase=$(cut -d'|' -f 1 <<< ${wifi_passphrase})
+	advanced=$(cut -d'|' -f 1 <<< ${advanced})
 	ip4_nat_prefix=$(cut -d'|' -f 1 <<< ${ip4_nat_prefix})
 	ip6_net=$(cut -d'|' -f 1 <<< ${ip6_net})
 	ip6_firewall=$(cut -d'|' -f 1 <<< ${ip6_firewall})
@@ -133,6 +135,10 @@ if [[ -n ${multissid} ]]; then
 	ynh_secure_remove --file="/etc/hostapd/hostapd.base.conf"
 	ynh_secure_remove --file="/etc/hostapd/hostapd.accesspoint.conf"
 	ynh_secure_remove --file="/etc/dnsmasq.dhcpd/"
+fi
+
+if [[ -z ${advanced} ]]; then
+    ynh_app_setting_set --app=$app --key=adanced --value=0
 fi
 
 # Old stuff prior to 2.x
