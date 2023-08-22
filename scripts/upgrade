@@ -208,18 +208,8 @@ install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq
 install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.$app/dhcpdv4.conf.tpl
 
 if [[ -n ${wifi_device} ]]; then 
-	if [ "${wifi_secure}" -eq 1 ]; then
-		sec_comment=""
-	else
-		sec_comment="#"
-	fi
-
-	ynh_add_config --template="/etc/hostapd/$app/hostapd.conf.tpl" --destination="/etc/hostapd/$app/hostapd.conf"
-	ynh_add_config --template="/etc/dnsmasq.$app/dhcpdv4.conf.tpl" --destination="/etc/dnsmasq.$app/dhcpdv4.conf"
-
-	if [[ -n "${ip6_net}" ]] && [[ "${ip6_net}" != "none" ]]; then
-		ynh_add_config --template="/etc/dnsmasq.$app/dhcpdv6.conf.tpl" --destination="/etc/dnsmasq.$app/dhcpdv6.conf"
-	fi  
+	configure_hostapd
+	configure_dhcp
 fi
 
 # Copy init script

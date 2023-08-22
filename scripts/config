@@ -191,18 +191,8 @@ ynh_app_config_apply() {
 
     _ynh_app_config_apply
 
-    if [ "${wifi_secure}" -eq 1 ]; then
-        local sec_comment=""
-    else
-        local sec_comment="#"
-    fi
-
-    ynh_add_config --template="/etc/hostapd/$app/hostapd.conf.tpl" --destination="/etc/hostapd/$app/hostapd.conf"
-    ynh_add_config --template="/etc/dnsmasq.$app/dhcpdv4.conf.tpl" --destination="/etc/dnsmasq.$app/dhcpdv4.conf"
-    
-    if [[ -n "${ip6_net}" ]] && [[ "${ip6_net}" != "none" ]]; then
-        ynh_add_config --template="/etc/dnsmasq.$app/dhcpdv6.conf.tpl" --destination="/etc/dnsmasq.$app/dhcpdv6.conf"
-    fi  
+    configure_hostapd
+    configure_dhcp
 
     # Start hotspot
     ynh_print_info --message="Starting hotspot service if needed"

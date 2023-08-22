@@ -48,6 +48,26 @@ function hot_reload_usb_wifi_cards()
   done
 }
 
+function configure_hostapd()
+{
+  if [[ "${wifi_secure}" -eq 1 ]]; then
+		sec_comment=""
+	else
+		sec_comment="#"
+	fi
+
+	ynh_add_config --template="/etc/hostapd/$app/hostapd.conf.tpl" --destination="/etc/hostapd/$app/hostapd.conf"
+}
+
+function configure_dhcp()
+{
+  ynh_add_config --template="/etc/dnsmasq.$app/dhcpdv4.conf.tpl" --destination="/etc/dnsmasq.$app/dhcpdv4.conf"
+
+	if [[ -n "${ip6_net}" ]] && [[ "${ip6_net}" != "none" ]]; then
+		ynh_add_config --template="/etc/dnsmasq.$app/dhcpdv6.conf.tpl" --destination="/etc/dnsmasq.$app/dhcpdv6.conf"
+	fi  
+}
+
 #=================================================
 # EXPERIMENTAL HELPERS
 #=================================================
