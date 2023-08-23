@@ -99,7 +99,7 @@ ynh_restore_file --origin_path="/etc/systemd/system/hostapd@$app.service"
 #=================================================
 ynh_script_progression --message="Integrating service in YunoHost..."
 
-yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd@$app" --needs_exposed_ports 547 67
+yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd@$app"
 
 #=================================================
 # START SYSTEMD SERVICE
