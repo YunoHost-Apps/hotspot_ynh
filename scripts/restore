@@ -29,6 +29,7 @@ app=$YNH_APP_INSTANCE_NAME
 
 firmware_nonfree=$(ynh_app_setting_get --app=$app --key=firmware_nonfree)
 service_name=$(ynh_app_setting_get --app=$app --key=service_name)
+wifi_device=$(ynh_app_setting_get --app=$app --key=wifi_device)
 
 #=================================================
 # CHECK IF THE APP CAN BE RESTORED
@@ -106,7 +107,10 @@ yunohost service add $service_name --description "Creates a Wi-Fi access point" 
 ynh_script_progression --message="Starting a systemd service..."
 
 hot_reload_usb_wifi_cards
-wifi_device=$(iw_devices | awk -F\| '{ print $1 }')
+if [[ -z $wifi_device ]] || ! grep -q -F $wifi_device <(unused_iw_devices); then
+	wifi_device=$(unused_iw_devices | head -n 1)
+	ynh_app_setting_set --app=$app --key=wifi_device --value="${wifi_device}"
+fi
 
 if [[ -z $wifi_device ]]; then
 	ynh_app_setting_set --app=$app --key=service_enabled --value=0

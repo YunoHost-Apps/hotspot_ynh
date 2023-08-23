@@ -27,7 +27,7 @@ final_path=$(ynh_app_setting_get $app final_path)
 #=================================================
 
 get__no_antenna() {
-    if [[ $(iw_devices) == "" ]]
+    if [[ $(unused_iw_devices) == "" ]]
     then
         echo "value: true"
     else
@@ -76,14 +76,15 @@ EOF
 }
 
 get__wifi_device() {
-    if [[ $(iw_devices) == "" ]]
+    local unused_wifi_devices=$(unused_iw_devices)
+    if [[ -z ${unused_wifi_devices} ]]
     then
         echo "choices: []"
     else
         cat << EOF
 choices:
 EOF
-        for device in $(iw_devices | sed "s/|/ /g")
+        for device in $unused_wifi_devices
         do
             echo "  $device: $device"
         done

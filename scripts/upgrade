@@ -19,6 +19,7 @@ app=$YNH_APP_INSTANCE_NAME
 firmware_nonfree=$(ynh_app_setting_get --app=$app --key=firmware_nonfree)
 service_name=$(ynh_app_setting_get --app=$app --key=service_name)
 
+wifi_device=$(ynh_app_setting_get --app=$app --key=wifi_device)
 wifi_ssid=$(ynh_app_setting_get --app=$app --key=wifi_ssid)
 wifi_secure=$(ynh_app_setting_get --app=$app --key=wifi_secure)
 wifi_passphrase=$(ynh_app_setting_get --app=$app --key=wifi_passphrase)
@@ -201,7 +202,10 @@ ynh_install_app_dependencies $pkg_dependencies
 ynh_script_progression --message="Copying configuration..."
 
 hot_reload_usb_wifi_cards
-wifi_device=$(iw_devices | awk -F\| '{ print $1 }')
+if [[ -z $wifi_device ]] || ! grep -q -F $wifi_device <(unused_iw_devices); then
+	wifi_device=$(unused_iw_devices | head -n 1)
+	ynh_app_setting_set --app=$app --key=wifi_device --value="${wifi_device}"
+fi
 
 mkdir -pm 0755 /etc/hostapd/$app/
 chown root: /etc/hostapd/$app/

@@ -138,7 +138,7 @@ ip4_nat_prefix="10.${ip4_nat_prefix_index}.242"
 ip4_dns="${ip4_nat_prefix}.1"
 
 hot_reload_usb_wifi_cards
-wifi_device=$(iw_devices | awk -F\| '{ print $1 }')
+wifi_device=$(unused_iw_devices | head -n 1)
 wifi_secure=1
 wifi_channel=6
 
