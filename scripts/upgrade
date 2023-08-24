@@ -139,7 +139,7 @@ if [[ -n ${multissid} ]]; then
 fi
 
 if [[ -z ${advanced} ]]; then
-    ynh_app_setting_set --app=$app --key=adanced --value=0
+    ynh_app_setting_set --app=$app --key=advanced --value=0
 fi
 
 # Old stuff prior to 2.x
