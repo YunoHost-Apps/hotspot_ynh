@@ -69,13 +69,13 @@ is_forwarding_set() {
 is_dhcpd6_running() {
     local i=${1}
 
-    ps aux | grep "dhcpdv6-ssid${i}" | grep -qv grep
+    [[ -e "/run/dnsmasq/dnsmasq-dhcpdv6-ssid${i}.pid" ]] && ps -p $(cat "/run/dnsmasq/dnsmasq-dhcpdv6-ssid${i}.pid") > /dev/null
 }
 
 is_dhcpd4_running() {
     local i=${1}
 
-    ps aux | grep "dhcpdv4-ssid${i}" | grep -qv grep
+    [[ -e "/run/dnsmasq/dnsmasq-dhcpdv4-ssid${i}.pid" ]] && ps -p $(cat "/run/dnsmasq/dnsmasq-dhcpdv4-ssid${i}.pid") > /dev/null
 }
 
 is_hostapd_running() {
@@ -154,7 +154,7 @@ start_dhcpd() {
         sed "s|__IP4_DNS__|${ip4_dns[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
         sed "s|__IP4_NAT_PREFIX__|${ip4_nat_prefix[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
 
-        dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf -p0
+        dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf -p0 -x /run/dnsmasq/dnsmasq-dhcpv4-ssid${i}.pid
     fi
 
     # Run DHCPv6 server
@@ -167,7 +167,7 @@ start_dhcpd() {
         sed "s|__IP6_DNS__|${ip6_dns[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
         sed "s|__IP6_NET__|${ip6_net[${i}]}|g" -i /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
 
-        dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf -p0
+        dnsmasq -C /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf -p0 -x /run/dnsmasq/dnsmasq-dhcpv6-ssid${i}.pid
     fi
 }
 
@@ -244,14 +244,16 @@ stop_dhcpd() {
 
     if is_dhcpd6_running ${i}; then
         echo "hotspot${i}: Stop the NDP and DHCPv6 server (dnsmasq)"
-        kill $(ps aux | grep 'dhcpdv6-ssid' | grep -v grep | awk '{ print $2 }')
-        rm -f /etc/dnsmasq.d/dhcpdv6-ssid*.conf
+        kill $(cat /run/dnsmasq/dnsmasq-dhcpdv6-ssid${i}.pid)
+        rm -f /run/dnsmasq/dnsmasq-dhcpdv6-ssid${1}.pid
+        rm -f /etc/dnsmasq.dhcpd/dhcpdv6-ssid${i}.conf
     fi
 
     if is_dhcpd4_running ${i}; then
         echo "hotspot${i}: Stop the DHCPv4 server (dnsmasq)"
-        kill $(ps aux | grep 'dhcpdv4-ssid' | grep -v grep | awk '{ print $2 }')
-        rm -f /etc/dnsmasq.d/dhcpdv4-ssid*.conf
+        kill $(cat /run/dnsmasq/dnsmasq-dhcpdv4-ssid${i}.pid)
+        rm -f /run/dnsmasq/dnsmasq-dhcpdv4-ssid${1}.pid
+        rm -f /etc/dnsmasq.dhcpd/dhcpdv4-ssid${i}.conf
     fi
 }
 
