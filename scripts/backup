@@ -50,6 +50,9 @@ ynh_backup --src_path="/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl"
 
 ynh_backup --src_path="/usr/local/bin/$service_name"
 
+ynh_backup --src_path="/etc/openvpn/scripts/route-up.d/90-hotspot"
+ynh_backup --src_path="/etc/openvpn/scripts/route-down.d/90-hotspot"
+
 ynh_backup --src_path="/etc/init.d/hostapd"
 
 #=================================================
