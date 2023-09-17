@@ -27,7 +27,7 @@ final_path=$(ynh_app_setting_get $app final_path)
 #=================================================
 
 get__no_antenna() {
-    if [[ $(iw_devices) == "" ]]
+    if [[ "$(unused_iw_devices)" == "" ]]
     then
         echo "value: true"
     else
@@ -37,9 +37,9 @@ get__no_antenna() {
 
 get__status() {
     local service_enabled=$(ynh_app_setting_get $app service_enabled)
-    if systemctl is-active hostapd -q
+    if systemctl is-active hostapd@$app -q
     then
-        if [ $service_enabled -eq 1 ]
+        if [[ "$service_enabled" -eq 1 ]]
         then
             cat << EOF
 style: success
@@ -54,7 +54,7 @@ ask:
   en: Your Hotspot is running, but it shouldn't !
 EOF
         fi
-    elif [ $service_enabled -eq 1 ]
+    elif [[ "$service_enabled" -eq 1 ]]
     then
         cat << EOF
 style: danger
@@ -62,7 +62,7 @@ ask:
   en: |-
     Your Hotspot is down ! Here are errors logged in the last 5 minutes
     \`\`\`
-$(journalctl -u hostapd -n10 -o cat | sed 's/^/    /g')
+$(journalctl -u hostapd@$app -n10 -o cat | sed 's/^/    /g')
     \`\`\`
 EOF
     else
@@ -76,14 +76,15 @@ EOF
 }
 
 get__wifi_device() {
-    if [[ $(iw_devices) == "" ]]
+    local unused_wifi_devices=$(unused_iw_devices)
+    if [[ -z "${unused_wifi_devices}" ]]
     then
         echo "choices: []"
     else
         cat << EOF
 choices:
 EOF
-        for device in $(iw_devices | sed "s/|/ /g")
+        for device in $unused_wifi_devices
         do
             echo "  $device: $device"
         done
@@ -92,127 +93,111 @@ EOF
     echo "value: '$(ynh_app_setting_get $app wifi_device)'"
 }
 
-get__array_settings() {
-    local short_setting="${1%%__*}"
-    local index="${1#*__}"
-    IFS='|' read -a values <<< "$(ynh_app_setting_get $app $short_setting)"
-    echo "value: \"${values[$(($index - 1))]:-}\""
+get__dns() {
+    ip6_net=$(ynh_app_setting_get --app=$app --key=ip6_net)
+    ip6_dns=$(ynh_app_setting_get --app=$app --key=ip6_dns | tr -d '[]')
+    ip4_nat_prefix=$(ynh_app_setting_get --app=$app --key=ip4_nat_prefix)
+    ip4_dns=$(ynh_app_setting_get --app=$app --key=ip4_dns)
+
+    if [[ -n "${ip6_net}" ]] && [[ -z "${ip6_dns}" ]]; then
+        ip6_dns="${ip6_net}1"
+    fi
+
+    if [[ -n "${ip4_nat_prefix}" ]] && [[ -z "${ip4_dns}" ]]; then
+        ip4_dns="${ip4_nat_prefix}.1"
+    fi
+
+    echo "value: ${ip4_dns},${ip6_dns}"
 }
 
 #=================================================
 # SPECIFIC VALIDATORS FOR TOML SHORT KEYS
 #=================================================
-is_unique() {
-    local short_setting="$1"
-    local short_setting__1="$1__1"
-    local short_setting__2="$1__2"
-    local short_setting__3="$1__3"
-    if [[ "${!short_setting__1}" == "${!short_setting__2}" ]]
-    then
-        return 1
-    elif [ "$multissid" -ge "3" ] && [[ "${!short_setting__1}" == "${!short_setting__3}" ]]
-    then
-        return 1
-    elif [ "$multissid" -ge "3" ] && [[ "${!short_setting__2}" == "${!short_setting__3}" ]]
-    then
-        return 1
-    fi
-    return 0
-}
+
 validate__wifi_ssid() {
-    local wifi_ssid_var="wifi_ssid__$1"
-    if [ "$multissid" -ge "$1" ] && [[ -z "${!wifi_ssid_var}" ]]
+    if [[ -z "${wifi_ssid}" ]]
     then
         echo 'SSID required'
-    fi
-    if ! is_unique wifi_ssid
-    then
-        echo 'All Wifi names must be unique'
     fi
 }
 
 validate__wifi_passphrase() {
-    local wifi_secure_var="wifi_secure__$1"
-    local wifi_passphrase_var="wifi_passphrase__$1"
-    if [ "$multissid" -ge "$1" ] && [[ "${!wifi_secure_var}" == "1" ]] && [[ -z "${!wifi_passphrase_var}" ]]
+    if [[ "${wifi_secure}" == "1" ]] && [[ -z "${wifi_passphrase}" ]]
     then
         echo 'In WPA2 secure mode, you need to provide a passphrase'
     fi
 }
 
 validate__ip4_nat_prefix() {
-    local ip4_nat_prefix_var="ip4_nat_prefix__$1"
-    if [ "$multissid" -ge "$1" ] && [[ -z "${!ip4_nat_prefix_var}" ]]
+    if [[ -z "${ip4_nat_prefix}" ]]
     then
         echo 'Private IPv4 nat prefix required'
-    fi
-    if ! is_unique ip4_nat_prefix
-    then
-        echo 'All IPv4 prefix must be unique'
     fi
 }
 
 validate__dns() {
-    local dns_var="dns__$1"
-    local ip6_net_var="dns__$1"
-    if [ "$multissid" -ge "$1" ] && ! echo "${!dns_var}" | grep -q "\."
+    if ! echo "${dns}" | grep -q "\."
     then
         echo 'IPv4 DNS required'
     fi
-    if [ "$multissid" -ge "$1" ] && [[ -n "${!ip6_net_var}" ]] && ! echo "${!dns_var}" | grep -q ":"
+    if [[ -n "${ip6_net}" ]] && ! echo "${dns}" | grep -q ":"
     then
         echo 'IPv6 DNS required'
-    fi
-}
-
-validate__array_settings() {
-    local short_setting="${1%%__*}"
-    local index="${1#*__}"
-    if type -t validate__$short_setting | grep -q '^function$' 2>/dev/null;
-    then
-        validate__$short_setting $index
     fi
 }
 
 #=================================================
 # SPECIFIC SETTERS FOR TOML SHORT KEYS
 #=================================================
-set__array_settings() {
-    local short_setting="${1%%__*}"
-    local index="${1#*__}"
-    local type="${types[$1]}"
-    local value="${!1}"
-    if [[ "$type" == "string" ]] && [ "$multissid" -lt "$index" ]
-    then
-        value=""
-    fi
-    local values="$(ynh_app_setting_get $app $short_setting | awk "BEGIN{FS=OFS=\"|\"} {\$${index}=\"${value}\"}"1)"
-    ynh_app_setting_set --app=$app --key=$short_setting --value="$values"
-    ynh_print_info --message="Configuration key '$short_setting' edited in app settings"
-}
 
+set__dns() {
+    ip6_dns=""
+    ip4_dns=""
+    for ip in $(echo "${dns}" | tr ',' ' '); do
+        if [[ "$ip" == *":"* ]]; then
+            ip6_dns+="[$ip],"
+        else
+            ip4_dns+="$ip,"
+        fi
+    done
+    # Remove trailing ,
+    ip6_dns="${ip6_dns%%,}"
+    ip4_dns="${ip4_dns%%,}"
+
+    if [[ -n "${ip6_net}" ]] && [[ -z "${ip6_dns}" ]]; then
+        ip6_dns="${ip6_net}1"
+    fi
+
+    if [[ -n "${ip4_nat_prefix}" ]] && [[ -z "${ip4_dns}" ]]; then
+        ip4_dns="${ip4_nat_prefix}.1"
+    fi
+    
+    ynh_app_setting_set $app ip6_dns "${ip6_dns}"
+    ynh_app_setting_set $app ip4_dns "${ip4_dns}"
+}
 
 #=================================================
 # OVERWRITING VALIDATE STEP 
 #=================================================
-ynh_app_config_validate() {
-    _ynh_app_config_validate
-}
 
 #=================================================
 # OVERWRITING APPLY STEP 
 #=================================================
 ynh_app_config_apply() {
-    
+    service_name=$(ynh_app_setting_get --app=$app --key=service_name)
+
     # Stop vpn client
     ynh_print_info --message="Stopping hotspot in order to edit files"
-    /usr/local/bin/ynh-hotspot stop
+    /usr/local/bin/${service_name} stop
 
     _ynh_app_config_apply
-    
-    # Start vpn client
+
+    configure_hostapd
+    configure_dhcp
+
+    # Start hotspot
     ynh_print_info --message="Starting hotspot service if needed"
-    /usr/local/bin/ynh-hotspot start
+    /usr/local/bin/${service_name} start
 
 }
 

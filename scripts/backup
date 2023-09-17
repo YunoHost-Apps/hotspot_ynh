@@ -40,20 +40,19 @@ ynh_print_info --message="Declaring files to be backed up..."
 # BACKUP THE APP MAIN DIR
 #=================================================
 
-for FILE in $(ls /etc/hostapd/hostapd.*.conf 2>/dev/null)
-do
-	ynh_backup --src_path="$FILE"
-done
+ynh_backup --src_path="/etc/hostapd/$app/hostapd.conf.tpl"
+ynh_backup --src_path="/etc/hostapd/$app/hostapd.conf" --not_mandatory
 
-ynh_backup --src_path="/etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl"
-ynh_backup --src_path="/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl"
+ynh_backup --src_path="/etc/dnsmasq.$app/dhcpdv6.conf.tpl"
+ynh_backup --src_path="/etc/dnsmasq.$app/dhcpdv6.conf" --not_mandatory
+
+ynh_backup --src_path="/etc/dnsmasq.$app/dhcpdv4.conf.tpl"
+ynh_backup --src_path="/etc/dnsmasq.$app/dhcpdv4.conf" --not_mandatory
 
 ynh_backup --src_path="/usr/local/bin/$service_name"
 
-ynh_backup --src_path="/etc/openvpn/scripts/route-up.d/90-hotspot"
-ynh_backup --src_path="/etc/openvpn/scripts/route-down.d/90-hotspot"
-
-ynh_backup --src_path="/etc/init.d/hostapd"
+ynh_backup --src_path="/etc/openvpn/scripts/route-up.d/90-$service_name"
+ynh_backup --src_path="/etc/openvpn/scripts/route-down.d/90-$service_name"
 
 #=================================================
 # SPECIFIC BACKUP
@@ -62,6 +61,7 @@ ynh_backup --src_path="/etc/init.d/hostapd"
 #=================================================
 
 ynh_backup --src_path="/etc/systemd/system/$service_name.service"
+ynh_backup --src_path="/etc/systemd/system/hostapd@$app.service"
 
 #=================================================
 # END OF SCRIPT

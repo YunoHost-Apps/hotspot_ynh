@@ -29,6 +29,7 @@ app=$YNH_APP_INSTANCE_NAME
 
 firmware_nonfree=$(ynh_app_setting_get --app=$app --key=firmware_nonfree)
 service_name=$(ynh_app_setting_get --app=$app --key=service_name)
+wifi_device=$(ynh_app_setting_get --app=$app --key=wifi_device)
 
 #=================================================
 # CHECK IF THE APP CAN BE RESTORED
@@ -61,19 +62,19 @@ else
 	pkg_dependencies="$pkg_dependencies $free_firmware_packages"
 fi
 
-for FILE in $(ls /etc/hostapd/hostapd.conf{.tpl?,} 2>/dev/null)
-do
-    ynh_restore_file --origin_path="$FILE"
-done
-ynh_restore_file --origin_path="/etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl"
-ynh_restore_file --origin_path="/etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl"
+ynh_restore_file --origin_path="/etc/hostapd/$app/hostapd.conf.tpl"
+ynh_restore_file --origin_path="/etc/hostapd/$app/hostapd.conf" --not_mandatory
+
+ynh_restore_file --origin_path="/etc/dnsmasq.$app/dhcpdv6.conf.tpl"
+ynh_restore_file --origin_path="/etc/dnsmasq.$app/dhcpdv6.conf" --not_mandatory
+
+ynh_restore_file --origin_path="/etc/dnsmasq.$app/dhcpdv4.conf.tpl"
+ynh_restore_file --origin_path="/etc/dnsmasq.$app/dhcpdv4.conf" --not_mandatory
 
 ynh_restore_file --origin_path="/usr/local/bin/$service_name"
 
-ynh_restore_file --origin_path="/etc/openvpn/scripts/route-up.d/90-hotspot"
-ynh_restore_file --origin_path="/etc/openvpn/scripts/route-down.d/90-hotspot"
-
-ynh_restore_file --origin_path="/etc/init.d/hostapd"
+ynh_restore_file --origin_path="/etc/openvpn/scripts/route-up.d/90-${service_name}"
+ynh_restore_file --origin_path="/etc/openvpn/scripts/route-down.d/90-${service_name}"
 
 #=================================================
 # SPECIFIC RESTORATION
@@ -91,14 +92,14 @@ ynh_install_app_dependencies $pkg_dependencies
 ynh_script_progression --message="Restoring the systemd configuration..."
 
 ynh_restore_file --origin_path="/etc/systemd/system/$service_name.service"
-systemctl enable $service_name.service --quiet
+ynh_restore_file --origin_path="/etc/systemd/system/hostapd@$app.service"
 
 #=================================================
 # INTEGRATE SERVICE IN YUNOHOST
 #=================================================
 ynh_script_progression --message="Integrating service in YunoHost..."
 
-yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd"
+yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd@$app"
 
 #=================================================
 # START SYSTEMD SERVICE
@@ -106,7 +107,10 @@ yunohost service add $service_name --description "Creates a Wi-Fi access point" 
 ynh_script_progression --message="Starting a systemd service..."
 
 hot_reload_usb_wifi_cards
-wifi_device=$(iw_devices | awk -F\| '{ print $1 }')
+if [[ -z "$wifi_device" ]] || ! grep -q -F "$wifi_device" <(unused_iw_devices); then
+	wifi_device=$(unused_iw_devices | head -n 1)
+	ynh_app_setting_set --app=$app --key=wifi_device --value="${wifi_device}"
+fi
 
 if [[ -z $wifi_device ]]; then
 	ynh_app_setting_set --app=$app --key=service_enabled --value=0
