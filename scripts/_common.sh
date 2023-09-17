@@ -25,7 +25,7 @@ function used_iw_devices()
   local other_hotspot_apps=$(grep -F -x -v $app <<< ${hotspot_apps})
   for hotspot_app in ${other_hotspot_apps}; do
     hotspot_wifi_device=$(ynh_app_setting_get --app=$hotspot_app --key=wifi_device)
-    if [[ -n ${hotspot_wifi_device} ]]; then
+    if [[ -n "${hotspot_wifi_device}" ]]; then
       echo "${hotspot_wifi_device}"
     fi
   done

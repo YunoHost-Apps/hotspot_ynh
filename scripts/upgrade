@@ -84,7 +84,7 @@ if [ -z $service_name ]; then
 	ynh_app_setting_set --app=$app --key=service_name --value=$service_name
 fi
 
-if [[ -n ${multissid} ]] && [[ ${multissid} -gt 1 ]]; then
+if [[ -n "${multissid}" ]] && [[ "${multissid}" -gt 1 ]]; then
 	wifi_ssid=$(cut -d'|' -f 1 <<< ${wifi_ssid})
 	wifi_secure=$(cut -d'|' -f 1 <<< ${wifi_secure})
 	wifi_passphrase=$(cut -d'|' -f 1 <<< ${wifi_passphrase})
@@ -129,7 +129,7 @@ else
     ip4_dns=$(ynh_app_setting_get --app=$app --key=ip4_dns)
 fi
 
-if [[ -n ${multissid} ]]; then
+if [[ -n "${multissid}" ]]; then
     ynh_app_setting_delete --app=$app --key=multissid
 
 	ynh_secure_remove --file="/etc/hostapd/hostapd.conf"
@@ -138,7 +138,7 @@ if [[ -n ${multissid} ]]; then
 	ynh_secure_remove --file="/etc/dnsmasq.dhcpd/"
 fi
 
-if [[ -z ${advanced} ]]; then
+if [[ -z "${advanced}" ]]; then
     ynh_app_setting_set --app=$app --key=advanced --value=0
 fi
 
@@ -202,8 +202,8 @@ ynh_install_app_dependencies $pkg_dependencies
 ynh_script_progression --message="Copying configuration..."
 
 hot_reload_usb_wifi_cards
-if [[ -z $wifi_device ]] || ! grep -q -F $wifi_device <(unused_iw_devices); then
-	wifi_device=$(unused_iw_devices | head -n 1)
+if [[ -z "$wifi_device" ]] || ! grep -q -F "$wifi_device" <(unused_iw_devices); then
+	wifi_device="$(unused_iw_devices | head -n 1)"
 	ynh_app_setting_set --app=$app --key=wifi_device --value="${wifi_device}"
 fi
 
@@ -217,7 +217,7 @@ install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl /etc/hostapd/$app/ho
 install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.$app/dhcpdv6.conf.tpl
 install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.$app/dhcpdv4.conf.tpl
 
-if [[ -n ${wifi_device} ]]; then 
+if [[ -n "${wifi_device}" ]]; then 
 	configure_hostapd
 	configure_dhcp
 fi

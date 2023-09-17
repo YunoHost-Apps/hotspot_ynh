@@ -200,7 +200,7 @@ systemctl disable hostapd --quiet 2>&1
 systemctl stop hostapd 2>&1
 systemctl unmask hostapd 2>&1 # On some system e.g. RPi, for some reason hostapd is masked after install ...
 
-if [[ -n ${wifi_device} ]]; then 
+if [[ -n "${wifi_device}" ]]; then 
 	configure_hostapd
 	configure_dhcp
 fi

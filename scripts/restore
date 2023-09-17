@@ -107,7 +107,7 @@ yunohost service add $service_name --description "Creates a Wi-Fi access point" 
 ynh_script_progression --message="Starting a systemd service..."
 
 hot_reload_usb_wifi_cards
-if [[ -z $wifi_device ]] || ! grep -q -F $wifi_device <(unused_iw_devices); then
+if [[ -z "$wifi_device" ]] || ! grep -q -F "$wifi_device" <(unused_iw_devices); then
 	wifi_device=$(unused_iw_devices | head -n 1)
 	ynh_app_setting_set --app=$app --key=wifi_device --value="${wifi_device}"
 fi
