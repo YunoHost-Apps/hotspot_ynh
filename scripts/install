@@ -117,6 +117,9 @@ ynh_system_user_create --username=$app
 #=================================================
 ynh_script_progression --message="Configuring hotspot..."
 
+ip6_net=""
+ip6_dns=""
+
 ip4_nat_prefix_index=${app##*__}
 if [[ "${ip4_nat_prefix_index}" == "${app}" ]]; then
   	ip4_nat_prefix_index=0
@@ -136,8 +139,8 @@ ynh_app_setting_set --app=$app --key=wifi_device --value="${wifi_device}"
 ynh_app_setting_set --app=$app --key=wifi_channel --value="${wifi_channel}"
 ynh_app_setting_set --app=$app --key=advanced --value=0
 ynh_app_setting_set --app=$app --key=ip6_firewall --value=1
-ynh_app_setting_set --app=$app --key=ip6_net --value=""
-ynh_app_setting_set --app=$app --key=ip6_dns --value=""
+ynh_app_setting_set --app=$app --key=ip6_net --value="${ip6_net}"
+ynh_app_setting_set --app=$app --key=ip6_dns --value="${ip6_dns}"
 ynh_app_setting_set --app=$app --key=ip4_dns --value="${ip4_dns}"
 ynh_app_setting_set --app=$app --key=ip4_nat_prefix --value="${ip4_nat_prefix}"
 
