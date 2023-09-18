@@ -136,6 +136,8 @@ ynh_app_setting_set --app=$app --key=wifi_device --value="${wifi_device}"
 ynh_app_setting_set --app=$app --key=wifi_channel --value="${wifi_channel}"
 ynh_app_setting_set --app=$app --key=advanced --value=0
 ynh_app_setting_set --app=$app --key=ip6_firewall --value=1
+ynh_app_setting_set --app=$app --key=ip6_net --value=""
+ynh_app_setting_set --app=$app --key=ip6_dns --value=""
 ynh_app_setting_set --app=$app --key=ip4_dns --value="${ip4_dns}"
 ynh_app_setting_set --app=$app --key=ip4_nat_prefix --value="${ip4_nat_prefix}"
 
