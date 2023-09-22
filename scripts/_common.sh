@@ -82,6 +82,7 @@ function configure_hostapd()
 function configure_dnsmasq()
 {
   ynh_add_config --template="/etc/dnsmasq.$app/dnsmasq.conf.tpl" --destination="/etc/dnsmasq.d/$app.conf"
+  systemctl restart dnsmasq
 }
 
 function configure_dhcp()

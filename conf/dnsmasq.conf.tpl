@@ -1,4 +1,4 @@
 # Wifi Hotspot app for YunoHost 
 
-# Enable DNS
+# Enable DNS resolution on wifi interface
 interface=__WIFI_DEVICE__
