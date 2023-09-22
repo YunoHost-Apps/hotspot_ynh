@@ -58,8 +58,7 @@ ynh_secure_remove --file="/etc/openvpn/scripts/route-down.d/90-${service_name}"
 # Remove the app directory securely
 ynh_secure_remove --file="/usr/local/bin/$service_name"
 
-for FILE in $(ls /tmp/.${service_name}-* 2>/dev/null)
-do
+for FILE in $(ls /tmp/.${service_name}-* 2>/dev/null); do
     ynh_secure_remove --file="$FILE"
 done
 
@@ -74,17 +73,16 @@ ynh_secure_remove --file="/etc/hostapd/$app/"
 # CLOSE A PORT
 #=================================================
 
-if yunohost firewall list | grep -q "\- 547$"
-then
-	ynh_script_progression --message="Closing port 547"
-	ynh_exec_warn_less yunohost firewall disallow TCP 547
-fi
+if [[ -z "$(other_hotspot_apps)" ]]; then
+	if yunohost firewall list | grep -q "\- 547$"; then
+		ynh_script_progression --message="Closing port 547"
+		ynh_exec_warn_less yunohost firewall disallow TCP 547
+	fi
 
-
-if yunohost firewall list | grep -q "\- 67$"
-then
-	ynh_script_progression --message="Closing port 67"
-	ynh_exec_warn_less yunohost firewall disallow TCP 67
+	if yunohost firewall list | grep -q "\- 67$"; then
+		ynh_script_progression --message="Closing port 67"
+		ynh_exec_warn_less yunohost firewall disallow TCP 67
+	fi
 fi
 
 #=================================================

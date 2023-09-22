@@ -12,6 +12,14 @@ free_firmware_packages="firmware-ath9k-htc"
 # PERSONAL HELPERS
 #=================================================
 
+function other_hotspot_apps()
+{
+  local app_shortname="${app%%__*}"
+  local hotspot_apps=$(yunohost app list --output-as json | jq -r .apps[].id | grep -F $app_shortname)
+  # Remove this app from hotspot apps list
+  grep -F -x -v $app <<< ${hotspot_apps}
+}
+
 function iw_devices()
 {
   /sbin/iw dev | grep Interface | grep -v 'mon\.' | grep -v hotspot | awk '{ print $NF }'
@@ -19,11 +27,7 @@ function iw_devices()
 
 function used_iw_devices()
 {
-  local app_shortname="${app%%__*}"
-  local hotspot_apps=$(yunohost app list --output-as json | jq -r .apps[].id | grep -F $app_shortname)
-  # Remove this app from hotspot apps list
-  local other_hotspot_apps=$(grep -F -x -v $app <<< ${hotspot_apps})
-  for hotspot_app in ${other_hotspot_apps}; do
+  for hotspot_app in $(other_hotspot_apps); do
     hotspot_wifi_device=$(ynh_app_setting_get --app=$hotspot_app --key=wifi_device)
     if [[ -n "${hotspot_wifi_device}" ]]; then
       echo "${hotspot_wifi_device}"

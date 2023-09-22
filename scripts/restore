@@ -36,6 +36,15 @@ wifi_device=$(ynh_app_setting_get --app=$app --key=wifi_device)
 #=================================================
 ynh_script_progression --message="Validating restoration parameters..."
 
+#=================================================
+# FIND AND OPEN A PORT
+#=================================================
+ynh_script_progression --message="Configuring firewall..."
+
+# Update firewall for DHCP
+ynh_exec_warn_less yunohost firewall allow --no-upnp --ipv6 UDP 547
+ynh_exec_warn_less yunohost firewall allow --no-upnp UDP 67
+
 # Meh idk where to put this ... On RPi, by default wlan is blocked
 if test -e /usr/sbin/rfkill && rfkill | grep wlan | grep -q -w 'blocked'
 then
