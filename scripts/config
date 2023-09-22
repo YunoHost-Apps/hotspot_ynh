@@ -193,6 +193,7 @@ ynh_app_config_apply() {
     _ynh_app_config_apply
 
     configure_hostapd
+    configure_dnsmasq
     configure_dhcp
 
     # Start hotspot

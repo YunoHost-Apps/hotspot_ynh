@@ -162,6 +162,7 @@ mkdir -pm 0755 /etc/dnsmasq.$app/
 chown root: /etc/dnsmasq.$app/
 
 install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl /etc/hostapd/$app/hostapd.conf.tpl
+install -b -o root -g root -m 0644 ../conf/dnsmasq.conf.tpl /etc/dnsmasq.$app/dnsmasq.conf.tpl
 install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.$app/dhcpdv6.conf.tpl
 install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.$app/dhcpdv4.conf.tpl
 
@@ -200,6 +201,7 @@ systemctl unmask hostapd 2>&1 # On some system e.g. RPi, for some reason hostapd
 
 if [[ -n "${wifi_device}" ]]; then 
 	configure_hostapd
+	configure_dnsmasq
 	configure_dhcp
 fi
 

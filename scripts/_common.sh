@@ -79,6 +79,11 @@ function configure_hostapd()
 	ynh_add_config --template="/etc/hostapd/$app/hostapd.conf.tpl" --destination="/etc/hostapd/$app/hostapd.conf"
 }
 
+function configure_dnsmasq()
+{
+  ynh_add_config --template="/etc/dnsmasq.$app/dnsmasq.conf.tpl" --destination="/etc/dnsmasq.d/$app.conf"
+}
+
 function configure_dhcp()
 {
   ynh_add_config --template="/etc/dnsmasq.$app/dhcpdv4.conf.tpl" --destination="/etc/dnsmasq.$app/dhcpdv4.conf"
