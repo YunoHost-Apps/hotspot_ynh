@@ -65,6 +65,7 @@ done
 
 # Remove confs
 ynh_secure_remove --file="/etc/dnsmasq.d/$app.conf"
+systemctl restart dnsmasq
 
 ynh_secure_remove --file="/etc/dnsmasq.$app/"
 ynh_secure_remove --file="/etc/hostapd/$app/"
