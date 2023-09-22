@@ -1,0 +1,3 @@
+#!/bin/bash
+
+systemctl restart __SERVICE_NAME__

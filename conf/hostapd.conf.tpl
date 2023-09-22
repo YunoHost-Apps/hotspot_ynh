@@ -1,4 +1,9 @@
-__BSS_COMMENT__bss=__WIFI_INTERFACE__
+interface=__WIFI_DEVICE__
+hw_mode=g
+macaddr_acl=0
+auth_algs=1
+ignore_broadcast_ssid=0
+channel=__WIFI_CHANNEL__
 ssid=__WIFI_SSID__
 __SEC_COMMENT__wpa=2
 __SEC_COMMENT__wpa_passphrase=__WIFI_PASSPHRASE__

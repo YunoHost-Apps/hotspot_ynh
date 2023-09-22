@@ -19,6 +19,18 @@ app=$YNH_APP_INSTANCE_NAME
 firmware_nonfree=$(ynh_app_setting_get --app=$app --key=firmware_nonfree)
 service_name=$(ynh_app_setting_get --app=$app --key=service_name)
 
+wifi_device=$(ynh_app_setting_get --app=$app --key=wifi_device)
+wifi_ssid=$(ynh_app_setting_get --app=$app --key=wifi_ssid)
+wifi_secure=$(ynh_app_setting_get --app=$app --key=wifi_secure)
+wifi_passphrase=$(ynh_app_setting_get --app=$app --key=wifi_passphrase)
+wifi_channel=$(ynh_app_setting_get --app=$app --key=wifi_channel)
+advanced=$(ynh_app_setting_get --app=$app --key=advanced)
+ip4_nat_prefix=$(ynh_app_setting_get --app=$app --key=ip4_nat_prefix)
+ip6_net=$(ynh_app_setting_get --app=$app --key=ip6_net)
+ip6_firewall=$(ynh_app_setting_get --app=$app --key=ip6_firewall)
+dns=$(ynh_app_setting_get --app=$app --key=dns)
+multissid=$(ynh_app_setting_get --app=$app --key=multissid)
+
 #=================================================
 # CHECK VERSION
 #=================================================
@@ -68,8 +80,66 @@ elif [ $firmware_nonfree = "no" ]; then
 fi
 
 if [ -z $service_name ]; then
-	service_name="ynh-hotspot"
+	service_name="ynh-$app"
 	ynh_app_setting_set --app=$app --key=service_name --value=$service_name
+fi
+
+if [[ -n "${multissid}" ]] && [[ "${multissid}" -gt 1 ]]; then
+	wifi_ssid=$(cut -d'|' -f 1 <<< ${wifi_ssid})
+	wifi_secure=$(cut -d'|' -f 1 <<< ${wifi_secure})
+	wifi_passphrase=$(cut -d'|' -f 1 <<< ${wifi_passphrase})
+	advanced=$(cut -d'|' -f 1 <<< ${advanced})
+	ip4_nat_prefix=$(cut -d'|' -f 1 <<< ${ip4_nat_prefix})
+	ip6_net=$(cut -d'|' -f 1 <<< ${ip6_net})
+	ip6_firewall=$(cut -d'|' -f 1 <<< ${ip6_firewall})
+	dns=$(cut -d'|' -f 1 <<< ${dns})
+
+	ynh_app_setting_set --app=$app --key=wifi_ssid --value="${wifi_ssid}"
+	ynh_app_setting_set --app=$app --key=wifi_secure --value="${wifi_secure}"
+	ynh_app_setting_set --app=$app --key=wifi_passphrase --value="${wifi_passphrase}"
+	ynh_app_setting_set --app=$app --key=ip4_nat_prefix --value="${ip4_nat_prefix}"
+	ynh_app_setting_set --app=$app --key=ip6_net --value="${ip6_net}"
+	ynh_app_setting_set --app=$app --key=ip6_firewall --value="${ip6_firewall}"
+fi
+
+if [[ -n "${dns}" ]]; then
+    ip6_dns=""
+    ip4_dns=""
+    for ip in $(echo "${dns}" | tr ',' ' '); do
+        if [[ "$ip" == *":"* ]]; then
+            ip6_dns+="[$ip],"
+        else
+            ip4_dns+="$ip,"
+        fi
+    done
+    # Remove trailing ,
+    ip6_dns="${ip6_dns%%,}"
+    ip4_dns="${ip4_dns%%,}"
+
+	if [[ -z "$(ynh_app_setting_get --app=$app --key=ip6_dns)" ]]; then
+		ynh_app_setting_set --app=$app --key=ip6_dns --value="${ip6_dns}"
+	fi
+	if [[ -z "$(ynh_app_setting_get --app=$app --key=ip4_dns)" ]]; then
+		ynh_app_setting_set --app=$app --key=ip4_dns --value="${ip4_dns}"
+	fi
+
+	ynh_app_setting_delete $app dns
+else
+    ip6_dns=$(ynh_app_setting_get --app=$app --key=ip6_dns)
+    ip4_dns=$(ynh_app_setting_get --app=$app --key=ip4_dns)
+fi
+
+if [[ -n "${multissid}" ]]; then
+    ynh_app_setting_delete --app=$app --key=multissid
+
+	ynh_secure_remove --file="/etc/hostapd/hostapd.conf"
+	ynh_secure_remove --file="/etc/hostapd/hostapd.base.conf"
+	ynh_secure_remove --file="/etc/hostapd/hostapd.accesspoint.conf"
+	ynh_secure_remove --file="/etc/dnsmasq.dhcpd/"
+fi
+
+if [[ -z "${advanced}" ]]; then
+    ynh_app_setting_set --app=$app --key=advanced --value=0
 fi
 
 # Old stuff prior to 2.x
@@ -131,15 +201,41 @@ ynh_install_app_dependencies $pkg_dependencies
 #=================================================
 ynh_script_progression --message="Copying configuration..."
 
-mkdir -pm 0755 /etc/dnsmasq.dhcpd/
-chown root: /etc/dnsmasq.dhcpd/
+hot_reload_usb_wifi_cards
+if [[ -z "$wifi_device" ]] || ! grep -q -F "$wifi_device" <(unused_iw_devices); then
+	wifi_device="$(unused_iw_devices | head -n 1)"
+	ynh_app_setting_set --app=$app --key=wifi_device --value="${wifi_device}"
+fi
 
-install -b -o root -g root -m 0644 ../conf/hostapd.*.conf /etc/hostapd/
-install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv6.conf.tpl
-install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.dhcpd/dhcpdv4.conf.tpl
+mkdir -pm 0755 /etc/hostapd/$app/
+chown root: /etc/hostapd/$app/
+
+mkdir -pm 0755 /etc/dnsmasq.$app/
+chown root: /etc/dnsmasq.$app/
+
+install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl /etc/hostapd/$app/hostapd.conf.tpl
+install -b -o root -g root -m 0644 ../conf/dnsmasq.conf.tpl /etc/dnsmasq.$app/dnsmasq.conf.tpl
+install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.$app/dhcpdv6.conf.tpl
+install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.$app/dhcpdv4.conf.tpl
+
+if [[ -n "${wifi_device}" ]]; then 
+	configure_hostapd
+	configure_dnsmasq
+	configure_dhcp
+fi
 
 # Copy init script
-install -o root -g root -m 0755 ../conf/$service_name /usr/local/bin/
+ynh_add_config --template="../conf/ynh-hotspot" --destination="/usr/local/bin/$service_name"
+chmod 0755 "/usr/local/bin/$service_name"
+
+# Copy openvpn scripts
+mkdir -pm 0755 /etc/openvpn/scripts
+mkdir -pm 0755 /etc/openvpn/scripts/route-up.d
+mkdir -pm 0755 /etc/openvpn/scripts/route-down.d
+ynh_add_config --template="../conf/openvpn_90-hotspot" --destination="/etc/openvpn/scripts/route-up.d/90-$service_name"
+ynh_add_config --template="../conf/openvpn_90-hotspot" --destination="/etc/openvpn/scripts/route-down.d/90-$service_name"
+chmod 0755 "/etc/openvpn/scripts/route-up.d/90-${service_name}"
+chmod 0755 "/etc/openvpn/scripts/route-down.d/90-${service_name}"
 
 #=================================================
 # SETUP SYSTEMD
@@ -148,6 +244,8 @@ ynh_script_progression --message="Upgrading systemd configuration..."
 
 # Create a dedicated systemd config
 ynh_add_systemd_config --service=$service_name
+# Create custom systemd config for hostapd to handle multiple wifi devices
+ynh_add_systemd_config --service="hostapd@$app" --template="../conf/systemd_hostapd.service"
 
 #=================================================
 # GENERIC FINALIZATION
@@ -156,15 +254,12 @@ ynh_add_systemd_config --service=$service_name
 #=================================================
 ynh_script_progression --message="Integrating service in YunoHost..."
 
-yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd"
+yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd@$app"
 
 #=================================================
 # START SYSTEMD SERVICE
 #=================================================
 ynh_script_progression --message="Starting the hotspot service..."
-
-hot_reload_usb_wifi_cards
-wifi_device=$(iw_devices | awk -F\| '{ print $1 }')
 
 if [[ -z $wifi_device ]]; then
 	ynh_app_setting_set --app=$app --key=service_enabled --value=0

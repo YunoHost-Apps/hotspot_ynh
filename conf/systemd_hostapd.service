@@ -1,0 +1,12 @@
+[Unit]
+Description=LSB: Advanced IEEE 802.11 management daemon
+After=remote-fs.target
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Restart=no
+TimeoutSec=5min
+ExecStart=/usr/sbin/hostapd /etc/hostapd/__APP__/hostapd.conf
+ExecReload=/bin/kill -HEP $MAINPID

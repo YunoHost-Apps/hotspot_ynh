@@ -6,7 +6,7 @@
         "en": "Create and manager wifi networks, share Internet access and use YunoHost apps accross wifi",
         "fr": "Créer et configurer des réseaux wifi, partager l'accès a Internet et utiliser les applications YunoHost via wifi"
     },
-    "version": "2.0~ynh4",
+    "version": "2.1~ynh1",
     "url": "https://github.com/labriqueinternet/hotspot_ynh",
     "license": "AGPL-3.0",
     "maintainer": {
@@ -21,7 +21,7 @@
     "requirements": {
         "yunohost": ">= 4.3.2"
     },
-    "multi_instance": false,
+    "multi_instance": true,
     "services": [],
     "arguments": {
         "install" : [

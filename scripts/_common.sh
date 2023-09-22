@@ -12,9 +12,33 @@ free_firmware_packages="firmware-ath9k-htc"
 # PERSONAL HELPERS
 #=================================================
 
+function other_hotspot_apps()
+{
+  local app_shortname="${app%%__*}"
+  local hotspot_apps=$(yunohost app list --output-as json | jq -r .apps[].id | grep -F $app_shortname)
+  # Remove this app from hotspot apps list
+  grep -F -x -v $app <<< ${hotspot_apps}
+}
+
 function iw_devices()
 {
-  echo -n $(/sbin/iw dev | grep Interface | grep -v 'mon\.' | grep -v hotspot | awk '{ print $NF }') | tr ' ' '|'
+  /sbin/iw dev | grep Interface | grep -v 'mon\.' | grep -v hotspot | awk '{ print $NF }'
+}
+
+function used_iw_devices()
+{
+  for hotspot_app in $(other_hotspot_apps); do
+    hotspot_wifi_device=$(ynh_app_setting_get --app=$hotspot_app --key=wifi_device)
+    if [[ -n "${hotspot_wifi_device}" ]]; then
+      echo "${hotspot_wifi_device}"
+    fi
+  done
+}
+
+function unused_iw_devices()
+{
+  # Only prints devices that are not in the list of used devices
+  iw_devices | grep -F -v -f <(used_iw_devices)
 }
 
 function check_armbian_nonfree_conflict()
@@ -46,6 +70,32 @@ function hot_reload_usb_wifi_cards()
       sleep 2
     fi
   done
+}
+
+function configure_hostapd()
+{
+  if [[ "${wifi_secure}" -eq 1 ]]; then
+		sec_comment=""
+	else
+		sec_comment="#"
+	fi
+
+	ynh_add_config --template="/etc/hostapd/$app/hostapd.conf.tpl" --destination="/etc/hostapd/$app/hostapd.conf"
+}
+
+function configure_dnsmasq()
+{
+  ynh_add_config --template="/etc/dnsmasq.$app/dnsmasq.conf.tpl" --destination="/etc/dnsmasq.d/$app.conf"
+  systemctl restart dnsmasq
+}
+
+function configure_dhcp()
+{
+  ynh_add_config --template="/etc/dnsmasq.$app/dhcpdv4.conf.tpl" --destination="/etc/dnsmasq.$app/dhcpdv4.conf"
+
+	if [[ -n "${ip6_net}" ]] && [[ "${ip6_net}" != "none" ]]; then
+		ynh_add_config --template="/etc/dnsmasq.$app/dhcpdv6.conf.tpl" --destination="/etc/dnsmasq.$app/dhcpdv6.conf"
+	fi  
 }
 
 #=================================================
