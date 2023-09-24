@@ -199,7 +199,7 @@ ynh_app_config_apply() {
 
     # Stop vpn client
     ynh_print_info --message="Stopping hotspot in order to edit files"
-    /usr/local/bin/${service_name} stop
+    systemctl stop ${service_name}
 
     _ynh_app_config_apply
 
@@ -210,7 +210,7 @@ ynh_app_config_apply() {
 
         # Start hotspot
         ynh_print_info --message="Starting hotspot service if needed"
-        /usr/local/bin/${service_name} start
+        systemctl start ${service_name}
     else
         ynh_print_info --message="Cleanup hotspot config files"
         ynh_secure_remove --file="/etc/hostapd/$app/hostapd.conf"
