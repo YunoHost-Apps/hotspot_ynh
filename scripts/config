@@ -136,21 +136,24 @@ validate__ip4_nat_prefix() {
 }
 
 validate__dns() {
-    if ! echo "${dns}" | grep -q "\."
+    if [[ -z "$ip4_dns" ]]
     then
         echo 'IPv4 DNS required'
     fi
-    if [[ -n "${ip6_net}" ]] && ! echo "${dns}" | grep -q ":"
+    if [[ -n "${ip6_net}" ]] && [[ -z "$ip6_dns" ]]
     then
         echo 'IPv6 DNS required'
     fi
 }
 
-#=================================================
-# SPECIFIC SETTERS FOR TOML SHORT KEYS
-#=================================================
+ynh_app_config_validate() {
+    if [[ "${advanced}" -eq 0 ]]; then
+        # When we aren't in advanced mode, these variables must be manually declared
+        dns="${old[dns]}"
+        ip6_net="${old[ip6_net]}"
+        ip4_nat_prefix="${old[ip4_nat_prefix]}"
+    fi
 
-set__dns() {
     ip6_dns=""
     ip4_dns=""
     for ip in $(echo "${dns}" | tr ',' ' '); do
@@ -171,7 +174,15 @@ set__dns() {
     if [[ -n "${ip4_nat_prefix}" ]] && [[ -z "${ip4_dns}" ]]; then
         ip4_dns="${ip4_nat_prefix}.1"
     fi
-    
+
+    _ynh_app_config_validate
+}
+
+#=================================================
+# SPECIFIC SETTERS FOR TOML SHORT KEYS
+#=================================================
+
+set__dns() {
     ynh_app_setting_set $app ip6_dns "${ip6_dns}"
     ynh_app_setting_set $app ip4_dns "${ip4_dns}"
 }
@@ -188,18 +199,27 @@ ynh_app_config_apply() {
 
     # Stop vpn client
     ynh_print_info --message="Stopping hotspot in order to edit files"
-    /usr/local/bin/${service_name} stop
+    systemctl stop ${service_name}
 
     _ynh_app_config_apply
 
-    configure_hostapd
-    configure_dnsmasq
-    configure_dhcp
+    if [[ "${service_enabled}" -eq 1 ]]; then
+        configure_hostapd
+        configure_dnsmasq
+        configure_dhcp
 
-    # Start hotspot
-    ynh_print_info --message="Starting hotspot service if needed"
-    /usr/local/bin/${service_name} start
+        # Start hotspot
+        ynh_print_info --message="Starting hotspot service if needed"
+        systemctl start ${service_name}
+    else
+        ynh_print_info --message="Cleanup hotspot config files"
+        ynh_secure_remove --file="/etc/hostapd/$app/hostapd.conf"
+        ynh_secure_remove --file="/etc/dnsmasq.d/$app.conf"
+        ynh_secure_remove --file="/etc/dnsmasq.$app/dhcpdv4.conf"
+        ynh_secure_remove --file="/etc/dnsmasq.$app/dhcpdv6.conf"
 
+        systemctl restart dnsmasq
+    fi
 }
 
 ynh_app_config_run $1
