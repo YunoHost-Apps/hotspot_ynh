@@ -252,7 +252,7 @@ ynh_add_systemd_config --service="hostapd@$app" --template="../conf/systemd_host
 #=================================================
 ynh_script_progression --message="Integrating service in YunoHost..."
 
-yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd@$app"
+yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd@$app" --need_lock
 
 #=================================================
 # START SYSTEMD SERVICE
