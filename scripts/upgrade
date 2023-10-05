@@ -58,8 +58,7 @@ ynh_abort_if_errors
 # STOP SYSTEMD SERVICE
 #=================================================
 ynh_script_progression --message="Stopping the hotspot service ... (this may take some time)"
-
-ynh_systemd_action --service_name=$service_name --action="stop" --log_path=systemd #--line_match="Started YunoHost Wifi Hotspot"
+yunohost service stop $service_name
 
 #=================================================
 # ENSURE DOWNWARD COMPATIBILITY
@@ -269,7 +268,7 @@ fi
 if [[ $wifi_device == "" ]]; then
 	echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
 else
-	ynh_systemd_action --service_name=$service_name --action="start" --log_path=systemd #--line_match="Started YunoHost Wifi Hotspot"
+    yunohost service start $service_name
 fi
 
 #=================================================
