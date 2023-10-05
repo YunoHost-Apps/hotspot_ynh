@@ -296,6 +296,9 @@ start)
 
     # Update dynamic settings
     ynh_app_setting_set hotspot gateway_interface "${new_gateway_interface}"
+
+    # Regen-conf dnsmasq to enable dns resolution on dnsmasq for the new interface
+    yunohost tools regen-conf dnsmasq
     ;;
 stop)
     echo "[hotspot] Stopping..."
@@ -319,6 +322,9 @@ stop)
         echo "Stop hostapd"
         stop_hostapd
     fi
+
+    # Regen-conf dnsmasq to disable dns resolution on dnsmasq for the previous interface
+    yunohost tools regen-conf dnsmasq
     ;;
 restart)
     $0 stop

@@ -205,7 +205,6 @@ ynh_app_config_apply() {
 
     if [[ "${service_enabled}" -eq 1 ]]; then
         configure_hostapd
-        configure_dnsmasq
         configure_dhcp
 
         # Start hotspot
