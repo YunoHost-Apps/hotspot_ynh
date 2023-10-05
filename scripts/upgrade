@@ -70,6 +70,9 @@ if [ -d /var/www/wifiadmin/ ]; then
     ynh_secure_remove /var/www/wifiadmin/
 fi
 
+if [ -e /etc/dnsmasq.d/$app.conf ]; then
+    ynh_secure_remove /etc/dnsmasq.d/$app.conf
+fi
 
 if [ $firmware_nonfree = "yes" ]; then
 	firmware_nonfree=1
