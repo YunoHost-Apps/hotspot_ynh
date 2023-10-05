@@ -213,12 +213,13 @@ ynh_app_config_apply() {
     else
         ynh_print_info --message="Cleanup hotspot config files"
         ynh_secure_remove --file="/etc/hostapd/$app/hostapd.conf"
-        ynh_secure_remove --file="/etc/dnsmasq.d/$app.conf"
         ynh_secure_remove --file="/etc/dnsmasq.$app/dhcpdv4.conf"
         ynh_secure_remove --file="/etc/dnsmasq.$app/dhcpdv6.conf"
 
         systemctl restart dnsmasq
     fi
+
+    yunohost tools regen-conf dnsmasq
 }
 
 ynh_app_config_run $1
