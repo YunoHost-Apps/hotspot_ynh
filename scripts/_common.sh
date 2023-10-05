@@ -80,14 +80,14 @@ function configure_hostapd()
         sec_comment="#"
     fi
 
-    ynh_add_config --template="/etc/hostapd/$app/hostapd.conf.tpl" --destination="/etc/hostapd/$app/hostapd.conf"
+    ynh_add_config --template="../conf/hostapd.conf" --destination="/etc/hostapd/$app/hostapd.conf"
 }
 
 function configure_dhcp()
 {
-    ynh_add_config --template="/etc/dnsmasq.$app/dhcpdv4.conf.tpl" --destination="/etc/dnsmasq.$app/dhcpdv4.conf"
+    ynh_add_config --template="../conf/dhcpdv4.conf" --destination="/etc/dnsmasq.$app/dhcpdv4.conf"
 
     if [[ -n "${ip6_net}" ]] && [[ "${ip6_net}" != "none" ]]; then
-        ynh_add_config --template="/etc/dnsmasq.$app/dhcpdv6.conf.tpl" --destination="/etc/dnsmasq.$app/dhcpdv6.conf"
+        ynh_add_config --template="../conf/dhcpdv6.conf" --destination="/etc/dnsmasq.$app/dhcpdv6.conf"
     fi  
 }

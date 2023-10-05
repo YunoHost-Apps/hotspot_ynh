@@ -71,13 +71,8 @@ else
 	pkg_dependencies="$pkg_dependencies $free_firmware_packages"
 fi
 
-ynh_restore_file --origin_path="/etc/hostapd/$app/hostapd.conf.tpl"
 ynh_restore_file --origin_path="/etc/hostapd/$app/hostapd.conf" --not_mandatory
-
-ynh_restore_file --origin_path="/etc/dnsmasq.$app/dhcpdv6.conf.tpl"
 ynh_restore_file --origin_path="/etc/dnsmasq.$app/dhcpdv6.conf" --not_mandatory
-
-ynh_restore_file --origin_path="/etc/dnsmasq.$app/dhcpdv4.conf.tpl"
 ynh_restore_file --origin_path="/etc/dnsmasq.$app/dhcpdv4.conf" --not_mandatory
 
 ynh_restore_file --origin_path="/usr/local/bin/$service_name"
