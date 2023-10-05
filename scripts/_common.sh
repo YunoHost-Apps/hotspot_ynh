@@ -85,9 +85,9 @@ function configure_hostapd()
 
 function configure_dhcp()
 {
-    ynh_add_config --template="../conf/dhcpdv4.conf" --destination="/etc/dnsmasq.$app/dhcpdv4.conf"
+    ynh_add_config --template="../conf/dnsmasq_dhcpdv4.conf" --destination="/etc/dnsmasq.$app/dhcpdv4.conf"
 
     if [[ -n "${ip6_net}" ]] && [[ "${ip6_net}" != "none" ]]; then
-        ynh_add_config --template="../conf/dhcpdv6.conf" --destination="/etc/dnsmasq.$app/dhcpdv6.conf"
+        ynh_add_config --template="../conf/dnsmasq_dhcpdv6.conf" --destination="/etc/dnsmasq.$app/dhcpdv6.conf"
     fi  
 }
