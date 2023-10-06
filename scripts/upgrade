@@ -58,8 +58,7 @@ ynh_abort_if_errors
 # STOP SYSTEMD SERVICE
 #=================================================
 ynh_script_progression --message="Stopping the hotspot service ... (this may take some time)"
-
-ynh_systemd_action --service_name=$service_name --action="stop" --log_path=systemd #--line_match="Started YunoHost Wifi Hotspot"
+yunohost service stop $service_name
 
 #=================================================
 # ENSURE DOWNWARD COMPATIBILITY
@@ -70,6 +69,9 @@ if [ -d /var/www/wifiadmin/ ]; then
     ynh_secure_remove /var/www/wifiadmin/
 fi
 
+if [ -e /etc/dnsmasq.d/$app.conf ]; then
+    ynh_secure_remove /etc/dnsmasq.d/$app.conf
+fi
 
 if [ $firmware_nonfree = "yes" ]; then
 	firmware_nonfree=1
@@ -213,15 +215,9 @@ chown root: /etc/hostapd/$app/
 mkdir -pm 0755 /etc/dnsmasq.$app/
 chown root: /etc/dnsmasq.$app/
 
-install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl /etc/hostapd/$app/hostapd.conf.tpl
-install -b -o root -g root -m 0644 ../conf/dnsmasq.conf.tpl /etc/dnsmasq.$app/dnsmasq.conf.tpl
-install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.$app/dhcpdv6.conf.tpl
-install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.$app/dhcpdv4.conf.tpl
-
 if [[ -n "${wifi_device}" ]]; then 
-	configure_hostapd
-	configure_dnsmasq
-	configure_dhcp
+    configure_hostapd
+    configure_dhcp
 fi
 
 # Copy init script
@@ -254,7 +250,7 @@ ynh_add_systemd_config --service="hostapd@$app" --template="../conf/systemd_host
 #=================================================
 ynh_script_progression --message="Integrating service in YunoHost..."
 
-yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd@$app"
+yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd@$app" --need_lock
 
 #=================================================
 # START SYSTEMD SERVICE
@@ -272,7 +268,7 @@ fi
 if [[ $wifi_device == "" ]]; then
 	echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
 else
-	ynh_systemd_action --service_name=$service_name --action="start" --log_path=systemd #--line_match="Started YunoHost Wifi Hotspot"
+    yunohost service start $service_name
 fi
 
 #=================================================

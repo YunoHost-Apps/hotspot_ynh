@@ -161,11 +161,6 @@ chown root: /etc/hostapd/$app/
 mkdir -pm 0755 /etc/dnsmasq.$app/
 chown root: /etc/dnsmasq.$app/
 
-install -b -o root -g root -m 0644 ../conf/hostapd.conf.tpl /etc/hostapd/$app/hostapd.conf.tpl
-install -b -o root -g root -m 0644 ../conf/dnsmasq.conf.tpl /etc/dnsmasq.$app/dnsmasq.conf.tpl
-install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv6.conf.tpl /etc/dnsmasq.$app/dhcpdv6.conf.tpl
-install -b -o root -g root -m 0644 ../conf/dnsmasq_dhcpdv4.conf.tpl /etc/dnsmasq.$app/dhcpdv4.conf.tpl
-
 # Copy init script
 ynh_add_config --template="../conf/ynh-hotspot" --destination="/usr/local/bin/$service_name"
 chmod 0755 "/usr/local/bin/$service_name"
@@ -192,9 +187,8 @@ systemctl stop hostapd 2>&1
 systemctl unmask hostapd 2>&1 # On some system e.g. RPi, for some reason hostapd is masked after install ...
 
 if [[ -n "${wifi_device}" ]]; then 
-	configure_hostapd
-	configure_dnsmasq
-	configure_dhcp
+    configure_hostapd
+    configure_dhcp
 fi
 
 #=================================================
@@ -212,7 +206,7 @@ ynh_add_systemd_config --service="hostapd@$app" --template="../conf/systemd_host
 #=================================================
 ynh_script_progression --message="Integrating service in YunoHost..."
 
-yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd@$app"
+yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd@$app" --need_lock
 
 #=================================================
 # START SYSTEMD SERVICE
@@ -223,7 +217,7 @@ ynh_script_progression --message="Starting a systemd service..."
 if [[ $wifi_device == "" ]]; then
 	echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
 else
-	ynh_systemd_action --service_name=$service_name --action="start" --log_path=systemd #--line_match="Started YunoHost Wifi Hotspot"
+    yunohost service start $service_name
 fi
 
 #=================================================
