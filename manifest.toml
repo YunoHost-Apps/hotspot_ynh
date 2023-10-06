@@ -1,0 +1,73 @@
+#:schema https://raw.githubusercontent.com/YunoHost/apps/master/schemas/manifest.v2.schema.json
+
+packaging_format = 2
+
+id = "hotspot"
+name = "Wifi Hotspot"
+description.en = "Create and configure a WiFi hotspot"
+description.fr = "Créez et gérez un point d'accès WiFi"
+
+version = "2.3.0~ynh1"
+
+maintainers = []
+
+[upstream]
+license = "AGPL-3.0"
+website = "https://internetcu.be/"
+
+[integration]
+yunohost = ">= 11.2"
+architectures = "all"
+multi_instance = true
+ldap = "not_relevant"
+sso = "not_relevant"
+disk = "50M"
+ram.build = "50M"
+ram.runtime = "50M"
+
+[install]
+    [install.wifi_ssid]
+    ask.en = "Choose a wifi name (SSID)"
+    ask.fr = "Choisissez un nom pour le wifi (SSID)"
+    type = "string"
+    example = "myNeutralNetwork"
+    default = "myNeutralNetwork"
+
+    [install.wifi_passphrase]
+    ask.en = "Choose a wifi password (at least 8 characters for WPA2)"
+    ask.fr = "Choisissez un mot de passe wifi (au minimum 8 caractères pour le WPA2)"
+    type = "password"
+
+    [install.firmware_nonfree]
+    ask.en = "Install non-free WiFi firmwares? (Only needed if you're using a proprietary WiFi antenna/dongle)"
+    ask.fr = "Installer des firmwares WiFi non-libres ? (Nécessaire seulement si vous utilisez une antenne/clé WiFi propriétaire)"
+    type = "boolean"
+    default = false
+
+[resources]
+    [resources.system_user]
+
+    [resources.apt]
+    packages = "sipcalc, hostapd, iw, kmod"
+
+# =========================================
+# FIXME FIXME FIXME FIXME FIXME FIXME FIXME 
+#   Gotta find a way to conditionally install the non-free packages
+#  So far the "packages_from_raw_bash" thing doesnt allow conditional packages from extra repo (here, the non-free component..)
+# FIXME FIXME FIXME FIXME FIXME FIXME FIXME 
+# =========================================
+#
+# # Packaged USB Wireless Device firmwares
+# # Based on https://wiki.debian.org/WiFi#USB_Devices
+# if [[ $firmware_nonfree -eq 1 ]]; then
+#	# FIXME : if armbian-firmware is detected, we should remove ra-link....
+#       #if dpkg --list | grep -q armbian-firmware; then
+#       #    echo "You are running Armbian and firmware-misc-nonfree are known to conflict with armbian-firwmare. " >&2
+#       #    echo "The package firmware-misc-nonfree is a dependency of firmware-ralink, so firmware-ralink will NOT be installed" >&2
+#       #    echo "You can manually install firmware-ralink with 'apt -o Dpkg::Options::=\"--force-overwrite\" firmware-ralink'" >&2
+#       #    nonfree_firmware_packages=$(echo $nonfree_firmware_packages | sed 's/ firmware-ralink//')
+#       #fi
+#     echo "firmware-atheros firmware-realtek firmware-ralink firmware-libertas atmel-firmware firmware-zd1211"
+# else
+#     echo "firmware-ath9k-htc"
+# fi
