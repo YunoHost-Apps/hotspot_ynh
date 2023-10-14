@@ -103,6 +103,7 @@ name = "Configuration"
         [main.hotspot.dns]
         ask = "DNS resolvers"
         type = "tags"
+        optional = true
         visible = "advanced"
         pattern.regexp = '^([0-9.]{7,15}|[0-9a-fA-F:]+)$'
         pattern.error = "Not an ip"
