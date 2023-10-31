@@ -29,6 +29,7 @@ Si vous n’avez pas YunoHost, regardez [ici](https://yunohost.org/#/install) po
 ## Documentations et ressources
 
 * Site officiel de l’app : <https://internetcu.be/>
+* YunoHost Store: <https://apps.yunohost.org/app/hotspot>
 * Signaler un bug : <https://github.com/YunoHost-Apps/hotspot_ynh/issues>
 
 ## Informations pour les développeurs

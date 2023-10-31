@@ -29,6 +29,7 @@ If you don't have YunoHost, please consult [the guide](https://yunohost.org/#/in
 ## Documentation and resources
 
 * Official app website: <https://internetcu.be/>
+* YunoHost Store: <https://apps.yunohost.org/app/hotspot>
 * Report a bug: <https://github.com/YunoHost-Apps/hotspot_ynh/issues>
 
 ## Developer info
