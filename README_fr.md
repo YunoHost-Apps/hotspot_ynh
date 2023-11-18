@@ -20,7 +20,7 @@ Si vous n’avez pas YunoHost, regardez [ici](https://yunohost.org/#/install) po
 * À combiner avec l'[app VPN Client](https://github.com/labriqueinternet/vpnclient_ynh) pour obtenir un accès internet aumatiquement protégé par votre VPN
 
 
-**Version incluse :** 2.2.0~ynh1
+**Version incluse :** 2.2.1~ynh1
 
 ## Captures d’écran
 
@@ -29,6 +29,7 @@ Si vous n’avez pas YunoHost, regardez [ici](https://yunohost.org/#/install) po
 ## Documentations et ressources
 
 * Site officiel de l’app : <https://internetcu.be/>
+* YunoHost Store: <https://apps.yunohost.org/app/hotspot>
 * Signaler un bug : <https://github.com/YunoHost-Apps/hotspot_ynh/issues>
 
 ## Informations pour les développeurs

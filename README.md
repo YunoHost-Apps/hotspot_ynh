@@ -20,7 +20,7 @@ If you don't have YunoHost, please consult [the guide](https://yunohost.org/#/in
 * Combine with the [VPN Client app](https://github.com/labriqueinternet/vpnclient_ynh) to obtain a VPN-protected WiFi
 
 
-**Shipped version:** 2.2.0~ynh1
+**Shipped version:** 2.2.1~ynh1
 
 ## Screenshots
 
@@ -29,6 +29,7 @@ If you don't have YunoHost, please consult [the guide](https://yunohost.org/#/in
 ## Documentation and resources
 
 * Official app website: <https://internetcu.be/>
+* YunoHost Store: <https://apps.yunohost.org/app/hotspot>
 * Report a bug: <https://github.com/YunoHost-Apps/hotspot_ynh/issues>
 
 ## Developer info
