@@ -25,7 +25,9 @@ if systemctl is-active __SERVICE_NAME__; then
     unset_nat "${old_gateway_interface}"
   fi
 
-  set_nat "${new_gateway_interface}"
+  if [[ -n "$new_gateway_interface" ]] && ! is_nat_set $new_gateway_interface; then
+    set_nat "${new_gateway_interface}"
+  fi
 
   ynh_app_setting_set --app=__APP__ --key=gateway_interface --value="${new_gateway_interface}"
 fi
