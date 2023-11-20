@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /usr/share/yunohost/helpers
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 is_nat_set() {
   local gateway_interface=${1}
@@ -17,8 +17,8 @@ set_nat() {
   iptables -w -t nat -A POSTROUTING -o "${gateway_interface}" -j MASQUERADE
 }
 
-if systemctl is-active __SERVICE_NAME__; then
-  old_gateway_interface=$(ynh_app_setting_get --app=__APP__ --key=gateway_interface)
+if systemctl -q is-active __SERVICE_NAME__; then
+  old_gateway_interface=$(yunohost app setting __APP__ gateway_interface)
   new_gateway_interface=$(ip route get 1.2.3.4 | awk '{ print $5; }')
 
   if [[ -n "$old_gateway_interface" ]] && [[ "$old_gateway_interface" != "$new_gateway_interface" ]] && is_nat_set "$old_gateway_interface"; then
@@ -29,5 +29,5 @@ if systemctl is-active __SERVICE_NAME__; then
     set_nat "${new_gateway_interface}"
   fi
 
-  ynh_app_setting_set --app=__APP__ --key=gateway_interface --value="${new_gateway_interface}"
+  yunohost app setting __APP__ gateway_interface --value "${new_gateway_interface}"
 fi
