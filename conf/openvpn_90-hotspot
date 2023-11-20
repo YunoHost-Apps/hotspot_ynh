@@ -1,7 +1,5 @@
 #!/bin/bash
 
-export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-
 is_nat_set() {
   local gateway_interface=${1}
   iptables -w -nvt nat -L POSTROUTING | grep MASQUERADE | grep -q "${gateway_interface}"
