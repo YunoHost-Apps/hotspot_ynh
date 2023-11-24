@@ -1,3 +1,31 @@
 #!/bin/bash
 
-systemctl restart __SERVICE_NAME__
+is_nat_set() {
+  local gateway_interface=${1}
+  iptables -w -nvt nat -L POSTROUTING | grep MASQUERADE | grep -q "${gateway_interface}"
+}
+
+unset_nat() {
+  local gateway_interface=${1}
+  iptables -w -t nat -D POSTROUTING -o "${gateway_interface}" -j MASQUERADE
+}
+
+set_nat() {
+  local gateway_interface=${1}
+  iptables -w -t nat -A POSTROUTING -o "${gateway_interface}" -j MASQUERADE
+}
+
+if systemctl -q is-active __SERVICE_NAME__; then
+  old_gateway_interface=$(yunohost app setting __APP__ gateway_interface)
+  new_gateway_interface=$(ip route get 1.2.3.4 | awk '{ print $5; }')
+
+  if [[ -n "$old_gateway_interface" ]] && [[ "$old_gateway_interface" != "$new_gateway_interface" ]] && is_nat_set "$old_gateway_interface"; then
+    unset_nat "${old_gateway_interface}"
+  fi
+
+  if [[ -n "$new_gateway_interface" ]] && ! is_nat_set $new_gateway_interface; then
+    set_nat "${new_gateway_interface}"
+  fi
+
+  yunohost app setting __APP__ gateway_interface --value "${new_gateway_interface}"
+fi
