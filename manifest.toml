@@ -49,10 +49,7 @@ ram.runtime = "50M"
 
     [resources.apt]
     packages = "sipcalc, hostapd, iw, kmod"
-    packages_from_raw_bash = """
-        # Free firmwares
-        [[ "$firmware_nonfree" -eq 0 ]] && echo "firmware-ath9k-htc" || true
-    """
+    packages_from_raw_bash = '[[ "$firmware_nonfree" -eq 0 ]] && echo "firmware-ath9k-htc" || true'
 
     extras.nonfree.repo = "deb http://deb.debian.org/debian bullseye non-free"
     extras.nonfree.key = "https://ftp-master.debian.org/keys/archive-key-11.asc"
@@ -62,9 +59,9 @@ ram.runtime = "50M"
             # if armbian-firmware is detected, we dont include ra-link which is known to conflict....
             if dpkg --list | grep -q armbian-firmware; then
                 echo "firmware-atheros firmware-realtek firmware-libertas atmel-firmware firmware-zd1211"
+            else
+                echo "firmware-atheros firmware-realtek firmware-ralink firmware-libertas atmel-firmware firmware-zd1211"
             fi
-            echo "firmware-atheros firmware-realtek firmware-ralink firmware-libertas atmel-firmware firmware-zd1211"
         else
-            echo ""
-        fi
-    """
+            echo " "
+        fi"""
