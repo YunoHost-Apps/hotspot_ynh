@@ -90,6 +90,10 @@ else
 	ynh_app_setting_set --app=$app --key=service_enabled --value=1
 fi
 
+# We must explicitly save the wifi passphrase despite being in the install question
+# because password-type questions are not saved automatically
+ynh_app_setting_set --app=$app --key=wifi_passphrase --value="$wifi_passphrase"
+
 #=================================================
 # COPY CONFIGS
 #=================================================
