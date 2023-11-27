@@ -258,7 +258,7 @@ start)
         exit 1
     fi
 
-    echo "[hotspot] Starting..."
+    echo "[$app] Starting..."
     touch /tmp/.${service_name}-started
 
     # Check old state of the ipv4 NAT settings
@@ -295,13 +295,13 @@ start)
     start_dhcpd
 
     # Update dynamic settings
-    ynh_app_setting_set hotspot gateway_interface "${new_gateway_interface}"
+    ynh_app_setting_set --app=$app --key=gateway_interface --value="${new_gateway_interface}"
 
     # Regen-conf dnsmasq to enable dns resolution on dnsmasq for the new interface
     yunohost tools regen-conf dnsmasq
     ;;
 stop)
-    echo "[hotspot] Stopping..."
+    echo "[$app] Stopping..."
     rm -f /tmp/.${service_name}-started
 
     if ! is_other_hostapd_running; then
