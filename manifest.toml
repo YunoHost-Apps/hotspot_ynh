@@ -49,25 +49,22 @@ ram.runtime = "50M"
 
     [resources.apt]
     packages = "sipcalc, hostapd, iw, kmod"
+    packages_from_raw_bash = """
+        # Free firmwares
+        [[ "$firmware_nonfree" -eq 0 ]] && echo "firmware-ath9k-htc" || true
+    """
 
-# =========================================
-# FIXME FIXME FIXME FIXME FIXME FIXME FIXME 
-#   Gotta find a way to conditionally install the non-free packages
-#  So far the "packages_from_raw_bash" thing doesnt allow conditional packages from extra repo (here, the non-free component..)
-# FIXME FIXME FIXME FIXME FIXME FIXME FIXME 
-# =========================================
-#
-# # Packaged USB Wireless Device firmwares
-# # Based on https://wiki.debian.org/WiFi#USB_Devices
-# if [[ $firmware_nonfree -eq 1 ]]; then
-#	# FIXME : if armbian-firmware is detected, we should remove ra-link....
-#       #if dpkg --list | grep -q armbian-firmware; then
-#       #    echo "You are running Armbian and firmware-misc-nonfree are known to conflict with armbian-firwmare. " >&2
-#       #    echo "The package firmware-misc-nonfree is a dependency of firmware-ralink, so firmware-ralink will NOT be installed" >&2
-#       #    echo "You can manually install firmware-ralink with 'apt -o Dpkg::Options::=\"--force-overwrite\" firmware-ralink'" >&2
-#       #    nonfree_firmware_packages=$(echo $nonfree_firmware_packages | sed 's/ firmware-ralink//')
-#       #fi
-#     echo "firmware-atheros firmware-realtek firmware-ralink firmware-libertas atmel-firmware firmware-zd1211"
-# else
-#     echo "firmware-ath9k-htc"
-# fi
+    extras.nonfree.repo = "deb http://deb.debian.org/debian bullseye non-free"
+    extras.nonfree.key = "https://ftp-master.debian.org/keys/archive-key-11.asc"
+    extras.nonfree.packages_from_raw_bash = """
+        # Proprietary USB Wireless Device firmwares, based on https://wiki.debian.org/WiFi#USB_Devices
+        if [[ "$firmware_nonfree" -eq 1 ]]; then
+            # if armbian-firmware is detected, we dont include ra-link which is known to conflict....
+            if dpkg --list | grep -q armbian-firmware; then
+                echo "firmware-atheros firmware-realtek firmware-libertas atmel-firmware firmware-zd1211"
+            fi
+            echo "firmware-atheros firmware-realtek firmware-ralink firmware-libertas atmel-firmware firmware-zd1211"
+        else
+            echo ""
+        fi
+    """
