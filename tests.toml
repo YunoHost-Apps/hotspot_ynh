@@ -6,6 +6,7 @@ test_format = 1.0
     args.firmware_nonfree = "no"
 
     test_upgrade_from.539a1f26.name = "Pre 2.0"
+    test_upgrade_from.539a1f26.args.domain = "domain.tld"
 
 [with_nonfree]
     
