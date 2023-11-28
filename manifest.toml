@@ -16,7 +16,7 @@ license = "AGPL-3.0"
 website = "https://internetcu.be/"
 
 [integration]
-yunohost = ">= 11.2"
+yunohost = ">= 11.2.7"
 architectures = "all"
 multi_instance = true
 ldap = "not_relevant"
