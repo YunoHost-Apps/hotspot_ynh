@@ -15,7 +15,8 @@ set_nat() {
   iptables -w -t nat -A POSTROUTING -o "${gateway_interface}" -j MASQUERADE
 }
 
-if systemctl -q is-active __SERVICE_NAME__; then
+ynh_hotspot_state=$(systemctl -q is-active __SERVICE_NAME__)
+if [[ "${ynh_hotspot_state}" == "active" || "${ynh_hotspot_state}" == "activating" ]]; then
   old_gateway_interface=$(yunohost app setting __APP__ gateway_interface)
   new_gateway_interface=$(ip route get 1.2.3.4 | awk '{ print $5; }')
 
