@@ -123,12 +123,10 @@ chmod 0755 "/etc/openvpn/scripts/route-down.d/90-${service_name}"
 #=================================================
 ynh_script_progression --message="Configuring hostapd..."
 
-# Set default inits
-# The boot order of these services are important, so they are disabled by default
-# and the ynh-hotspot service handles them.
+# Disable hostapd, we'll use hostapd@$app instead (for multissid support etc)
 systemctl disable hostapd --quiet 2>&1
 systemctl stop hostapd 2>&1
-systemctl unmask hostapd 2>&1 # On some system e.g. RPi, for some reason hostapd is masked after install ...
+systemctl mask hostapd 2>&1
 
 if [[ -n "${wifi_device}" ]]; then 
     configure_hostapd

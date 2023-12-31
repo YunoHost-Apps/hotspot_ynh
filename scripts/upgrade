@@ -129,6 +129,14 @@ if [ -e "/etc/sudoers.d/${app}_ynh" ]; then
   ynh_secure_remove "/etc/sudoers.d/${app}_ynh"
 fi
 
+if systemctl -q is-enabled hostapd
+then
+    # Disable hostapd, we'll use hostapd@$app instead (for multissid support etc)
+    systemctl disable hostapd --quiet 2>&1
+    systemctl stop hostapd 2>&1
+    systemctl mask hostapd 2>&1
+fi
+
 #=================================================
 # SPECIFIC UPGRADE
 #=================================================
