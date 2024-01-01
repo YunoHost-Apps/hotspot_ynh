@@ -9,32 +9,14 @@
 source _common.sh
 source /usr/share/yunohost/helpers
 
-#=================================================
-# MANAGE SCRIPT FAILURE
-#=================================================
-
-ynh_clean_setup () {
-	ynh_clean_check_starting
-}
-# Exit if an error occurs during the execution of the script
-ynh_abort_if_errors
-
-#=================================================
-# RETRIEVE ARGUMENTS FROM THE MANIFEST
-#=================================================
-
-wifi_ssid=$YNH_APP_ARG_WIFI_SSID
-wifi_passphrase=$YNH_APP_ARG_WIFI_PASSPHRASE
-firmware_nonfree=$YNH_APP_ARG_FIRMWARE_NONFREE
-
-app=$YNH_APP_INSTANCE_NAME
-
-# the service name must match the service template files
 service_name=ynh-$app
+ynh_app_setting_set --app=$app --key=service_name --value=$service_name
 
 #=================================================
 # CHECK IF THE APP CAN BE INSTALLED WITH THESE ARGS
 #=================================================
+
+# FIXME : we could probably implement all these checks in manifest.toml directly ?
 ynh_script_progression --message="Validating installation parameters..."
 
 # Check arguments
@@ -45,23 +27,13 @@ fi
 # Check passphrase length
 wifi_passphrase_length="$(wc -c <<< "${wifi_passphrase}")"
 if [[ $wifi_passphrase_length -lt 8 ]] || [[ $wifi_passphrase_length -gt 63 ]]; then
-	ynh_die --message="Your password must from 8 to 63 characters (WPA2 passphrase)"
+	ynh_die --message="Your password must have between 8 and 63 characters (WPA2 passphrase)"
 fi
 
 # Check no special characters are present in the passphrase
 if [[ $wifi_passphrase =~ [^[:print:]] ]]; then
 	ynh_die --message="Only printable ASCII characters are permitted in your password (WPA2 passphrase)"
 fi
-
-#=================================================
-# STORE SETTINGS FROM MANIFEST
-#=================================================
-ynh_script_progression --message="Storing installation settings..."
-
-ynh_app_setting_set --app=$app --key=wifi_ssid --value="$wifi_ssid"
-ynh_app_setting_set --app=$app --key=wifi_passphrase --value="$wifi_passphrase"
-ynh_app_setting_set --app=$app --key=firmware_nonfree --value="$firmware_nonfree"
-ynh_app_setting_set --app=$app --key=service_name --value=$service_name
 
 #=================================================
 # STANDARD MODIFICATIONS
@@ -71,6 +43,7 @@ ynh_app_setting_set --app=$app --key=service_name --value=$service_name
 ynh_script_progression --message="Configuring firewall..."
 
 # Update firewall for DHCP
+# FIXME : move to manifest.toml
 ynh_exec_warn_less yunohost firewall allow --no-upnp --ipv6 UDP 547
 ynh_exec_warn_less yunohost firewall allow --no-upnp UDP 67
 
@@ -80,37 +53,6 @@ then
     ynh_print_info "Unblocking wlan interface..."
     /usr/sbin/rfkill unblock wlan
 fi
-
-#=================================================
-# INSTALL NONFREE FIRWARE IF REQUESTED
-#=================================================
-ynh_script_progression --message="Installing firmware..."
-
-export DEBIAN_FRONTEND=noninteractive
-
-# Packaged USB Wireless Device firmwares
-# Based on https://wiki.debian.org/WiFi#USB_Devices
-if [[ $firmware_nonfree -eq 1 ]]; then
-	check_armbian_nonfree_conflict
-	ynh_install_extra_app_dependencies --repo="deb http://deb.debian.org/debian $(ynh_get_debian_release) non-free" --package="$nonfree_firmware_packages"
-else
-	pkg_dependencies="$pkg_dependencies $free_firmware_packages"
-fi
-
-#=================================================
-# INSTALL DEPENDENCIES
-#=================================================
-ynh_script_progression --message="Installing dependencies..."
-
-ynh_install_app_dependencies $pkg_dependencies
-
-#=================================================
-# CREATE DEDICATED USER
-#=================================================
-ynh_script_progression --message="Configuring system user..."
-
-# Create a system user
-ynh_system_user_create --username=$app
 
 #=================================================
 # SPECIFIC SETTINGS
@@ -132,9 +74,7 @@ wifi_device=$(unused_iw_devices | head -n 1)
 wifi_secure=1
 wifi_channel=6
 
-ynh_app_setting_set --app=$app --key=wifi_ssid --value="${wifi_ssid}"
 ynh_app_setting_set --app=$app --key=wifi_secure --value="${wifi_secure}"
-ynh_app_setting_set --app=$app --key=wifi_passphrase --value="${wifi_passphrase}"
 ynh_app_setting_set --app=$app --key=wifi_device --value="${wifi_device}"
 ynh_app_setting_set --app=$app --key=wifi_channel --value="${wifi_channel}"
 ynh_app_setting_set --app=$app --key=advanced --value=0
@@ -144,11 +84,15 @@ ynh_app_setting_set --app=$app --key=ip6_dns --value="${ip6_dns}"
 ynh_app_setting_set --app=$app --key=ip4_dns --value="${ip4_dns}"
 ynh_app_setting_set --app=$app --key=ip4_nat_prefix --value="${ip4_nat_prefix}"
 
-if [[ -z $wifi_device ]]; then
+if [[ -z "$wifi_device" ]]; then
 	ynh_app_setting_set --app=$app --key=service_enabled --value=0
 else
 	ynh_app_setting_set --app=$app --key=service_enabled --value=1
 fi
+
+# We must explicitly save the wifi passphrase despite being in the install question
+# because password-type questions are not saved automatically
+ynh_app_setting_set --app=$app --key=wifi_passphrase --value="$wifi_passphrase"
 
 #=================================================
 # COPY CONFIGS
@@ -179,12 +123,10 @@ chmod 0755 "/etc/openvpn/scripts/route-down.d/90-${service_name}"
 #=================================================
 ynh_script_progression --message="Configuring hostapd..."
 
-# Set default inits
-# The boot order of these services are important, so they are disabled by default
-# and the ynh-hotspot service handles them.
+# Disable hostapd, we'll use hostapd@$app instead (for multissid support etc)
 systemctl disable hostapd --quiet 2>&1
 systemctl stop hostapd 2>&1
-systemctl unmask hostapd 2>&1 # On some system e.g. RPi, for some reason hostapd is masked after install ...
+systemctl mask hostapd 2>&1
 
 if [[ -n "${wifi_device}" ]]; then 
     configure_hostapd
@@ -194,28 +136,23 @@ fi
 #=================================================
 # SETUP SYSTEMD
 #=================================================
-ynh_script_progression --message="Configuring a systemd service..."
+ynh_script_progression --message="Configuring systemd service..."
 
 # Create a dedicated systemd config
 ynh_add_systemd_config --service=$service_name
 # Create custom systemd config for hostapd to handle multiple wifi devices
 ynh_add_systemd_config --service="hostapd@$app" --template="../conf/systemd_hostapd.service"
 
-#=================================================
-# INTEGRATE SERVICE IN YUNOHOST
-#=================================================
-ynh_script_progression --message="Integrating service in YunoHost..."
-
 yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd@$app" --need_lock
 
 #=================================================
 # START SYSTEMD SERVICE
 #=================================================
-ynh_script_progression --message="Starting a systemd service..."
+ynh_script_progression --message="Starting the hotspot..."
 
 # Start a systemd service if device is present
 if [[ $wifi_device == "" ]]; then
-	echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
+	echo "WARNING: Wifi Hotspot is not started because no wifi device was found (check the Hotspot configuration in the webadmin > Applications > Hotspot > the config panel)" >&2
 else
     yunohost service start $service_name
 fi

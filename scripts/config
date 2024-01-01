@@ -17,12 +17,6 @@ source /usr/share/yunohost/helpers
 ynh_abort_if_errors
 
 #=================================================
-# RETRIEVE ARGUMENTS
-#=================================================
-
-final_path=$(ynh_app_setting_get $app final_path)
-
-#=================================================
 # SPECIFIC GETTERS FOR TOML SHORT KEY
 #=================================================
 

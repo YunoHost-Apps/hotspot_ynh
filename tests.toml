@@ -1,0 +1,16 @@
+test_format = 1.0
+
+[default]
+
+    args.wifi_passphrase = "!abcDEF01234"
+    args.firmware_nonfree = "no"
+
+    test_upgrade_from.539a1f26.name = "Pre 2.0"
+    test_upgrade_from.539a1f26.args.domain = "domain.tld"
+    test_upgrade_from.539a1f26.args.wifi_passphrase = "!abcDEF01234"
+
+[with_nonfree]
+    
+    args.wifi_passphrase = "!abcDEF01234"
+    args.firmware_nonfree = "yes"
+    only = ["install.nourl"]

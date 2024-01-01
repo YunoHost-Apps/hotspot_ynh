@@ -9,48 +9,7 @@
 source _common.sh
 source /usr/share/yunohost/helpers
 
-#=================================================
-# LOAD SETTINGS
-#=================================================
-ynh_script_progression --message="Loading installation settings..."
-
-app=$YNH_APP_INSTANCE_NAME
-
-firmware_nonfree=$(ynh_app_setting_get --app=$app --key=firmware_nonfree)
-service_name=$(ynh_app_setting_get --app=$app --key=service_name)
-
-wifi_device=$(ynh_app_setting_get --app=$app --key=wifi_device)
-wifi_ssid=$(ynh_app_setting_get --app=$app --key=wifi_ssid)
-wifi_secure=$(ynh_app_setting_get --app=$app --key=wifi_secure)
-wifi_passphrase=$(ynh_app_setting_get --app=$app --key=wifi_passphrase)
-wifi_channel=$(ynh_app_setting_get --app=$app --key=wifi_channel)
-advanced=$(ynh_app_setting_get --app=$app --key=advanced)
-ip4_nat_prefix=$(ynh_app_setting_get --app=$app --key=ip4_nat_prefix)
-ip6_net=$(ynh_app_setting_get --app=$app --key=ip6_net)
-ip6_firewall=$(ynh_app_setting_get --app=$app --key=ip6_firewall)
-dns=$(ynh_app_setting_get --app=$app --key=dns)
-multissid=$(ynh_app_setting_get --app=$app --key=multissid)
-
-#=================================================
-# CHECK VERSION
-#=================================================
-ynh_script_progression --message="Checking version..."
-
 upgrade_type=$(ynh_check_app_version_changed)
-
-#=================================================
-# BACKUP BEFORE UPGRADE THEN ACTIVE TRAP
-#=================================================
-ynh_script_progression --message="Backing up the app before upgrading (may take a while)..."
-
-# Backup the current version of the app
-ynh_backup_before_upgrade
-ynh_clean_setup () {
-	# Restore it if the upgrade fails
-	ynh_restore_upgradebackup
-}
-# Exit if an error occurs during the execution of the script
-ynh_abort_if_errors
 
 #=================================================
 # STANDARD UPGRADE STEPS
@@ -73,20 +32,20 @@ if [ -e /etc/dnsmasq.d/$app.conf ]; then
     ynh_secure_remove /etc/dnsmasq.d/$app.conf
 fi
 
-if [ $firmware_nonfree = "yes" ]; then
+if [ ${firmware_nonfree:-} = "yes" ]; then
 	firmware_nonfree=1
 	ynh_app_setting_set --app=$app --key=firmware_nonfree --value=$firmware_nonfree
-elif [ $firmware_nonfree = "no" ]; then
+elif [ ${firmware_nonfree:-} = "no" ]; then
 	firmware_nonfree=0
 	ynh_app_setting_set --app=$app --key=firmware_nonfree --value=$firmware_nonfree
 fi
 
-if [ -z $service_name ]; then
+if [ -z ${service_name:-} ]; then
 	service_name="ynh-$app"
 	ynh_app_setting_set --app=$app --key=service_name --value=$service_name
 fi
 
-if [[ -n "${multissid}" ]] && [[ "${multissid}" -gt 1 ]]; then
+if [[ -n "${multissid:-}" ]] && [[ "${multissid}" -gt 1 ]]; then
 	wifi_ssid=$(cut -d'|' -f 1 <<< ${wifi_ssid})
 	wifi_secure=$(cut -d'|' -f 1 <<< ${wifi_secure})
 	wifi_passphrase=$(cut -d'|' -f 1 <<< ${wifi_passphrase})
@@ -104,7 +63,7 @@ if [[ -n "${multissid}" ]] && [[ "${multissid}" -gt 1 ]]; then
 	ynh_app_setting_set --app=$app --key=ip6_firewall --value="${ip6_firewall}"
 fi
 
-if [[ -n "${dns}" ]]; then
+if [[ -n "${dns:-}" ]]; then
     ip6_dns=""
     ip4_dns=""
     for ip in $(echo "${dns}" | tr ',' ' '); do
@@ -118,20 +77,17 @@ if [[ -n "${dns}" ]]; then
     ip6_dns="${ip6_dns%%,}"
     ip4_dns="${ip4_dns%%,}"
 
-	if [[ -z "$(ynh_app_setting_get --app=$app --key=ip6_dns)" ]]; then
+ 	if [[ -z "$(ynh_app_setting_get --app=$app --key=ip6_dns)" ]]; then
 		ynh_app_setting_set --app=$app --key=ip6_dns --value="${ip6_dns}"
 	fi
-	if [[ -z "$(ynh_app_setting_get --app=$app --key=ip4_dns)" ]]; then
+ 	if [[ -z "$(ynh_app_setting_get --app=$app --key=ip4_dns)" ]]; then
 		ynh_app_setting_set --app=$app --key=ip4_dns --value="${ip4_dns}"
 	fi
 
 	ynh_app_setting_delete $app dns
-else
-    ip6_dns=$(ynh_app_setting_get --app=$app --key=ip6_dns)
-    ip4_dns=$(ynh_app_setting_get --app=$app --key=ip4_dns)
 fi
 
-if [[ -n "${multissid}" ]]; then
+if [[ -n "${multissid:-}" ]]; then
     ynh_app_setting_delete --app=$app --key=multissid
 
 	ynh_secure_remove --file="/etc/hostapd/hostapd.conf"
@@ -140,14 +96,13 @@ if [[ -n "${multissid}" ]]; then
 	ynh_secure_remove --file="/etc/dnsmasq.dhcpd/"
 fi
 
-if [[ -z "${advanced}" ]]; then
+if [[ -z "${advanced:-}" ]]; then
     ynh_app_setting_set --app=$app --key=advanced --value=0
 fi
 
 # Old stuff prior to 2.x
 
-ip6_net=$(ynh_app_setting_get --app=$app --key=ip6_net)
-if [ "$ip6_net" == "none" ]
+if [ "${ip6_net:-}" == "none" ]
 then
     ip6_net=""
 	ynh_app_setting_set --app=$app --key=ip6_net --value="$ip6_net"
@@ -166,35 +121,21 @@ if [ -d /var/www/$app ]; then
 	ynh_secure_remove /var/www/$app
 fi
 
-[ -z "$(ynh_app_setting_get $app domain)" ] || ynh_app_setting_delete $app domain
-[ -z "$(ynh_app_setting_get $app path)" ] || ynh_app_setting_delete $app path
-[ -z "$(ynh_app_setting_get $app final_path)" ] || ynh_app_setting_delete $app final_path
+[ -z "${domain:-}" ] || ynh_app_setting_delete $app domain
+[ -z "${path:-}" ] || ynh_app_setting_delete $app path
+[ -z "${install_dir:-}" ] || ynh_app_setting_delete $app install_dir
 
 if [ -e "/etc/sudoers.d/${app}_ynh" ]; then
   ynh_secure_remove "/etc/sudoers.d/${app}_ynh"
 fi
 
-#=================================================
-# CREATE DEDICATED USER
-#=================================================
-ynh_script_progression --message="Making sure dedicated system user exists..."
-
-# Create a dedicated user (if not existing)
-ynh_system_user_create --username=$app
-
-#=================================================
-# UPGRADE DEPENDENCIES
-#=================================================
-ynh_script_progression --message="Upgrading dependencies..."
-
-if [[ $firmware_nonfree -eq 1 ]]; then
-	check_armbian_nonfree_conflict
-	ynh_install_extra_app_dependencies --repo="deb http://deb.debian.org/debian $(ynh_get_debian_release) non-free" --package="$nonfree_firmware_packages"
-else
-	pkg_dependencies="$pkg_dependencies $free_firmware_packages"
+if systemctl -q is-enabled hostapd
+then
+    # Disable hostapd, we'll use hostapd@$app instead (for multissid support etc)
+    systemctl disable hostapd --quiet 2>&1
+    systemctl stop hostapd 2>&1
+    systemctl mask hostapd 2>&1
 fi
-
-ynh_install_app_dependencies $pkg_dependencies
 
 #=================================================
 # SPECIFIC UPGRADE
@@ -204,6 +145,7 @@ ynh_install_app_dependencies $pkg_dependencies
 ynh_script_progression --message="Copying configuration..."
 
 hot_reload_usb_wifi_cards
+
 if [[ -z "$wifi_device" ]] || ! grep -q -F "$wifi_device" <(unused_iw_devices); then
 	wifi_device="$(unused_iw_devices | head -n 1)"
 	ynh_app_setting_set --app=$app --key=wifi_device --value="${wifi_device}"
@@ -215,9 +157,13 @@ chown root: /etc/hostapd/$app/
 mkdir -pm 0755 /etc/dnsmasq.$app/
 chown root: /etc/dnsmasq.$app/
 
-if [[ -n "${wifi_device}" ]]; then 
+if [[ -n "${wifi_device:-}" ]]; then 
     configure_hostapd
     configure_dhcp
+	ynh_app_setting_set --app=$app --key=service_enabled --value=1
+else
+	ynh_app_setting_set --app=$app --key=service_enabled --value=0
+	wifi_device=""
 fi
 
 # Copy init script
@@ -243,13 +189,6 @@ ynh_add_systemd_config --service=$service_name
 # Create custom systemd config for hostapd to handle multiple wifi devices
 ynh_add_systemd_config --service="hostapd@$app" --template="../conf/systemd_hostapd.service"
 
-#=================================================
-# GENERIC FINALIZATION
-#=================================================
-# INTEGRATE SERVICE IN YUNOHOST
-#=================================================
-ynh_script_progression --message="Integrating service in YunoHost..."
-
 yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd@$app" --need_lock
 
 #=================================================
@@ -257,16 +196,9 @@ yunohost service add $service_name --description "Creates a Wi-Fi access point" 
 #=================================================
 ynh_script_progression --message="Starting the hotspot service..."
 
-if [[ -z $wifi_device ]]; then
-	ynh_app_setting_set --app=$app --key=service_enabled --value=0
-	wifi_device=""
-else
-	ynh_app_setting_set --app=$app --key=service_enabled --value=1
-fi
-
 # Start a systemd service if device is present
 if [[ $wifi_device == "" ]]; then
-	echo "WARNING: Wifi Hotspot is not started because no wifi device was found (please, check the web admin)" >&2
+	echo "WARNING: Wifi Hotspot is not started because no wifi device was found (check the Hotspot configuration in the webadmin > Applications > Hotspot > the config panel)" >&2
 else
     yunohost service start $service_name
 fi
