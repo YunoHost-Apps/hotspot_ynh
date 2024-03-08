@@ -236,8 +236,7 @@ if [ "$1" != restart ]; then
     ip4_nat_prefix=$(ynh_app_setting_get --app=$app --key=ip4_nat_prefix)
 
     old_gateway_interface=$(ynh_app_setting_get --app=$app --key=gateway_interface)
-    new_gateway_interface=$(ip route get 1.2.3.4 | awk '{ print $5; }')
-
+    new_gateway_interface=$(ip route get 1.2.3.4 | awk '$2 ~ /^dev$/ { print $3; } $4 ~ /^dev$/ { print $5; }')
     echo "OK"
 fi
 
