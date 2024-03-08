@@ -237,6 +237,7 @@ if [ "$1" != restart ]; then
 
     old_gateway_interface=$(ynh_app_setting_get --app=$app --key=gateway_interface)
     new_gateway_interface=$(ip route get 1.2.3.4 | awk '$2 ~ /^dev$/ { print $3; } $4 ~ /^dev$/ { print $5; }')
+
     echo "OK"
 fi
 
