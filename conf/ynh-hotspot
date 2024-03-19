@@ -236,7 +236,11 @@ if [ "$1" != restart ]; then
     ip4_nat_prefix=$(ynh_app_setting_get --app=$app --key=ip4_nat_prefix)
 
     old_gateway_interface=$(ynh_app_setting_get --app=$app --key=gateway_interface)
-    new_gateway_interface=$(ip route get 1.2.3.4 | awk '{ print $5; }')
+
+    # The awk syntax is to accomodate to the fact that the ip route output may look like:
+    # 1.2.3.4 via 192.168.1.254 dev end0 src 192.168.1.35 uid 0
+    # 1.2.3.4 dev vpn_iloth table 51820 src 5.6.7.8 uid 0
+    new_gateway_interface=$(ip route get 1.2.3.4 | awk '$2 ~ /^dev$/ { print $3; } $4 ~ /^dev$/ { print $5; }')
 
     echo "OK"
 fi
