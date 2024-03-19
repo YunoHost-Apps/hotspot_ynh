@@ -40,17 +40,7 @@ fi
 
 ynh_script_progression --message="Restoring configurations ..."
 
-ynh_restore_file --origin_path="/etc/hostapd/$app/hostapd.conf" --not_mandatory
-ynh_restore_file --origin_path="/etc/dnsmasq.$app/dhcpdv6.conf" --not_mandatory
-ynh_restore_file --origin_path="/etc/dnsmasq.$app/dhcpdv4.conf" --not_mandatory
-
-ynh_restore_file --origin_path="/usr/local/bin/$service_name"
-
-ynh_restore_file --origin_path="/etc/openvpn/scripts/route-up.d/90-${service_name}"
-ynh_restore_file --origin_path="/etc/openvpn/scripts/route-down.d/90-${service_name}"
-
-ynh_restore_file --origin_path="/etc/systemd/system/$service_name.service"
-ynh_restore_file --origin_path="/etc/systemd/system/hostapd@$app.service"
+ynh_restore
 
 yunohost service add "$service_name" --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd@$app" --need_lock
 
