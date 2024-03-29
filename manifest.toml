@@ -7,7 +7,7 @@ name = "Wifi Hotspot"
 description.en = "Create and configure a WiFi hotspot"
 description.fr = "Créez et gérez un point d'accès WiFi"
 
-version = "2.3.0~ynh1"
+version = "2.3.1~ynh1"
 
 maintainers = []
 
@@ -46,6 +46,8 @@ ram.runtime = "50M"
 
 [resources]
     [resources.system_user]
+
+    [resources.permissions]
 
     [resources.apt]
     packages = "sipcalc, hostapd, iw, kmod"
