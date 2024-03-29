@@ -20,7 +20,7 @@ Il NE doit PAS être modifié à la main.
 * À combiner avec l'[app VPN Client](https://github.com/labriqueinternet/vpnclient_ynh) pour obtenir un accès internet aumatiquement protégé par votre VPN
 
 
-**Version incluse :** 2.3.0~ynh1
+**Version incluse :** 2.3.1~ynh1
 
 ## Captures d’écran
 

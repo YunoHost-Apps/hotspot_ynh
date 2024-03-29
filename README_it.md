@@ -20,7 +20,7 @@ NON DEVE essere modificato manualmente.
 * Combine with the [VPN Client app](https://github.com/labriqueinternet/vpnclient_ynh) to obtain a VPN-protected WiFi
 
 
-**Versione pubblicata:** 2.3.0~ynh1
+**Versione pubblicata:** 2.3.1~ynh1
 
 ## Screenshot
 
