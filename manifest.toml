@@ -47,6 +47,8 @@ ram.runtime = "50M"
 [resources]
     [resources.system_user]
 
+    [resources.permissions]
+
     [resources.apt]
     packages = "sipcalc, hostapd, iw, kmod"
     packages_from_raw_bash = '[[ "$firmware_nonfree" -eq 0 ]] && echo "firmware-ath9k-htc" || true'
