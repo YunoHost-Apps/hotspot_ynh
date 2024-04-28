@@ -26,10 +26,6 @@ has_ip6delegatedprefix() {
     [[ -n "${ip6_net}" ]] && [[ "${ip6_net}" != "none" ]]
 }
 
-ip6addrfromdelegatedprefix() {
-    echo "${ip6_net}1"
-}
-
 is_nat_set() {
     local gateway_interface=${1}
     iptables -w -nvt nat -L POSTROUTING | grep MASQUERADE | grep -q "${gateway_interface}"
@@ -40,7 +36,7 @@ is_ip4nataddr_set() {
 }
 
 is_ip6addr_set() {
-    ip address show dev "${wifi_device}" 2>/dev/null | grep -q "$(ip6addrfromdelegatedprefix)/64"
+    ip address show dev "${wifi_device}" 2>/dev/null | grep -q "${ip6_addr}/64"
 }
 
 is_ip6firewall_set() {
@@ -122,10 +118,10 @@ set_ipaddr() {
         ip address add "${ip4_nat_prefix}.1/24" dev "${wifi_device}"
     fi
 
-    if has_ip6delegatedprefix && ! is_ip6addr_set; then
-        echo "hotspot ${wifi_device}: Set IPv6 address"
-        ip address delete "$(ip6addrfromdelegatedprefix)/64" dev tun0 &>/dev/null
-        ip address add "$(ip6addrfromdelegatedprefix)/64" dev "${wifi_device}"
+    if has_ip6delegatedprefix && ! is_ip6addr_set && ip route get 1.2.3.4 | grep -q tun0; then
+        echo "hotspot ${wifi_device}: Set IPv6 address ${ip6_addr}"
+        ip address delete "${ip6_addr}/64" dev tun0 &>/dev/null
+        ip address add "${ip6_addr}/64" dev "${wifi_device}"
     fi
 }
 
@@ -178,8 +174,8 @@ unset_ipaddr() {
     fi
 
     if has_ip6delegatedprefix && is_ip6addr_set; then
-        echo "hotspot ${wifi_device}: Unset IPv6 address"
-        ip address delete "$(ip6addrfromdelegatedprefix)/64" dev "${wifi_device}"
+        echo "hotspot ${wifi_device}: Unset IPv6 address ${ip6_addr}"
+        ip address delete "${ip6_addr}/64" dev "${wifi_device}"
     fi
 }
 
@@ -232,6 +228,7 @@ if [ "$1" != restart ]; then
     ip6_firewall=$(ynh_app_setting_get --app=$app --key=ip6_firewall)
     ip6_dns=$(ynh_app_setting_get --app=$app --key=ip6_dns)
     ip6_net=$(ynh_app_setting_get --app=$app --key=ip6_net)
+    ip6_addr="${ip6_net}1"
     ip4_dns=$(ynh_app_setting_get --app=$app --key=ip4_dns)
     ip4_nat_prefix=$(ynh_app_setting_get --app=$app --key=ip4_nat_prefix)
 
@@ -376,7 +373,7 @@ status)
 
     if has_ip6delegatedprefix; then
         echo "[INFO] hotspot ${wifi_device}: IPv6 delegated prefix found"
-        echo "[INFO] hotspot ${wifi_device}: IPv6 address computed from the delegated prefix: $(ip6addrfromdelegatedprefix)"
+        echo "[INFO] hotspot ${wifi_device}: IPv6 address computed from the delegated prefix: ${ip6_addr}"
 
         if is_ip6addr_set; then
             echo "[ OK ] hotspot ${wifi_device}: IPv6 address set"
