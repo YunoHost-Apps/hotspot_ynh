@@ -136,8 +136,17 @@ set_ipfirewall() {
 }
 
 set_forwarding() {
+    local ip6_gateway=$(ip -6 route | awk '/default via/ { print $3; }')
+    local wired_interface=$(ip -6 route | awk '/default via/ { print $5; }')
+
     sysctl -w net.ipv6.conf.all.forwarding=1 >/dev/null
     sysctl -w net.ipv4.conf.all.forwarding=1 >/dev/null
+
+    if [[ -n "${ip6_gateway}" ]]; then
+      # Enabling IPv6 forwarding removes the default route, so we need to add it back.
+      # See https://askubuntu.com/questions/463625/ipv6-forwarding-kills-ipv6-connection/463654#463654
+      ip route add default via "${ip6_gateway}" dev ${wired_interface}
+    fi
 }
 
 start_dhcpd() {
