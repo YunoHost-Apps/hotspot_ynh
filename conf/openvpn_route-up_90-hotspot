@@ -1,0 +1,57 @@
+#!/bin/bash
+
+is_nat_set() {
+  local gateway_interface=${1}
+  iptables -w -nvt nat -L POSTROUTING | grep MASQUERADE | grep -q "${gateway_interface}"
+}
+
+unset_nat() {
+  local gateway_interface=${1}
+  echo "[INFO] hotspot ${wifi_device}: Unset NAT on ${gateway_interface}"
+  iptables -w -t nat -D POSTROUTING -o "${gateway_interface}" -j MASQUERADE
+}
+
+set_nat() {
+  local gateway_interface=${1}
+  echo "[INFO] hotspot ${wifi_device}: Set NAT on ${gateway_interface}"
+  iptables -w -t nat -A POSTROUTING -o "${gateway_interface}" -j MASQUERADE
+}
+
+has_ip6delegatedprefix() {
+  [[ -n "${ip6_net}" ]] && [[ "${ip6_net}" != "none" ]]
+}
+
+is_ip6addr_set() {
+  ip address show dev "${wifi_device}" 2>/dev/null | grep -q "${ip6_addr}/64"
+}
+
+set_ip6addr() {
+  echo "[INFO] hotspot ${wifi_device}: Set IPv6 address ${ip6_addr}"
+  ip address delete "${ip6_addr}/64" dev "${new_gateway_interface}" &>/dev/null
+  ip address add "${ip6_addr}/64" dev "${wifi_device}"
+}
+
+ynh_hotspot_state=$(systemctl is-active __SERVICE_NAME__)
+if [[ "${ynh_hotspot_state}" == "active" || "${ynh_hotspot_state}" == "activating" ]]; then
+  old_gateway_interface=$(ip route | awk '/default via/ { print $5; }')
+  new_gateway_interface=${dev}
+  
+  ip6_net=$(yunohost app setting __APP__ ip6_net)
+  ip6_addr="${ip6_net}1"
+
+  wifi_device=$(yunohost app setting __APP__ wifi_device)
+
+  if [[ -n "$old_gateway_interface" ]] && is_nat_set "$old_gateway_interface"; then
+    unset_nat "${old_gateway_interface}"
+  fi
+
+  if ! is_nat_set $new_gateway_interface; then
+    set_nat "${new_gateway_interface}"
+  fi
+
+  if has_ip6delegatedprefix && ! is_ip6addr_set; then
+    set_ip6addr
+  fi
+
+  yunohost app setting __APP__ gateway_interface --value "${new_gateway_interface}"
+fi
