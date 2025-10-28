@@ -1,51 +1,43 @@
 #!/bin/bash
 
-#=================================================
-# GENERIC START
-#=================================================
-# IMPORT GENERIC HELPERS
-#=================================================
-
 source _common.sh
 source /usr/share/yunohost/helpers
 
 service_name=ynh-$app
-ynh_app_setting_set --app=$app --key=service_name --value=$service_name
+ynh_app_setting_set --key=service_name --value=$service_name
 
 #=================================================
 # CHECK IF THE APP CAN BE INSTALLED WITH THESE ARGS
 #=================================================
 
 # FIXME : we could probably implement all these checks in manifest.toml directly ?
-ynh_script_progression --message="Validating installation parameters..."
+ynh_script_progression "Validating installation parameters..."
 
 # Check arguments
 if [[ -z $wifi_ssid ]] || [[ -z $wifi_passphrase ]]; then
-	ynh_die --message="Your Wifi Hotspot needs a name and a password"
+	ynh_die "Your Wifi Hotspot needs a name and a password"
 fi
 
 # Check passphrase length
 wifi_passphrase_length="$(wc -c <<< "${wifi_passphrase}")"
 if [[ $wifi_passphrase_length -lt 8 ]] || [[ $wifi_passphrase_length -gt 63 ]]; then
-	ynh_die --message="Your password must have between 8 and 63 characters (WPA2 passphrase)"
+	ynh_die "Your password must have between 8 and 63 characters (WPA2 passphrase)"
 fi
 
 # Check no special characters are present in the passphrase
 if [[ $wifi_passphrase =~ [^[:print:]] ]]; then
-	ynh_die --message="Only printable ASCII characters are permitted in your password (WPA2 passphrase)"
+	ynh_die "Only printable ASCII characters are permitted in your password (WPA2 passphrase)"
 fi
 
 #=================================================
-# STANDARD MODIFICATIONS
-#=================================================
 # FIND AND OPEN A PORT
 #=================================================
-ynh_script_progression --message="Configuring firewall..."
+ynh_script_progression "Configuring firewall..."
 
 # Update firewall for DHCP
 # FIXME : move to manifest.toml
-ynh_exec_warn_less yunohost firewall allow --no-upnp --ipv6 UDP 547
-ynh_exec_warn_less yunohost firewall allow --no-upnp UDP 67
+ynh_hide_warnings yunohost firewall allow --no-upnp --ipv6 UDP 547
+ynh_hide_warnings yunohost firewall allow --no-upnp UDP 67
 
 # Meh idk where to put this ... On RPi, by default wlan is blocked
 if test -e /usr/sbin/rfkill && rfkill | grep wlan | grep -q -w 'blocked'
@@ -57,7 +49,7 @@ fi
 #=================================================
 # SPECIFIC SETTINGS
 #=================================================
-ynh_script_progression --message="Configuring hotspot..."
+ynh_script_progression "Configuring hotspot..."
 
 ip6_net=""
 ip6_dns=""
@@ -74,30 +66,30 @@ wifi_device=$(unused_iw_devices | head -n 1)
 wifi_secure=1
 wifi_channel=6
 
-ynh_app_setting_set --app=$app --key=wifi_secure --value="${wifi_secure}"
-ynh_app_setting_set --app=$app --key=wifi_device --value="${wifi_device}"
-ynh_app_setting_set --app=$app --key=wifi_channel --value="${wifi_channel}"
-ynh_app_setting_set --app=$app --key=advanced --value=0
-ynh_app_setting_set --app=$app --key=ip6_firewall --value=1
-ynh_app_setting_set --app=$app --key=ip6_net --value="${ip6_net}"
-ynh_app_setting_set --app=$app --key=ip6_dns --value="${ip6_dns}"
-ynh_app_setting_set --app=$app --key=ip4_dns --value="${ip4_dns}"
-ynh_app_setting_set --app=$app --key=ip4_nat_prefix --value="${ip4_nat_prefix}"
+ynh_app_setting_set --key=wifi_secure --value="${wifi_secure}"
+ynh_app_setting_set --key=wifi_device --value="${wifi_device}"
+ynh_app_setting_set --key=wifi_channel --value="${wifi_channel}"
+ynh_app_setting_set --key=advanced --value=0
+ynh_app_setting_set --key=ip6_firewall --value=1
+ynh_app_setting_set --key=ip6_net --value="${ip6_net}"
+ynh_app_setting_set --key=ip6_dns --value="${ip6_dns}"
+ynh_app_setting_set --key=ip4_dns --value="${ip4_dns}"
+ynh_app_setting_set --key=ip4_nat_prefix --value="${ip4_nat_prefix}"
 
 if [[ -z "$wifi_device" ]]; then
-	ynh_app_setting_set --app=$app --key=service_enabled --value=0
+	ynh_app_setting_set --key=service_enabled --value=0
 else
-	ynh_app_setting_set --app=$app --key=service_enabled --value=1
+	ynh_app_setting_set --key=service_enabled --value=1
 fi
 
 # We must explicitly save the wifi passphrase despite being in the install question
 # because password-type questions are not saved automatically
-ynh_app_setting_set --app=$app --key=wifi_passphrase --value="$wifi_passphrase"
+ynh_app_setting_set --key=wifi_passphrase --value="$wifi_passphrase"
 
 #=================================================
 # COPY CONFIGS
 #=================================================
-ynh_script_progression --message="Copying configuration files..."
+ynh_script_progression "Copying configuration files..."
 
 mkdir -pm 0755 /etc/hostapd/$app/
 chown root: /etc/hostapd/$app/
@@ -106,29 +98,30 @@ mkdir -pm 0755 /etc/dnsmasq.$app/
 chown root: /etc/dnsmasq.$app/
 
 # Copy init script
-ynh_add_config --template="../conf/ynh-hotspot" --destination="/usr/local/bin/$service_name"
+ynh_config_add --template="ynh-hotspot" --destination="/usr/local/bin/$service_name"
 chmod 0755 "/usr/local/bin/$service_name"
 
 # Copy openvpn scripts
 mkdir -pm 0755 /etc/openvpn/scripts
 mkdir -pm 0755 /etc/openvpn/scripts/route-up.d
 mkdir -pm 0755 /etc/openvpn/scripts/route-down.d
-ynh_add_config --template="../conf/openvpn_90-hotspot" --destination="/etc/openvpn/scripts/route-up.d/90-$service_name"
-ynh_add_config --template="../conf/openvpn_90-hotspot" --destination="/etc/openvpn/scripts/route-down.d/90-$service_name"
+ynh_config_add --template="openvpn_90-hotspot" --destination="/etc/openvpn/scripts/route-up.d/90-$service_name"
+ynh_config_add --template="openvpn_90-hotspot" --destination="/etc/openvpn/scripts/route-down.d/90-$service_name"
 chmod 0755 "/etc/openvpn/scripts/route-up.d/90-${service_name}"
 chmod 0755 "/etc/openvpn/scripts/route-down.d/90-${service_name}"
 
 #=================================================
 # CONFIGURE HOSTAPD
 #=================================================
-ynh_script_progression --message="Configuring hostapd..."
+ynh_script_progression "Configuring hostapd..."
 
 # Disable hostapd, we'll use hostapd@$app instead (for multissid support etc)
 systemctl disable hostapd --quiet 2>&1
 systemctl stop hostapd 2>&1
 systemctl mask hostapd 2>&1
 
-if [[ -n "${wifi_device}" ]]; then 
+if [[ -n "${wifi_device}" ]]; then
+
     configure_hostapd
     configure_dhcp
 fi
@@ -136,19 +129,19 @@ fi
 #=================================================
 # SETUP SYSTEMD
 #=================================================
-ynh_script_progression --message="Configuring systemd service..."
+ynh_script_progression "Configuring systemd service..."
 
 # Create a dedicated systemd config
-ynh_add_systemd_config --service=$service_name
+ynh_config_add_systemd --service=$service_name
 # Create custom systemd config for hostapd to handle multiple wifi devices
-ynh_add_systemd_config --service="hostapd@$app" --template="../conf/systemd_hostapd.service"
+ynh_config_add_systemd --service="hostapd@$app" --template="systemd_hostapd.service"
 
 yunohost service add $service_name --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd@$app" --need_lock
 
 #=================================================
 # START SYSTEMD SERVICE
 #=================================================
-ynh_script_progression --message="Starting the hotspot..."
+ynh_script_progression "Starting the hotspot..."
 
 # Start a systemd service if device is present
 if [[ $wifi_device == "" ]]; then
@@ -161,4 +154,4 @@ fi
 # END OF SCRIPT
 #=================================================
 
-ynh_script_progression --message="Installation of $app completed"
+ynh_script_progression "Installation of $app completed"

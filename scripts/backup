@@ -1,38 +1,29 @@
 #!/bin/bash
 
-#=================================================
-# GENERIC START
-#=================================================
-# IMPORT GENERIC HELPERS
-#=================================================
-
 # Keep this path for calling _common.sh inside the execution's context of backup and restore scripts
 source ../settings/scripts/_common.sh
 source /usr/share/yunohost/helpers
 
-#=================================================
-# DECLARE DATA AND CONF FILES TO BACKUP
-#=================================================
-ynh_print_info --message="Declaring files to be backed up..."
+ynh_print_info "Declaring files to be backed up..."
 
 #=================================================
 # BACKUP THE APP MAIN DIR
 #=================================================
 
-ynh_backup --src_path="/etc/hostapd/$app/hostapd.conf" --not_mandatory
-ynh_backup --src_path="/etc/dnsmasq.$app/dhcpdv6.conf" --not_mandatory
-ynh_backup --src_path="/etc/dnsmasq.$app/dhcpdv4.conf" --not_mandatory
+ynh_backup "/etc/hostapd/$app/hostapd.conf" || true
+ynh_backup "/etc/dnsmasq.$app/dhcpdv6.conf" || true
+ynh_backup "/etc/dnsmasq.$app/dhcpdv4.conf" || true
 
-ynh_backup --src_path="/usr/local/bin/$service_name"
+ynh_backup "/usr/local/bin/$service_name"
 
-ynh_backup --src_path="/etc/openvpn/scripts/route-up.d/90-$service_name"
-ynh_backup --src_path="/etc/openvpn/scripts/route-down.d/90-$service_name"
+ynh_backup "/etc/openvpn/scripts/route-up.d/90-$service_name"
+ynh_backup "/etc/openvpn/scripts/route-down.d/90-$service_name"
 
-ynh_backup --src_path="/etc/systemd/system/$service_name.service"
-ynh_backup --src_path="/etc/systemd/system/hostapd@$app.service"
+ynh_backup "/etc/systemd/system/$service_name.service"
+ynh_backup "/etc/systemd/system/hostapd@$app.service"
 
 #=================================================
 # END OF SCRIPT
 #=================================================
 
-ynh_print_info --message="Backup script completed for $app. (YunoHost will then actually copy those files to the archive)."
+ynh_print_info "Backup script completed for $app. (YunoHost will then actually copy those files to the archive)."

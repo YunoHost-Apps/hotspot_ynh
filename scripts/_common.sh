@@ -29,7 +29,6 @@ function unused_iw_devices()
     iw_devices | grep -F -v -f <(used_iw_devices)
 }
 
-
 function hot_reload_usb_wifi_cards()
 {
     modulesList="acx-mac80211 ar5523 ar9170usb at76c50x-usb at76_usb ath9k_htc carl9170 orinoco_usb p54usb prism2_usb r8712u r8192s_usb r8192u_usb rndis_wlan rt2500usb rt2800usb rt2870sta rt73usb rtl8187 rtl8192cu usb8xxx vt6656_stage zd1201 zd1211rw"
@@ -54,14 +53,15 @@ function configure_hostapd()
         sec_comment="#"
     fi
 
-    ynh_add_config --template="../conf/hostapd.conf" --destination="/etc/hostapd/$app/hostapd.conf"
+    ynh_config_add --template="hostapd.conf" --destination="/etc/hostapd/$app/hostapd.conf"
 }
 
 function configure_dhcp()
 {
-    ynh_add_config --template="../conf/dnsmasq_dhcpdv4.conf" --destination="/etc/dnsmasq.$app/dhcpdv4.conf"
+    ynh_config_add --template="dnsmasq_dhcpdv4.conf" --destination="/etc/dnsmasq.$app/dhcpdv4.conf"
 
     if [[ -n "${ip6_net}" ]] && [[ "${ip6_net}" != "none" ]]; then
-        ynh_add_config --template="../conf/dnsmasq_dhcpdv6.conf" --destination="/etc/dnsmasq.$app/dhcpdv6.conf"
-    fi  
+        ynh_config_add --template="dnsmasq_dhcpdv6.conf" --destination="/etc/dnsmasq.$app/dhcpdv6.conf"
+    fi
+
 }
