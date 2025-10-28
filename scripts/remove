@@ -14,8 +14,8 @@ ynh_script_progression "Removing $app service"
 yunohost service stop $service_name
 yunohost service remove $service_name
 
-ynh_config_remove_systemd$service_name
-ynh_config_remove_systemd"hostapd@$app"
+ynh_config_remove_systemd $service_name
+ynh_config_remove_systemd "hostapd@$app"
 
 #=================================================
 # REMOVE APP MAIN DIR
