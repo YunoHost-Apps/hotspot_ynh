@@ -35,12 +35,20 @@ fi
 ynh_script_progression "Restoring configurations ..."
 
 ynh_restore_everything
-yunohost service add "$service_name" --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd@$app" --need_lock
 
-#=================================================
-# START SYSTEMD SERVICE
-#=================================================
-ynh_script_progression "Starting the hotspot service..."
+chmod 0755 /etc/hostapd/$app/
+chmod 0755 /etc/dnsmasq.$app/
+
+chmod 0755 "/usr/local/bin/$service_name"
+
+chmod 0755 /etc/openvpn/scripts
+chmod 0755 /etc/openvpn/scripts/route-up.d
+chmod 0755 /etc/openvpn/scripts/route-down.d
+
+chmod 0755 "/etc/openvpn/scripts/route-up.d/90-${service_name}"
+chmod 0755 "/etc/openvpn/scripts/route-down.d/90-${service_name}"
+
+yunohost service add "$service_name" --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd@$app" --need_lock
 
 hot_reload_usb_wifi_cards
 if [[ -z "${wifi_device:-}" ]] || ! grep -q -F "$wifi_device" <(unused_iw_devices); then
@@ -51,8 +59,17 @@ fi
 if [[ -z "${wifi_device:-}" ]]; then
 	ynh_app_setting_set --key=service_enabled --value=0
 else
+    configure_hostapd
+    configure_dhcp
 	ynh_app_setting_set --key=service_enabled --value=1
 fi
+
+systemctl restart dnsmasq
+
+#=================================================
+# START SYSTEMD SERVICE
+#=================================================
+ynh_script_progression "Starting the hotspot service..."
 
 # Start a systemd service if device is present
 if [[ "${wifi_device:-}" == "" ]]; then

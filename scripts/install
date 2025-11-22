@@ -121,9 +121,10 @@ systemctl stop hostapd 2>&1
 systemctl mask hostapd 2>&1
 
 if [[ -n "${wifi_device}" ]]; then
-
     configure_hostapd
     configure_dhcp
+
+	systemctl restart dnsmasq
 fi
 
 #=================================================

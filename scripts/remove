@@ -31,11 +31,10 @@ for FILE in $(ls /tmp/.${service_name}-* 2>/dev/null); do
 done
 
 # Remove confs
-ynh_safe_rm "/etc/dnsmasq.d/$app.conf"
-systemctl restart dnsmasq
-
 ynh_safe_rm "/etc/dnsmasq.$app/"
 ynh_safe_rm "/etc/hostapd/$app/"
+
+systemctl restart dnsmasq
 
 #=================================================
 # CLOSE A PORT
