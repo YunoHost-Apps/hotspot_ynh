@@ -30,7 +30,7 @@ get__no_antenna() {
 }
 
 get__status() {
-    local service_enabled=$(ynh_app_setting_get $app service_enabled)
+    local service_enabled=$(ynh_app_setting_get --key=service_enabled)
     if systemctl is-active hostapd@$app -q
     then
         if [[ "$service_enabled" -eq 1 ]]
@@ -84,14 +84,14 @@ EOF
         done
     fi
 
-    echo "value: '$(ynh_app_setting_get $app wifi_device)'"
+    echo "value: '$(ynh_app_setting_get --key=wifi_device)'"
 }
 
 get__dns() {
-    ip6_net=$(ynh_app_setting_get --app=$app --key=ip6_net)
-    ip6_dns=$(ynh_app_setting_get --app=$app --key=ip6_dns | tr -d '[]')
-    ip4_nat_prefix=$(ynh_app_setting_get --app=$app --key=ip4_nat_prefix)
-    ip4_dns=$(ynh_app_setting_get --app=$app --key=ip4_dns)
+    ip6_net=$(ynh_app_setting_get --key=ip6_net)
+    ip6_dns=$(ynh_app_setting_get --key=ip6_dns | tr -d '[]')
+    ip4_nat_prefix=$(ynh_app_setting_get --key=ip4_nat_prefix)
+    ip4_dns=$(ynh_app_setting_get --key=ip4_dns)
 
     if [[ -n "${ip6_net}" ]] && [[ -z "${ip6_dns}" ]]; then
         ip6_dns="${ip6_net}1"
@@ -177,8 +177,8 @@ ynh_app_config_validate() {
 #=================================================
 
 set__dns() {
-    ynh_app_setting_set $app ip6_dns "${ip6_dns}"
-    ynh_app_setting_set $app ip4_dns "${ip4_dns}"
+    ynh_app_setting_set --key=ip6_dns --value="${ip6_dns}"
+    ynh_app_setting_set --key=ip4_dns --value="${ip4_dns}"
 }
 
 #=================================================
@@ -189,10 +189,10 @@ set__dns() {
 # OVERWRITING APPLY STEP 
 #=================================================
 ynh_app_config_apply() {
-    service_name=$(ynh_app_setting_get --app=$app --key=service_name)
+    service_name=$(ynh_app_setting_get --key=service_name)
 
-    # Stop vpn client
-    ynh_print_info --message="Stopping hotspot in order to edit files"
+    # Stop hotspot
+    ynh_print_info "Stopping hotspot in order to edit files"
     yunohost service stop $service_name
 
     _ynh_app_config_apply
@@ -202,18 +202,17 @@ ynh_app_config_apply() {
         configure_dhcp
 
         # Start hotspot
-        ynh_print_info --message="Starting hotspot service if needed"
+        ynh_print_info "Starting hotspot service if needed"
         yunohost service start $service_name
     else
-        ynh_print_info --message="Cleanup hotspot config files"
-        ynh_secure_remove --file="/etc/hostapd/$app/hostapd.conf"
-        ynh_secure_remove --file="/etc/dnsmasq.$app/dhcpdv4.conf"
-        ynh_secure_remove --file="/etc/dnsmasq.$app/dhcpdv6.conf"
-
-        systemctl restart dnsmasq
+        ynh_print_info "Cleanup hotspot config files"
+        ynh_safe_rm "/etc/hostapd/$app/hostapd.conf"
+        ynh_safe_rm "/etc/dnsmasq.$app/dhcpdv4.conf"
+        ynh_safe_rm "/etc/dnsmasq.$app/dhcpdv6.conf"
     fi
 
-    yunohost tools regen-conf dnsmasq
+    # Restart dnsmasq to disable or enable dns resolution on dnsmasq for the wifi interface
+    systemctl restart dnsmasq
 }
 
 ynh_app_config_run $1

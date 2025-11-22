@@ -1,11 +1,5 @@
 #!/bin/bash
 
-#=================================================
-# GENERIC START
-#=================================================
-# IMPORT GENERIC HELPERS
-#=================================================
-
 # Keep this path for calling _common.sh inside the execution's context of backup and restore scripts
 source ../settings/scripts/_common.sh
 source /usr/share/yunohost/helpers
@@ -21,11 +15,11 @@ fi
 #=================================================
 # FIND AND OPEN A PORT
 #=================================================
-ynh_script_progression --message="Configuring firewall..."
+ynh_script_progression "Configuring firewall..."
 
 # Update firewall for DHCP
-ynh_exec_warn_less yunohost firewall allow --no-upnp --ipv6 UDP 547
-ynh_exec_warn_less yunohost firewall allow --no-upnp UDP 67
+ynh_hide_warnings yunohost firewall allow --no-upnp --ipv6 UDP 547
+ynh_hide_warnings yunohost firewall allow --no-upnp UDP 67
 
 # Meh idk where to put this ... On RPi, by default wlan is blocked
 if test -e /usr/sbin/rfkill && rfkill | grep wlan | grep -q -w 'blocked'
@@ -38,27 +32,26 @@ fi
 # STANDARD RESTORATION STEPS
 #=================================================
 
-ynh_script_progression --message="Restoring configurations ..."
+ynh_script_progression "Restoring configurations ..."
 
-ynh_restore
-
+ynh_restore_everything
 yunohost service add "$service_name" --description "Creates a Wi-Fi access point" --test_status "systemctl is-active hostapd@$app" --need_lock
 
 #=================================================
 # START SYSTEMD SERVICE
 #=================================================
-ynh_script_progression --message="Starting the hotspot service..."
+ynh_script_progression "Starting the hotspot service..."
 
 hot_reload_usb_wifi_cards
 if [[ -z "${wifi_device:-}" ]] || ! grep -q -F "$wifi_device" <(unused_iw_devices); then
 	wifi_device=$(unused_iw_devices | head -n 1)
-	ynh_app_setting_set --app=$app --key=wifi_device --value="${wifi_device}"
+	ynh_app_setting_set --key=wifi_device --value="${wifi_device}"
 fi
 
 if [[ -z "${wifi_device:-}" ]]; then
-	ynh_app_setting_set --app=$app --key=service_enabled --value=0
+	ynh_app_setting_set --key=service_enabled --value=0
 else
-	ynh_app_setting_set --app=$app --key=service_enabled --value=1
+	ynh_app_setting_set --key=service_enabled --value=1
 fi
 
 # Start a systemd service if device is present
@@ -72,4 +65,4 @@ fi
 # END OF SCRIPT
 #=================================================
 
-ynh_script_progression --message="Restoration completed for $app"
+ynh_script_progression "Restoration completed for $app"
