@@ -3,7 +3,7 @@
 请勿手动编辑。
 -->
 
-# YunoHost 的 Wifi Hotspot
+# YunoHost 上的 Wifi Hotspot
 
 [![集成程度](https://dash.yunohost.org/integration/hotspot.svg)](https://dash.yunohost.org/appci/app/hotspot) ![工作状态](https://ci-apps.yunohost.org/ci/badges/hotspot.status.svg) ![维护状态](https://ci-apps.yunohost.org/ci/badges/hotspot.maintain.svg)
 
