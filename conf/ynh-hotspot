@@ -229,11 +229,11 @@ if [ "$1" != restart ]; then
     wifi_device=$(yunohost app setting "$app" wifi_device)
 
     ip6_firewall=$(yunohost app setting "$app" ip6_firewall)
-    ip6_net=$(yunohost app setting "$app" --key=ip6_net)
+    ip6_net=$(yunohost app setting "$app" ip6_net)
     ip6_addr="${ip6_net}1"
-    ip4_nat_prefix=$(yunohost app setting "$app" --key=ip4_nat_prefix)
+    ip4_nat_prefix=$(yunohost app setting "$app" ip4_nat_prefix)
 
-    old_gateway_interface=$(yunohost app setting "$app" --key=gateway_interface)
+    old_gateway_interface=$(yunohost app setting "$app" gateway_interface)
 
     # The awk syntax is to accomodate to the fact that the ip route output may look like:
     # 1.2.3.4 via 192.168.1.254 dev end0 src 192.168.1.35 uid 0
@@ -299,8 +299,8 @@ start)
     # Update dynamic settings
     yunohost app setting "$app" gateway_interface --value="${new_gateway_interface}"
 
-    # Regen-conf dnsmasq to enable dns resolution on dnsmasq for the new interface
-    yunohost tools regen-conf dnsmasq
+    # Reload dnsmasq to enable dns resolution on dnsmasq for the new interface
+    systemctl reload dnsmasq
     ;;
 stop)
     echo "[$app] Stopping..."
@@ -324,9 +324,6 @@ stop)
         echo "Stop hostapd"
         stop_hostapd
     fi
-
-    # Regen-conf dnsmasq to disable dns resolution on dnsmasq for the previous interface
-    yunohost tools regen-conf dnsmasq
     ;;
 restart)
     $0 stop

@@ -208,12 +208,11 @@ ynh_app_config_apply() {
         ynh_print_info "Cleanup hotspot config files"
         ynh_safe_rm "/etc/hostapd/$app/hostapd.conf"
         ynh_safe_rm "/etc/dnsmasq.$app/dhcpdv4.conf"
-        ynh_safe_rm --file="/etc/dnsmasq.$app/dhcpdv6.conf"
-
-        systemctl restart dnsmasq
+        ynh_safe_rm "/etc/dnsmasq.$app/dhcpdv6.conf"
     fi
 
-    yunohost tools regen-conf dnsmasq
+    # Restart dnsmasq to disable or enable dns resolution on dnsmasq for the wifi interface
+    systemctl restart dnsmasq
 }
 
 ynh_app_config_run $1
