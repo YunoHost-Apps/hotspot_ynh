@@ -174,8 +174,8 @@ chmod 0755 "/usr/local/bin/$service_name"
 mkdir -pm 0755 /etc/openvpn/scripts
 mkdir -pm 0755 /etc/openvpn/scripts/route-up.d
 mkdir -pm 0755 /etc/openvpn/scripts/route-down.d
-ynh_add_config --template="../conf/openvpn_90-hotspot" --destination="/etc/openvpn/scripts/route-up.d/90-$service_name"
-ynh_add_config --template="../conf/openvpn_90-hotspot" --destination="/etc/openvpn/scripts/route-down.d/90-$service_name"
+ynh_add_config --template="../conf/openvpn_route-up_90-hotspot" --destination="/etc/openvpn/scripts/route-up.d/90-$service_name"
+ynh_add_config --template="../conf/openvpn_route-down_90-hotspot" --destination="/etc/openvpn/scripts/route-down.d/90-$service_name"
 chmod 0755 "/etc/openvpn/scripts/route-up.d/90-${service_name}"
 chmod 0755 "/etc/openvpn/scripts/route-down.d/90-${service_name}"
 
