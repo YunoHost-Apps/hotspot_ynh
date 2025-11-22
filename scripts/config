@@ -192,7 +192,7 @@ ynh_app_config_apply() {
     service_name=$(ynh_app_setting_get --key=service_name)
 
     # Stop hotspot
-    ynh_print_info --message="Stopping hotspot in order to edit files"
+    ynh_print_info "Stopping hotspot in order to edit files"
     yunohost service stop $service_name
 
     _ynh_app_config_apply
@@ -202,13 +202,13 @@ ynh_app_config_apply() {
         configure_dhcp
 
         # Start hotspot
-        ynh_print_info --message="Starting hotspot service if needed"
+        ynh_print_info "Starting hotspot service if needed"
         yunohost service start $service_name
     else
-        ynh_print_info --message="Cleanup hotspot config files"
-        ynh_secure_remove --file="/etc/hostapd/$app/hostapd.conf"
-        ynh_secure_remove --file="/etc/dnsmasq.$app/dhcpdv4.conf"
-        ynh_secure_remove --file="/etc/dnsmasq.$app/dhcpdv6.conf"
+        ynh_print_info "Cleanup hotspot config files"
+        ynh_safe_rm "/etc/hostapd/$app/hostapd.conf"
+        ynh_safe_rm "/etc/dnsmasq.$app/dhcpdv4.conf"
+        ynh_safe_rm --file="/etc/dnsmasq.$app/dhcpdv6.conf"
 
         systemctl restart dnsmasq
     fi
