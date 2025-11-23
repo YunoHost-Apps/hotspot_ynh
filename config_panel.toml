@@ -111,7 +111,7 @@ name = "Configuration"
     [main.guest]
         name = "Guest Hotspot"
         optional = true
-        visible = ! no_antenna
+        visible = "! no_antenna"
 
         [main.guest.guest_enabled]
         ask = "Enable guest Hotspot"
