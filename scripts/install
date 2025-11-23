@@ -63,12 +63,14 @@ ip4_dns="${ip4_nat_prefix}.1"
 
 hot_reload_usb_wifi_cards
 wifi_device=$(unused_iw_devices | head -n 1)
-wifi_secure=1
-wifi_channel=6
 
-ynh_app_setting_set --key=wifi_secure --value="${wifi_secure}"
+ynh_app_setting_set --key=wifi_secure --value=1
 ynh_app_setting_set --key=wifi_device --value="${wifi_device}"
-ynh_app_setting_set --key=wifi_channel --value="${wifi_channel}"
+ynh_app_setting_set --key=wifi_channel --value=6
+ynh_app_setting_set --key=guest_enabled --value=0
+ynh_app_setting_set --key=guest_wifi_ssid --value=""
+ynh_app_setting_set --key=guest_wifi_passphrase --value=""
+ynh_app_setting_set --key=guest_wifi_secure --value=1
 ynh_app_setting_set --key=advanced --value=0
 ynh_app_setting_set --key=ip6_firewall --value=1
 ynh_app_setting_set --key=ip6_net --value="${ip6_net}"
