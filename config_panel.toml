@@ -136,6 +136,6 @@ name = "Configuration"
         type = "string"
         redact = true
         optional = true
-        visible = "guest_enabled and guest_wifi_secure"
+        visible = "guest_enabled && guest_wifi_secure"
         pattern.regexp = '^[a-zA-Z0-9]{8,63}$'
         pattern.error = "Only printable alphanumeric characters are permitted in your password. Maximal size 63 chars"
