@@ -108,29 +108,34 @@ name = "Configuration"
         pattern.regexp = '^(([0-9.]{7,15}|[0-9a-fA-F:]+),?)+$'
         pattern.error = "Not an ip"
 
-        [main.hotspot.guest_enabled]
-        ask = "Guest Hotspot settings"
+    [main.guest]
+        name = "Guest Hotspot"
+        optional = true
+        visible = ! no_antenna
+
+        [main.guest.guest_enabled]
+        ask = "Enable guest Hotspot"
         type = "boolean"
 
-        [main.hotspot.guest_wifi_ssid]
-        ask = "Guest Name (SSID)"
+        [main.guest.guest_wifi_ssid]
+        ask = "Name (SSID)"
         optional = true
         type = "string"
-        visible = "guest"
+        visible = "guest_enabled"
         pattern.regexp = '^[\w \-]{1,32}$'
         pattern.error = "SSID in this app are limited to letter, number space, dash and underscores."
 
-        [main.hotspot.guest_wifi_secure]
+        [main.guest.guest_wifi_secure]
         ask = "Secure"
         type = "boolean"
         optional = true
-        visible = "guest"
+        visible = "guest_enabled"
 
-        [main.hotspot.guest_wifi_passphrase]
-        ask = "Guest Password (WPA2)"
+        [main.guest.guest_wifi_passphrase]
+        ask = "Password (WPA2)"
         type = "string"
         redact = true
         optional = true
-        visible = "guest_wifi_secure and guest"
+        visible = "guest_enabled and guest_wifi_secure"
         pattern.regexp = '^[a-zA-Z0-9]{8,63}$'
         pattern.error = "Only printable alphanumeric characters are permitted in your password. Maximal size 63 chars"
