@@ -33,7 +33,19 @@ fi
 #=================================================
 ynh_script_progression "Restoring configurations ..."
 
-ynh_restore_everything
+#ynh_restore_everything
+
+ynh_restore "/etc/hostapd/$app/hostapd.conf"
+ynh_restore "/etc/dnsmasq.$app/dhcpdv6.conf"
+ynh_restore "/etc/dnsmasq.$app/dhcpdv4.conf"
+
+ynh_restore "/usr/local/bin/$service_name"
+
+ynh_restore "/etc/openvpn/scripts/route-up.d/90-$service_name"
+ynh_restore "/etc/openvpn/scripts/route-down.d/90-$service_name"
+
+ynh_restore "/etc/systemd/system/$service_name.service"
+ynh_restore "/etc/systemd/system/hostapd@$app.service"
 
 chmod 0755 /etc/hostapd/$app/
 chmod 0755 /etc/dnsmasq.$app/
