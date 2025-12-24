@@ -9,8 +9,6 @@ ynh_app_setting_set --key=service_name --value=$service_name
 #=================================================
 # CHECK IF THE APP CAN BE INSTALLED WITH THESE ARGS
 #=================================================
-
-# FIXME : we could probably implement all these checks in manifest.toml directly ?
 ynh_script_progression "Validating installation parameters..."
 
 # Check arguments
@@ -35,7 +33,6 @@ fi
 ynh_script_progression "Configuring firewall..."
 
 # Update firewall for DHCP
-# FIXME : move to manifest.toml
 ynh_hide_warnings yunohost firewall allow --no-upnp --ipv6 UDP 547
 ynh_hide_warnings yunohost firewall allow --no-upnp UDP 67
 

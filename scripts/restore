@@ -31,7 +31,6 @@ fi
 #=================================================
 # STANDARD RESTORATION STEPS
 #=================================================
-
 ynh_script_progression "Restoring configurations ..."
 
 ynh_restore_everything
