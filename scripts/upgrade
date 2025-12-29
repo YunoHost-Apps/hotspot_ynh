@@ -7,6 +7,7 @@ source /usr/share/yunohost/helpers
 # STOP SYSTEMD SERVICE
 #=================================================
 ynh_script_progression "Stopping the hotspot service ... (this may take some time)"
+
 yunohost service stop $service_name
 
 #=================================================
