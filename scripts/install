@@ -62,10 +62,18 @@ hot_reload_usb_wifi_cards
 wifi_device=$(unused_iw_devices | head -n 1)
 wifi_secure=1
 wifi_channel=6
+guest_enabled=0
+guest_wifi_secure=1
+guest_wifi_ssid=""
+guest_wifi_passphrase=""
 
 ynh_app_setting_set --key=wifi_secure --value="${wifi_secure}"
 ynh_app_setting_set --key=wifi_device --value="${wifi_device}"
 ynh_app_setting_set --key=wifi_channel --value="${wifi_channel}"
+ynh_app_setting_set --key=guest_enabled --value="${guest_enabled}"
+ynh_app_setting_set --key=guest_wifi_ssid --value="${guest_wifi_ssid}"
+ynh_app_setting_set --key=guest_wifi_passphrase --value="${guest_wifi_passphrase}"
+ynh_app_setting_set --key=guest_wifi_secure --value="${guest_wifi_secure}"
 ynh_app_setting_set --key=advanced --value=0
 ynh_app_setting_set --key=ip6_firewall --value=1
 ynh_app_setting_set --key=ip6_net --value="${ip6_net}"

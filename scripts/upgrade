@@ -32,6 +32,11 @@ elif [ ${firmware_nonfree:-} = "no" ]; then
 fi
 
 ynh_app_setting_set_default --key=service_name --value="ynh-$app"
+ynh_app_setting_set_default --key=guest_enabled --value=0
+ynh_app_setting_set_default --key=guest_wifi_ssid --value=""
+ynh_app_setting_set_default --key=guest_wifi_passphrase --value=""
+ynh_app_setting_set_default --key=guest_wifi_secure --value=1
+ynh_app_setting_set_default --key=advanced --value=0
 
 if [[ -n "${multissid:-}" ]] && [[ "${multissid}" -gt 1 ]]; then
 	wifi_ssid=$(cut -d'|' -f 1 <<< ${wifi_ssid})
@@ -82,10 +87,6 @@ if [[ -n "${multissid:-}" ]]; then
 	ynh_safe_rm "/etc/hostapd/hostapd.base.conf"
 	ynh_safe_rm "/etc/hostapd/hostapd.accesspoint.conf"
 	ynh_safe_rm "/etc/dnsmasq.dhcpd/"
-fi
-
-if [[ -z "${advanced:-}" ]]; then
-    ynh_app_setting_set --key=advanced --value=0
 fi
 
 # Old stuff prior to 2.x

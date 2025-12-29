@@ -47,10 +47,17 @@ function hot_reload_usb_wifi_cards()
 
 function configure_hostapd()
 {
+    sec_comment="#"
     if [[ "${wifi_secure}" -eq 1 ]]; then
         sec_comment=""
-    else
-        sec_comment="#"
+    fi
+    guest_comment="#"
+    guest_sec_comment="#"
+    if [[ "${guest_enabled}" -eq 1 ]]; then
+        guest_comment=""
+        if [[ "${guest_wifi_secure}" -eq 1 ]]; then
+          guest_sec_comment=""
+        fi
     fi
 
     ynh_config_add --template="hostapd.conf" --destination="/etc/hostapd/$app/hostapd.conf"
