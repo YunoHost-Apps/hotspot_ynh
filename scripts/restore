@@ -31,27 +31,24 @@ fi
 #=================================================
 # STANDARD RESTORATION STEPS
 #=================================================
+
 ynh_script_progression "Restoring configurations ..."
 
-#ynh_restore_everything
+ynh_restore_everything
 
-ynh_restore "/etc/hostapd/$app/hostapd.conf"
-ynh_restore "/etc/dnsmasq.$app/dhcpdv6.conf"
-ynh_restore "/etc/dnsmasq.$app/dhcpdv4.conf"
-
-ynh_restore "/usr/local/bin/$service_name"
-
-ynh_restore "/etc/openvpn/scripts/route-up.d/90-$service_name"
-ynh_restore "/etc/openvpn/scripts/route-down.d/90-$service_name"
-
-ynh_restore "/etc/systemd/system/$service_name.service"
-ynh_restore "/etc/systemd/system/hostapd@$app.service"
-
+mkdir -p /etc/hostapd/$app/
 chmod 0755 /etc/hostapd/$app/
+chown root: /etc/hostapd/$app/
+
+mkdir -p /etc/dnsmasq.$app/
 chmod 0755 /etc/dnsmasq.$app/
+chown root: /etc/dnsmasq.$app/
 
 chmod 0755 "/usr/local/bin/$service_name"
 
+mkdir -p /etc/openvpn/scripts
+mkdir -p /etc/openvpn/scripts/route-up.d
+mkdir -p /etc/openvpn/scripts/route-down.d
 chmod 0755 /etc/openvpn/scripts
 chmod 0755 /etc/openvpn/scripts/route-up.d
 chmod 0755 /etc/openvpn/scripts/route-down.d
