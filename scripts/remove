@@ -1,47 +1,37 @@
 #!/bin/bash
 
-#=================================================
-# GENERIC START
-#=================================================
-# IMPORT GENERIC HELPERS
-#=================================================
-
 source _common.sh
 source /usr/share/yunohost/helpers
 
 #=================================================
-# STANDARD REMOVE
-#=================================================
 # REMOVE SERVICE INTEGRATION IN YUNOHOST
 #=================================================
+ynh_script_progression "Removing $app service"
 
-# Remove the service from the list of services known by Yunohost (added from `yunohost service add`)
-ynh_script_progression --message="Removing $app service"
 yunohost service stop $service_name
 yunohost service remove $service_name
 
-ynh_remove_systemd_config --service=$service_name
-ynh_remove_systemd_config --service="hostapd@$app"
+ynh_config_remove_systemd $service_name
+ynh_config_remove_systemd "hostapd@$app"
 
 #=================================================
 # REMOVE APP MAIN DIR
 #=================================================
-ynh_script_progression --message="Removing $app configurations..."
+ynh_script_progression "Removing $app configurations..."
 
-ynh_secure_remove --file="/etc/openvpn/scripts/route-up.d/90-${service_name}"
-ynh_secure_remove --file="/etc/openvpn/scripts/route-down.d/90-${service_name}"
-ynh_secure_remove --file="/usr/local/bin/$service_name"
+ynh_safe_rm "/etc/openvpn/scripts/route-up.d/90-${service_name}"
+ynh_safe_rm "/etc/openvpn/scripts/route-down.d/90-${service_name}"
+ynh_safe_rm "/usr/local/bin/$service_name"
 
 for FILE in $(ls /tmp/.${service_name}-* 2>/dev/null); do
-    ynh_secure_remove --file="$FILE"
+    ynh_safe_rm "$FILE"
 done
 
 # Remove confs
-ynh_secure_remove --file="/etc/dnsmasq.d/$app.conf"
-systemctl restart dnsmasq
+ynh_safe_rm "/etc/dnsmasq.$app/"
+ynh_safe_rm "/etc/hostapd/$app/"
 
-ynh_secure_remove --file="/etc/dnsmasq.$app/"
-ynh_secure_remove --file="/etc/hostapd/$app/"
+systemctl restart dnsmasq
 
 #=================================================
 # CLOSE A PORT
@@ -49,12 +39,12 @@ ynh_secure_remove --file="/etc/hostapd/$app/"
 
 if [[ -z "$(other_hotspot_apps)" ]]; then
 	if yunohost firewall list | grep -q "\- 547$"; then
-		ynh_script_progression --message="Closing port 547"
-		ynh_exec_warn_less yunohost firewall disallow TCP 547
+		ynh_script_progression "Closing port 547"
+		ynh_hide_warnings yunohost firewall disallow TCP 547
 	fi
 
 	if yunohost firewall list | grep -q "\- 67$"; then
-		ynh_script_progression --message="Closing port 67"
-		ynh_exec_warn_less yunohost firewall disallow TCP 67
+		ynh_script_progression "Closing port 67"
+		ynh_hide_warnings yunohost firewall disallow TCP 67
 	fi
 fi

@@ -7,7 +7,7 @@ name = "Wifi Hotspot"
 description.en = "Create and configure a WiFi hotspot"
 description.fr = "Créez et gérez un point d'accès WiFi"
 
-version = "2.3.1~ynh1"
+version = "2.3.2~ynh1"
 
 maintainers = []
 
@@ -16,11 +16,14 @@ license = "AGPL-3.0"
 website = "https://internetcu.be/"
 
 [integration]
-yunohost = ">= 11.2.7"
+yunohost = ">= 12.1.17"
+helpers_version = "2.1"
 architectures = "all"
 multi_instance = true
+
 ldap = "not_relevant"
 sso = "not_relevant"
+
 disk = "50M"
 ram.build = "50M"
 ram.runtime = "50M"
@@ -45,6 +48,7 @@ ram.runtime = "50M"
     default = false
 
 [resources]
+
     [resources.system_user]
 
     [resources.permissions]

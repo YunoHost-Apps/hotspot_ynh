@@ -17,17 +17,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-source /usr/share/yunohost/helpers
-
 # Functions
 ## State functions
 
 has_ip6delegatedprefix() {
     [[ -n "${ip6_net}" ]] && [[ "${ip6_net}" != "none" ]]
-}
-
-ip6addrfromdelegatedprefix() {
-    echo "${ip6_net}1"
 }
 
 is_nat_set() {
@@ -40,7 +34,7 @@ is_ip4nataddr_set() {
 }
 
 is_ip6addr_set() {
-    ip address show dev "${wifi_device}" 2>/dev/null | grep -q "$(ip6addrfromdelegatedprefix)/64"
+    ip address show dev "${wifi_device}" 2>/dev/null | grep -q "${ip6_addr}/64"
 }
 
 is_ip6firewall_set() {
@@ -122,10 +116,10 @@ set_ipaddr() {
         ip address add "${ip4_nat_prefix}.1/24" dev "${wifi_device}"
     fi
 
-    if has_ip6delegatedprefix && ! is_ip6addr_set; then
-        echo "hotspot ${wifi_device}: Set IPv6 address"
-        ip address delete "$(ip6addrfromdelegatedprefix)/64" dev tun0 &>/dev/null
-        ip address add "$(ip6addrfromdelegatedprefix)/64" dev "${wifi_device}"
+    if has_ip6delegatedprefix && ! is_ip6addr_set && ip route get 1.2.3.4 | grep -q tun0; then
+        echo "hotspot ${wifi_device}: Set IPv6 address ${ip6_addr}"
+        ip address delete "${ip6_addr}/64" dev tun0 &>/dev/null
+        ip address add "${ip6_addr}/64" dev "${wifi_device}"
     fi
 }
 
@@ -140,8 +134,17 @@ set_ipfirewall() {
 }
 
 set_forwarding() {
+    local ip6_gateway=$(ip -6 route | awk '/default via/ { print $3; }')
+    local wired_interface=$(ip -6 route | awk '/default via/ { print $5; }')
+
     sysctl -w net.ipv6.conf.all.forwarding=1 >/dev/null
     sysctl -w net.ipv4.conf.all.forwarding=1 >/dev/null
+
+    if [[ -n "${ip6_gateway}" ]]; then
+      # Enabling IPv6 forwarding removes the default route, so we need to add it back.
+      # See https://askubuntu.com/questions/463625/ipv6-forwarding-kills-ipv6-connection/463654#463654
+      ip route add default via "${ip6_gateway}" dev ${wired_interface}
+    fi
 }
 
 start_dhcpd() {
@@ -178,8 +181,8 @@ unset_ipaddr() {
     fi
 
     if has_ip6delegatedprefix && is_ip6addr_set; then
-        echo "hotspot ${wifi_device}: Unset IPv6 address"
-        ip address delete "$(ip6addrfromdelegatedprefix)/64" dev "${wifi_device}"
+        echo "hotspot ${wifi_device}: Unset IPv6 address ${ip6_addr}"
+        ip address delete "${ip6_addr}/64" dev "${wifi_device}"
     fi
 }
 
@@ -222,20 +225,15 @@ if [ "$1" != restart ]; then
     echo -n "Retrieving Yunohost settings... "
 
     app=__APP__
-    service_enabled=$(ynh_app_setting_get --app=$app --key=service_enabled)
-    wifi_device=$(ynh_app_setting_get --app=$app --key=wifi_device)
-    wifi_channel=$(ynh_app_setting_get --app=$app --key=wifi_channel)
+    service_enabled=$(yunohost app setting "$app" service_enabled)
+    wifi_device=$(yunohost app setting "$app" wifi_device)
 
-    wifi_ssid=$(ynh_app_setting_get --app=$app --key=wifi_ssid)
-    wifi_secure=$(ynh_app_setting_get --app=$app --key=wifi_secure)
-    wifi_passphrase=$(ynh_app_setting_get --app=$app --key=wifi_passphrase)
-    ip6_firewall=$(ynh_app_setting_get --app=$app --key=ip6_firewall)
-    ip6_dns=$(ynh_app_setting_get --app=$app --key=ip6_dns)
-    ip6_net=$(ynh_app_setting_get --app=$app --key=ip6_net)
-    ip4_dns=$(ynh_app_setting_get --app=$app --key=ip4_dns)
-    ip4_nat_prefix=$(ynh_app_setting_get --app=$app --key=ip4_nat_prefix)
+    ip6_firewall=$(yunohost app setting "$app" ip6_firewall)
+    ip6_net=$(yunohost app setting "$app" ip6_net)
+    ip6_addr="${ip6_net}1"
+    ip4_nat_prefix=$(yunohost app setting "$app" ip4_nat_prefix)
 
-    old_gateway_interface=$(ynh_app_setting_get --app=$app --key=gateway_interface)
+    old_gateway_interface=$(yunohost app setting "$app" gateway_interface)
 
     # The awk syntax is to accomodate to the fact that the ip route output may look like:
     # 1.2.3.4 via 192.168.1.254 dev end0 src 192.168.1.35 uid 0
@@ -299,10 +297,10 @@ start)
     start_dhcpd
 
     # Update dynamic settings
-    ynh_app_setting_set --app=$app --key=gateway_interface --value="${new_gateway_interface}"
+    yunohost app setting "$app" gateway_interface --value="${new_gateway_interface}"
 
-    # Regen-conf dnsmasq to enable dns resolution on dnsmasq for the new interface
-    yunohost tools regen-conf dnsmasq
+    # Reload dnsmasq to enable dns resolution on dnsmasq for the new interface
+    systemctl reload dnsmasq
     ;;
 stop)
     echo "[$app] Stopping..."
@@ -326,9 +324,6 @@ stop)
         echo "Stop hostapd"
         stop_hostapd
     fi
-
-    # Regen-conf dnsmasq to disable dns resolution on dnsmasq for the previous interface
-    yunohost tools regen-conf dnsmasq
     ;;
 restart)
     $0 stop
@@ -376,7 +371,7 @@ status)
 
     if has_ip6delegatedprefix; then
         echo "[INFO] hotspot ${wifi_device}: IPv6 delegated prefix found"
-        echo "[INFO] hotspot ${wifi_device}: IPv6 address computed from the delegated prefix: $(ip6addrfromdelegatedprefix)"
+        echo "[INFO] hotspot ${wifi_device}: IPv6 address computed from the delegated prefix: ${ip6_addr}"
 
         if is_ip6addr_set; then
             echo "[ OK ] hotspot ${wifi_device}: IPv6 address set"
