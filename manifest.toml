@@ -64,8 +64,9 @@ ram.runtime = "50M"
         # Proprietary USB Wireless Device firmwares, based on https://wiki.debian.org/WiFi#USB_Devices
         if [[ "$firmware_nonfree" -eq 1 ]]; then
             # if armbian-firmware is detected, we dont include ra-link which is known to conflict....
+            # so is firmware-atheros apparently
             if dpkg --list | grep -q armbian-firmware; then
-                echo "firmware-atheros firmware-realtek firmware-libertas atmel-firmware firmware-zd1211"
+                echo "irmware-realtek firmware-libertas atmel-firmware firmware-zd1211"
             else
                 echo "firmware-atheros firmware-realtek firmware-ralink firmware-libertas atmel-firmware firmware-zd1211"
             fi
