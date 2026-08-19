@@ -2,19 +2,30 @@
 
 is_nat_set() {
   local gateway_interface=${1}
-  iptables -w -nvt nat -L POSTROUTING | grep MASQUERADE | grep -q "${gateway_interface}"
+  nft list inet __APP__ chain postrouting | grep masquerade | grep -q "${gateway_interface}"
 }
 
 unset_nat() {
   local gateway_interface=${1}
   echo "[INFO] hotspot ${wifi_device}: Unset NAT on ${gateway_interface}"
-  iptables -w -t nat -D POSTROUTING -o "${gateway_interface}" -j MASQUERADE
+  nft flush inet __APP__ chain postrouting
+  nft delete inet __APP__ chain postrouting
 }
 
 set_nat() {
   local gateway_interface=${1}
   echo "[INFO] hotspot ${wifi_device}: Set NAT on ${gateway_interface}"
-  iptables -w -t nat -A POSTROUTING -o "${gateway_interface}" -j MASQUERADE
+  nft -f - << EOF
+  table inet __APP__ {
+    chain postrouting {
+      type nat hook postrouting priority srcnat; policy accept;
+
+      # Mask client IP and show server IP instead
+      oifname ${gateway_interface} counter masquerade
+      oifname ${gateway_interface} counter masquerade
+    }
+  }
+EOF
 }
 
 has_ip6delegatedprefix() {
@@ -33,7 +44,7 @@ unset_ip6addr() {
 ynh_hotspot_state=$(systemctl is-active __SERVICE_NAME__)
 if [[ "${ynh_hotspot_state}" == "active" || "${ynh_hotspot_state}" == "activating" ]]; then
   old_gateway_interface=${dev}
-  new_gateway_interface=$(ip route | awk '/default via/ { print $5; }')
+  new_gateway_interface=$(ip route | awk '/default via/ { print $5; exit; }')
   
   ip6_net=$(yunohost app setting __APP__ ip6_net)
   ip6_addr="${ip6_net}1"

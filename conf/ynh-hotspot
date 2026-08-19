@@ -25,8 +25,8 @@ has_ip6delegatedprefix() {
 }
 
 is_nat_set() {
-    local gateway_interface=${1}
-    iptables -w -nvt nat -L POSTROUTING | grep MASQUERADE | grep -q "${gateway_interface}"
+  local gateway_interface=${1}
+  nft list inet __APP__ chain postrouting | grep masquerade | grep -q "${gateway_interface}"
 }
 
 is_ip4nataddr_set() {
@@ -105,9 +105,19 @@ is_running() {
 ## Setters
 
 set_nat() {
-    local gateway_interface=${1}
+  local gateway_interface=${1}
+  echo "[INFO] hotspot ${wifi_device}: Set NAT on ${gateway_interface}"
+  nft -f - << EOF
+  table inet __APP__ {
+    chain postrouting {
+      type nat hook postrouting priority srcnat; policy accept;
 
-    iptables -w -t nat -A POSTROUTING -o "${gateway_interface}" -j MASQUERADE
+      # Mask client IP and show server IP instead
+      oifname ${gateway_interface} counter masquerade
+      oifname ${gateway_interface} counter masquerade
+    }
+  }
+EOF
 }
 
 set_ipaddr() {
@@ -134,8 +144,8 @@ set_ipfirewall() {
 }
 
 set_forwarding() {
-    local ip6_gateway=$(ip -6 route | awk '/default via/ { print $3; }')
-    local wired_interface=$(ip -6 route | awk '/default via/ { print $5; }')
+    local ip6_gateway=$(ip -6 route | awk '/default via/ { print $3; exit; }')
+    local wired_interface=$(ip -6 route | awk '/default via/ { print $5; exit; }')
 
     sysctl -w net.ipv6.conf.all.forwarding=1 >/dev/null
     sysctl -w net.ipv4.conf.all.forwarding=1 >/dev/null
@@ -169,9 +179,10 @@ configure_hostapd() {
 ## Unsetters
 
 unset_nat() {
-    local gateway_interface=${1}
-
-    iptables -w -t nat -D POSTROUTING -o "${gateway_interface}" -j MASQUERADE
+  local gateway_interface=${1}
+  echo "[INFO] hotspot ${wifi_device}: Unset NAT on ${gateway_interface}"
+  nft flush inet __APP__ chain postrouting
+  nft delete inet __APP__ chain postrouting
 }
 
 unset_ipaddr() {
