@@ -58,8 +58,7 @@ ram.runtime = "50M"
     packages_from_raw_bash = '[[ "$firmware_nonfree" -eq 0 ]] && echo "firmware-ath9k-htc" || true'
 
     [resources.apt.extras.nonfree]
-    repo = "deb http://deb.debian.org/debian bullseye non-free"
-    key = "https://ftp-master.debian.org/keys/archive-key-11.asc"
+    repo = "deb http://deb.debian.org/debian __YNH_DEBIAN_VERSION__ non-free-firmware"
     packages_from_raw_bash = """
         # Proprietary USB Wireless Device firmwares, based on https://wiki.debian.org/WiFi#USB_Devices
         if [[ "$firmware_nonfree" -eq 1 ]]; then
