@@ -55,6 +55,10 @@ ram.runtime = "50M"
 
     [resources.apt]
     packages = "sipcalc, hostapd, iw, kmod"
+    packages_from_raw_bash = '[[ "$firmware_nonfree" -eq 0 ]] && echo "firmware-ath9k-htc" || true'
+
+    [resources.apt.extras.nonfree]
+    repo = "deb http://deb.debian.org/debian __YNH_DEBIAN_VERSION__ non-free-firmware"
     packages_from_raw_bash = """
         # Proprietary USB Wireless Device firmwares, based on https://wiki.debian.org/WiFi#USB_Devices
         if [[ "$firmware_nonfree" -eq 1 ]]; then
@@ -65,5 +69,5 @@ ram.runtime = "50M"
                 echo "firmware-atheros firmware-realtek firmware-ralink firmware-libertas atmel-firmware firmware-zd1211"
             fi
         else
-            echo "firmware-ath9k-htc"
+            echo " "
         fi"""
