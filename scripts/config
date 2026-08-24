@@ -64,7 +64,9 @@ get__wifi_device() {
     local unused_wifi_devices=$(unused_iw_devices)
     if [[ -z "${unused_wifi_devices}" ]]
     then
-        echo "choices: []"
+        # We return a list with an empty string because config panel doesn't accept empty list anymore in Yunohost 13.
+        # This won't be displayed anyways, as the wifi device field is hidden when there is no antenna.
+        echo "choices: ['']"
     else
         cat << EOF
 choices:
