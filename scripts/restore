@@ -69,6 +69,8 @@ if [[ -z "${wifi_device:-}" ]]; then
 else
     configure_hostapd
     configure_dhcp
+    configure_dns_resolver
+    
 	ynh_app_setting_set --key=service_enabled --value=1
 fi
 

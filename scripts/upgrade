@@ -146,6 +146,8 @@ chown root: /etc/dnsmasq.$app/
 if [[ -n "${wifi_device:-}" ]]; then
     configure_hostapd
     configure_dhcp
+	configure_dns_resolver
+	
 	ynh_app_setting_set --key=service_enabled --value=1
 else
 	ynh_app_setting_set --key=service_enabled --value=0

@@ -13,6 +13,7 @@ ynh_print_info "Declaring files to be backed up..."
 ynh_backup "/etc/hostapd/$app/hostapd.conf" || true
 ynh_backup "/etc/dnsmasq.$app/dhcpdv6.conf" || true
 ynh_backup "/etc/dnsmasq.$app/dhcpdv4.conf" || true
+ynh_backup "/etc/dnsmasq.d/$app.conf" || true
 
 ynh_backup "/usr/local/bin/$service_name"
 

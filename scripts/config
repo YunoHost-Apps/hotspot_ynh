@@ -193,6 +193,7 @@ ynh_app_config_apply() {
     if [[ "${service_enabled}" -eq 1 ]]; then
         configure_hostapd
         configure_dhcp
+        configure_dns_resolver
 
         # Start hotspot
         ynh_print_info "Starting hotspot service if needed"
@@ -202,6 +203,7 @@ ynh_app_config_apply() {
         ynh_safe_rm "/etc/hostapd/$app/hostapd.conf"
         ynh_safe_rm "/etc/dnsmasq.$app/dhcpdv4.conf"
         ynh_safe_rm "/etc/dnsmasq.$app/dhcpdv6.conf"
+        ynh_safe_rm "/etc/dnsmasq.d/$app.conf"
     fi
 
     # Restart dnsmasq to disable or enable dns resolution on dnsmasq for the wifi interface
