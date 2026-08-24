@@ -114,7 +114,6 @@ set_nat() {
 
       # Mask client IP and show server IP instead
       oifname ${gateway_interface} counter masquerade
-      oifname ${gateway_interface} counter masquerade
     }
   }
 EOF
@@ -181,8 +180,7 @@ configure_hostapd() {
 unset_nat() {
   local gateway_interface=${1}
   echo "[INFO] hotspot ${wifi_device}: Unset NAT on ${gateway_interface}"
-  nft flush inet __APP__ chain postrouting
-  nft delete inet __APP__ chain postrouting
+  nft delete table inet __APP__
 }
 
 unset_ipaddr() {
