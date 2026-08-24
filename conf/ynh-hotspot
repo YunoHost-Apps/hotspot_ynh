@@ -26,7 +26,7 @@ has_ip6delegatedprefix() {
 
 is_nat_set() {
   local gateway_interface=${1}
-  nft list inet __APP__ chain postrouting | grep masquerade | grep -q "${gateway_interface}"
+  nft list chain inet __APP__ postrouting | grep masquerade | grep -q "${gateway_interface}"
 }
 
 is_ip4nataddr_set() {
@@ -38,7 +38,7 @@ is_ip6addr_set() {
 }
 
 is_ip6firewall_set() {
-    nft list inet __APP__ chain forward-${wifi_device} | grep drop | grep -q "${wifi_device}"
+    nft list chain inet __APP__ forward-${wifi_device} | grep drop | grep -q "${wifi_device}"
 }
 
 is_forwarding_set() {
