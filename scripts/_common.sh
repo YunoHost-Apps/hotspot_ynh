@@ -65,3 +65,8 @@ function configure_dhcp()
     fi
 
 }
+
+function configure_dns_resolver()
+{
+    ynh_config_add --template="dnsmasq_dns_resolver.conf" --destination="/etc/dnsmasq.d/$app.conf"
+}
