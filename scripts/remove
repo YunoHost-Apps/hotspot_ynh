@@ -29,6 +29,7 @@ done
 
 # Remove confs
 ynh_safe_rm "/etc/dnsmasq.$app/"
+ynh_safe_rm "/etc/dnsmasq.d/$app.conf"
 ynh_safe_rm "/etc/hostapd/$app/"
 
 systemctl restart dnsmasq
