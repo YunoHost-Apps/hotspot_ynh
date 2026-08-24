@@ -64,7 +64,7 @@ get__wifi_device() {
     local unused_wifi_devices=$(unused_iw_devices)
     if [[ -z "${unused_wifi_devices}" ]]
     then
-        echo "choices: []"
+        echo "choices: ['']"
     else
         cat << EOF
 choices:
