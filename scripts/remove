@@ -38,6 +38,9 @@ systemctl restart dnsmasq
 # CLOSE A PORT
 #=================================================
 
+# Cleanup nft rules used for hotspot app
+nft delete table inet $app
+
 if [[ -z "$(other_hotspot_apps)" ]]; then
 	if yunohost firewall list | grep -q "\- 547$"; then
 		ynh_script_progression "Closing port 547"
