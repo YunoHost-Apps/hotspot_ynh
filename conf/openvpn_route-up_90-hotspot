@@ -8,7 +8,7 @@ is_nat_set() {
 unset_nat() {
   local gateway_interface=${1}
   echo "[INFO] hotspot ${wifi_device}: Unset NAT on ${gateway_interface}"
-  nft delete table inet __APP__
+  nft delete chain inet __APP__ postrouting
 }
 
 set_nat() {

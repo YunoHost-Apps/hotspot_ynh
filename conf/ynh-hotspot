@@ -38,7 +38,7 @@ is_ip6addr_set() {
 }
 
 is_ip6firewall_set() {
-    ip6tables -w -nvL FORWARD | grep DROP | grep -q "${wifi_device}"
+    nft list inet __APP__ chain forward-${wifi_device} | grep drop | grep -q "${wifi_device}"
 }
 
 is_forwarding_set() {
@@ -136,9 +136,17 @@ set_ipfirewall() {
     # Set ipv6 firewalling
     if has_ip6delegatedprefix && [[ "${ip6_firewall}" -eq 1 ]] && ! is_ip6firewall_set; then
         echo "hotspot ${wifi_device}: Set IPv6 firewalling"
-        ip6tables -w -A FORWARD -i "${wifi_device}" -j ACCEPT
-        ip6tables -w -A FORWARD -o "${wifi_device}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-        ip6tables -w -A FORWARD -o "${wifi_device}" -j DROP
+        nft -f - << EOF
+  table inet __APP__ {
+    chain forward-${wifi_device} {
+      type filter hook forward priority filter; policy accept;
+
+      iifname ${wifi_device} counter accept
+      oifname ${wifi_device} ct state related,established counter accept
+      oifname ${wifi_device} counter drop
+    }
+  }
+EOF
     fi
 }
 
@@ -180,7 +188,7 @@ configure_hostapd() {
 unset_nat() {
   local gateway_interface=${1}
   echo "[INFO] hotspot ${wifi_device}: Unset NAT on ${gateway_interface}"
-  nft delete table inet __APP__
+  nft delete chain inet __APP__ postrouting
 }
 
 unset_ipaddr() {
@@ -198,9 +206,7 @@ unset_ipaddr() {
 unset_ipfirewall() {
     if has_ip6delegatedprefix && [[ "${ip6_firewall}" -eq 1 ]] && is_ip6firewall_set; then
         echo "hotspot ${wifi_device}: Unset IPv6 firewalling"
-        ip6tables -w -D FORWARD -i "${wifi_device}" -j ACCEPT
-        ip6tables -w -D FORWARD -o "${wifi_device}" -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-        ip6tables -w -D FORWARD -o "${wifi_device}" -j DROP
+        nft delete chain inet __APP__ forward-${wifi_device}
     fi
 }
 
