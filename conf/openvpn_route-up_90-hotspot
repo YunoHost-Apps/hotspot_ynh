@@ -2,7 +2,7 @@
 
 is_nat_set() {
   local gateway_interface=${1}
-  nft list chain inet __APP__ postrouting | grep masquerade | grep -q "${gateway_interface}"
+  nft -s list chain inet __APP__ postrouting 2>/dev/null | grep masquerade | grep -q "${gateway_interface}"
 }
 
 unset_nat() {
