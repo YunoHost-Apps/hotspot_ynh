@@ -38,7 +38,7 @@ is_ip6addr_set() {
 }
 
 is_ip6firewall_set() {
-    nft -s list chain inet __APP__ forward-${wifi_device} 2>/dev/null | grep drop | grep -q "${wifi_device}"
+    nft -s list chain inet __APP__ forward 2>/dev/null | grep drop | grep -q "${wifi_device}"
 }
 
 is_forwarding_set() {
@@ -132,13 +132,13 @@ set_ipaddr() {
     fi
 }
 
-set_ipfirewall() {
+set_ipfirewall() {    
     # Set ipv6 firewalling
     if has_ip6delegatedprefix && [[ "${ip6_firewall}" -eq 1 ]] && ! is_ip6firewall_set; then
         echo "hotspot ${wifi_device}: Set IPv6 firewalling"
         nft -f - << EOF
   table inet __APP__ {
-    chain forward-${wifi_device} {
+    chain forward {
       type filter hook forward priority filter; policy accept;
 
       iifname ${wifi_device} counter accept
@@ -204,10 +204,7 @@ unset_ipaddr() {
 }
 
 unset_ipfirewall() {
-    if has_ip6delegatedprefix && [[ "${ip6_firewall}" -eq 1 ]] && is_ip6firewall_set; then
-        echo "hotspot ${wifi_device}: Unset IPv6 firewalling"
-        nft delete chain inet __APP__ forward-${wifi_device}
-    fi
+    nft delete table inet __APP__
 }
 
 unset_forwarding() {
